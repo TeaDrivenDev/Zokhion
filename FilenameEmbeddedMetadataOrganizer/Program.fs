@@ -1,7 +1,12 @@
 ﻿// Learn more about F# at http://fsharp.org
 // See the 'F# Tutorial' project for more help.
 
+open FsXaml
+
+type App = XAML<"App.xaml">
+type MainWindow = XAML<"MainWindow.xaml">
+
 [<EntryPoint>]
-let main argv = 
+let main argv =
     printfn "%A" argv
     0 // return an integer exit code

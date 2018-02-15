@@ -3,10 +3,10 @@ framework: auto-detect
 
 nuget FSharp.Core
 nuget FsXaml.Wpf
-nuget ReactiveUI
+nuget ReactiveUI prerelease
 nuget System.ValueTuple 4.3.1
 
 group Build
-source https://www.nuget.org/api/v2
+    source https://www.nuget.org/api/v2
 
-nuget FAKE
+    nuget FAKE

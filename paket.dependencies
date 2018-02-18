@@ -1,5 +1,5 @@
 source https://www.nuget.org/api/v2
-framework: auto-detect
+framework: net461
 
 nuget FSharp.Core
 nuget FsXaml.Wpf
@@ -10,3 +10,10 @@ group Build
     source https://www.nuget.org/api/v2
 
     nuget FAKE
+
+group Test
+    source https://www.nuget.org/api/v2
+
+    nuget xunit
+    nuget xunit.runner.visualstudio
+    nuget Unquote

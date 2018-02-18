@@ -2,15 +2,19 @@ namespace FilenameEmbeddedMetadataOrganizer.Tests
 
 open Xunit
 
-module Tests =
+[<AutoOpen>]
+module Implementation =
     open System
+    open System.Text.RegularExpressions
+
+    let inline (<||>) f g x = f x || g x
 
     type RenameParameters =
         {
             SelectedFeatures : string list option
             AllNames : string list
             SelectedNames : string list option
-            ReplaceExistingNames : bool
+            TreatParenthesizedPartAsNames : bool
         }
 
     type RenameResult =
@@ -20,10 +24,31 @@ module Tests =
             DetectedNames : string list
         }
 
+    let splitFileName preserveSeparateNamesPart (fileName : string) =
+        let regex =
+            if preserveSeparateNamesPart
+            then @"^(?<main>.+?)\s*(?<names>\([^\)]+\))?\s*(?<features>\[.+\])?$"
+            else @"^(?<main>.+?)\s*(?<features>\[.+\])?$"
+            |> Regex
+
+        let m = regex.Match fileName
+
+        if m.Success
+        then (m.Groups.["main"].Value, m.Groups.["names"].Value, m.Groups.["features"].Value)
+        else "", "", ""
+
     let rename parameters (originalFileName : string) : RenameResult =
+        let (mainPart, namesPart, featuresPart) =
+            splitFileName parameters.TreatParenthesizedPartAsNames originalFileName
+
+        let namesSource =
+            if String.IsNullOrWhiteSpace namesPart
+            then mainPart
+            else namesPart
+
         let detectedNames =
             parameters.AllNames
-            |> List.filter originalFileName.Contains
+            |> List.filter namesSource.Contains
             |> List.sort
 
         let namesToUse =
@@ -58,7 +83,7 @@ module Tests =
             |> Option.defaultValue ""
 
         let newFileName =
-            [ originalFileName; names; features ]
+            [ mainPart; names; features ]
             |> List.filter (String.IsNullOrWhiteSpace >> not)
             |> String.concat " "
 
@@ -68,6 +93,48 @@ module Tests =
             DetectedFeatures = []
         }
 
+module SplitFileNameTests =
+    [<Theory>]
+    [<InlineData("Aerial view over Uluru at night", "Aerial view over Uluru at night", "", "")>]
+    [<InlineData("Aerial view (from above) over Uluru at night", "Aerial view (from above) over Uluru at night", "", "")>]
+    [<InlineData("Aerial view over Uluru at night (Uluru)", "Aerial view over Uluru at night", "(Uluru)", "")>]
+    [<InlineData("Aerial view over Uluru at night (.Andes.Pacific Ocean.)", "Aerial view over Uluru at night", "(.Andes.Pacific Ocean.)", "")>]
+    [<InlineData("Aerial view (from above) over Uluru at night (.Andes.Pacific Ocean.)", "Aerial view (from above) over Uluru at night", "(.Andes.Pacific Ocean.)", "")>]
+    [<InlineData("Aerial view over Uluru at night (.Andes.Pacific Ocean.) [.Ax.Bd.]", "Aerial view over Uluru at night", "(.Andes.Pacific Ocean.)", "[.Ax.Bd.]")>]
+    [<InlineData("Aerial view over Uluru at night [.Ax.Bd.]", "Aerial view over Uluru at night", "", "[.Ax.Bd.]")>]
+    let ``Filename parts are correctly detected`` (fileName, expectedMain, expectedNames, expectedFeatures) =
+        // Arrange
+        let fileName = fileName
+
+        let expectedResult = (expectedMain, expectedNames, expectedFeatures)
+
+        // Act
+        let result = splitFileName true fileName
+
+        // Assert
+        Assert.Equal (expectedResult, result)
+
+    [<Theory>]
+    [<InlineData("Aerial view over Uluru at night", "Aerial view over Uluru at night", "", "")>]
+    [<InlineData("Aerial view (from above) over Uluru at night", "Aerial view (from above) over Uluru at night", "", "")>]
+    [<InlineData("Aerial view over Uluru at night (Uluru)", "Aerial view over Uluru at night (Uluru)", "", "")>]
+    [<InlineData("Aerial view over Uluru at night (.Andes.Pacific Ocean.)", "Aerial view over Uluru at night (.Andes.Pacific Ocean.)", "", "")>]
+    [<InlineData("Aerial view (from above) over Uluru at night (.Andes.Pacific Ocean.)", "Aerial view (from above) over Uluru at night (.Andes.Pacific Ocean.)", "", "")>]
+    [<InlineData("Aerial view over Uluru at night (.Andes.Pacific Ocean.) [.Ax.Bd.]", "Aerial view over Uluru at night (.Andes.Pacific Ocean.)", "", "[.Ax.Bd.]")>]
+    [<InlineData("Aerial view over Uluru at night [.Ax.Bd.]", "Aerial view over Uluru at night", "", "[.Ax.Bd.]")>]
+    let ``Filename parts are correctly detected omitting separate name part`` (fileName, expectedMain, expectedNames, expectedFeatures) =
+        // Arrange
+        let fileName = fileName
+
+        let expectedResult = (expectedMain, expectedNames, expectedFeatures)
+
+        // Act
+        let result = splitFileName false fileName
+
+        // Assert
+        Assert.Equal (expectedResult, result)
+
+module RenameTests =
     let allNames =
         [
             "Uluru"
@@ -87,7 +154,7 @@ module Tests =
                 SelectedFeatures = None
                 AllNames = allNames
                 SelectedNames = None
-                ReplaceExistingNames = false
+                TreatParenthesizedPartAsNames = false
             }
 
         let expectedResult =
@@ -113,7 +180,7 @@ module Tests =
                 SelectedFeatures = None
                 AllNames = allNames
                 SelectedNames = None
-                ReplaceExistingNames = false
+                TreatParenthesizedPartAsNames = false
             }
 
         let expectedResult =
@@ -139,13 +206,91 @@ module Tests =
                 SelectedFeatures = None
                 AllNames = allNames
                 SelectedNames = Some [ "Rocky Mountains"; "Pacific Ocean" ]
-                ReplaceExistingNames = false
+                TreatParenthesizedPartAsNames = false
             }
 
         let expectedResult =
             {
                 NewFileName = "View from the Glasshouse Mountains to the Great Barrier Reef (.Pacific Ocean.Rocky Mountains.)"
                 DetectedNames = [ "Glasshouse Mountains"; "Great Barrier Reef" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Appended names override names in the main part`` () =
+        // Arrange
+        let originalName = "View from the Glasshouse Mountains to the Great Barrier Reef (Uluru, Pacific Ocean)"
+
+        let parameters =
+            {
+                SelectedFeatures = None
+                AllNames = allNames
+                SelectedNames = None
+                TreatParenthesizedPartAsNames = true
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "View from the Glasshouse Mountains to the Great Barrier Reef (.Pacific Ocean.Uluru.)"
+                DetectedNames = [ "Pacific Ocean"; "Uluru" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Treating parenthesized part as names can be disabled`` () =
+        // Arrange
+        let originalName = "Glasshouse Mountains at sunset (Glasshouse Mountains)"
+
+        let parameters =
+            {
+                SelectedFeatures = None
+                AllNames = allNames
+                SelectedNames = None
+                TreatParenthesizedPartAsNames = false
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "Glasshouse Mountains at sunset (Glasshouse Mountains) (.Glasshouse Mountains.)"
+                DetectedNames = [ "Glasshouse Mountains" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``New appended names format replaces old format`` () =
+        // Arrange
+        let originalName = "Glasshouse Mountains at sunset (Glasshouse Mountains)"
+
+        let parameters =
+            {
+                SelectedFeatures = None
+                AllNames = allNames
+                SelectedNames = None
+                TreatParenthesizedPartAsNames = true
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "Glasshouse Mountains at sunset (.Glasshouse Mountains.)"
+                DetectedNames = [ "Glasshouse Mountains" ]
                 DetectedFeatures = []
             }
 
@@ -165,7 +310,7 @@ module Tests =
                 SelectedFeatures = None
                 AllNames = allNames
                 SelectedNames = None
-                ReplaceExistingNames = false
+                TreatParenthesizedPartAsNames = false
             }
 
         let expectedResult =
@@ -191,7 +336,7 @@ module Tests =
                 SelectedFeatures = Some [ "Bd"; "Ax" ]
                 AllNames = allNames
                 SelectedNames = None
-                ReplaceExistingNames = false
+                TreatParenthesizedPartAsNames = false
             }
 
         let expectedResult =

@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FilenameEmbeddedMetadataOrganizer.Tests.fs" />
+    <None Include="App.config" />
     <None Include="paket.references" />
     <None Include="Script.fsx" />
   </ItemGroup>

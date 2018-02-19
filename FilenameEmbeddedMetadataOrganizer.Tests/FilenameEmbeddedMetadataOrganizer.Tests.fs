@@ -8,6 +8,7 @@ module Implementation =
     open System.Text.RegularExpressions
 
     let inline (<||>) f g x = f x || g x
+    let trim (s : string) = s.Trim()
 
     type RenameParameters =
         {
@@ -37,18 +38,25 @@ module Implementation =
         then (m.Groups.["main"].Value, m.Groups.["names"].Value, m.Groups.["features"].Value)
         else "", "", ""
 
+    let evaluateNamesPart (names : string) =
+        let m = Regex.Match(names, @"^\(\.(?<names>.+)\.\)$")
+
+        if m.Success
+        then Some (m.Groups.["names"].Value.Split('.') |> Array.map trim |> Array.toList)
+        else
+            let m = Regex.Match(names, @"^\((?<names>.+)\)")
+
+            if m.Success
+            then Some (m.Groups.["names"].Value.Split(',') |> Array.map trim |> Array.toList)
+            else None
+
     let rename parameters (originalFileName : string) : RenameResult =
         let (mainPart, namesPart, featuresPart) =
             splitFileName parameters.TreatParenthesizedPartAsNames originalFileName
 
-        let namesSource =
-            if String.IsNullOrWhiteSpace namesPart
-            then mainPart
-            else namesPart
-
         let detectedNames =
-            parameters.AllNames
-            |> List.filter namesSource.Contains
+            evaluateNamesPart namesPart
+            |> Option.defaultWith (fun _ -> parameters.AllNames |> List.filter mainPart.Contains)
             |> List.sort
 
         let namesToUse =
@@ -239,6 +247,32 @@ module RenameTests =
             {
                 NewFileName = "View from the Glasshouse Mountains to the Great Barrier Reef (.Pacific Ocean.Uluru.)"
                 DetectedNames = [ "Pacific Ocean"; "Uluru" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Names in names part are reported regardless of prior existence`` () =
+        // Arrange
+        let originalName = "View from the Glasshouse Mountains to the Great Barrier Reef (Uluru, Andes)"
+
+        let parameters =
+            {
+                SelectedFeatures = None
+                AllNames = allNames
+                SelectedNames = None
+                TreatParenthesizedPartAsNames = true
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "View from the Glasshouse Mountains to the Great Barrier Reef (.Andes.Uluru.)"
+                DetectedNames = [ "Andes"; "Uluru" ]
                 DetectedFeatures = []
             }
 

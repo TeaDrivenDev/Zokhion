@@ -9,6 +9,8 @@ open System.Windows
 
 open ReactiveUI
 
+open FilenameEmbeddedMetadataOrganizer
+
 [<AutoOpen>]
 module Utility =
     open System.Linq.Expressions
@@ -38,9 +40,12 @@ type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
     let mutable baseDirectory = Unchecked.defaultof<string>
+    let mutable selectedDirectory = Unchecked.defaultof<string>
+    let mutable selectedFile = Unchecked.defaultof<FileInfo>
 
     let reverseString (s : string) = s |> Seq.rev |> String.Concat
-    let items = ObservableCollection<_>()
+    let directories = ObservableCollection<_>()
+    let files = ObservableCollection<_>()
 
     do
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
@@ -55,11 +60,31 @@ type MainWindowViewModel() as this =
                     |> Seq.map Path.GetFileName
                     |> Seq.filter (fun s -> s.StartsWith "_" || s.StartsWith "b")
                     |> Seq.sort
-                    |> Seq.iter items.Add)
+                    |> Seq.iter directories.Add)
+        |> ignore
+
+        this.ObservableForProperty(toLinq <@ fun vm -> vm.SelectedDirectory @>)
+            .SubscribeOnDispatcher()
+            .Subscribe(fun dir ->
+                files.Clear()
+
+                Directory.GetFiles (Path.Combine(this.BaseDirectory, dir.Value))
+                |> Seq.map FileInfo
+                |> Seq.sortBy (fun fi -> fi.Name)
+                |> Seq.iter files.Add)
         |> ignore
 
     member __.BaseDirectory
         with get () = baseDirectory
         and set value = this.RaiseAndSetIfChanged(&baseDirectory, value, nameof <@ any<MainWindowViewModel>.BaseDirectory @>) |> ignore
 
-    member __.Items = items
+    member __.Directories = directories
+    member __.Files = files
+
+    member __.SelectedDirectory
+        with get () = selectedDirectory
+        and set value = this.RaiseAndSetIfChanged(&selectedDirectory, value, nameof <@ any<MainWindowViewModel>.SelectedDirectory @>) |> ignore
+
+    member __.SelectedFile
+        with get () = selectedFile
+        and set value = this.RaiseAndSetIfChanged(&selectedFile, value, nameof <@ any<MainWindowViewModel>.SelectedFile @>) |> ignore

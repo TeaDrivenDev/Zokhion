@@ -43,7 +43,8 @@
             </StackPanel>
             <ListBox Grid.Row="1"
                      Margin="5"
-                     ItemsSource="{Binding Items}" />
+                     ItemsSource="{Binding Directories}"
+                     SelectedItem="{Binding SelectedDirectory}" />
             <TextBox Grid.Row="2"
                      Width="120"
                      Height="23"
@@ -51,7 +52,10 @@
                      Text=""
                      TextWrapping="NoWrap" />
             <ListBox Grid.Row="3"
-                     Margin="5" />
+                     Margin="5"
+                     DisplayMemberPath="Name"
+                     ItemsSource="{Binding Files}"
+                     SelectedItem="{Binding SelectedFile}" />
         </Grid>
 
         <GroupBox Grid.Column="1"

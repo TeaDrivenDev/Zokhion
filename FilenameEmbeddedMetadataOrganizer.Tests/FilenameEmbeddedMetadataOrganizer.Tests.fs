@@ -2,104 +2,7 @@ namespace FilenameEmbeddedMetadataOrganizer.Tests
 
 open Xunit
 
-[<AutoOpen>]
-module Implementation =
-    open System
-    open System.Text.RegularExpressions
-
-    let inline (<||>) f g x = f x || g x
-    let trim (s : string) = s.Trim()
-
-    type RenameParameters =
-        {
-            SelectedFeatures : string list option
-            AllNames : string list
-            SelectedNames : string list option
-            TreatParenthesizedPartAsNames : bool
-        }
-
-    type RenameResult =
-        {
-            NewFileName : string
-            DetectedFeatures : string list
-            DetectedNames : string list
-        }
-
-    let splitFileName preserveSeparateNamesPart (fileName : string) =
-        let regex =
-            if preserveSeparateNamesPart
-            then @"^(?<main>.+?)\s*(?<names>\([^\)]+\))?\s*(?<features>\[.+\])?$"
-            else @"^(?<main>.+?)\s*(?<features>\[.+\])?$"
-            |> Regex
-
-        let m = regex.Match fileName
-
-        if m.Success
-        then (m.Groups.["main"].Value, m.Groups.["names"].Value, m.Groups.["features"].Value)
-        else "", "", ""
-
-    let evaluateNamesPart (names : string) =
-        let m = Regex.Match(names, @"^\(\.(?<names>.+)\.\)$")
-
-        if m.Success
-        then Some (m.Groups.["names"].Value.Split('.') |> Array.map trim |> Array.toList)
-        else
-            let m = Regex.Match(names, @"^\((?<names>.+)\)")
-
-            if m.Success
-            then Some (m.Groups.["names"].Value.Split(',') |> Array.map trim |> Array.toList)
-            else None
-
-    let rename parameters (originalFileName : string) : RenameResult =
-        let (mainPart, namesPart, featuresPart) =
-            splitFileName parameters.TreatParenthesizedPartAsNames originalFileName
-
-        let detectedNames =
-            evaluateNamesPart namesPart
-            |> Option.defaultWith (fun _ -> parameters.AllNames |> List.filter mainPart.Contains)
-            |> List.sort
-
-        let namesToUse =
-            parameters.SelectedNames
-            |> Option.defaultValue detectedNames
-            |> List.sort
-
-        let names =
-            match namesToUse with
-            | [] -> ""
-            | _ ->
-                [
-                    yield "("
-
-                    yield! namesToUse
-
-                    yield ")"
-                ]
-                |> String.concat "."
-
-        let features =
-            parameters.SelectedFeatures
-            |> Option.map (fun features ->
-                [
-                    yield "["
-
-                    yield! features |> List.sort
-
-                    yield "]"
-                ]
-                |> String.concat ".")
-            |> Option.defaultValue ""
-
-        let newFileName =
-            [ mainPart; names; features ]
-            |> List.filter (String.IsNullOrWhiteSpace >> not)
-            |> String.concat " "
-
-        {
-            NewFileName = newFileName
-            DetectedNames = detectedNames
-            DetectedFeatures = []
-        }
+open FilenameEmbeddedMetadataOrganizer
 
 module SplitFileNameTests =
     [<Theory>]
@@ -163,6 +66,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = false
+                Replacements = []
             }
 
         let expectedResult =
@@ -189,6 +93,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = false
+                Replacements = []
             }
 
         let expectedResult =
@@ -215,6 +120,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = Some [ "Rocky Mountains"; "Pacific Ocean" ]
                 TreatParenthesizedPartAsNames = false
+                Replacements = []
             }
 
         let expectedResult =
@@ -241,6 +147,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = true
+                Replacements = []
             }
 
         let expectedResult =
@@ -267,6 +174,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = true
+                Replacements = []
             }
 
         let expectedResult =
@@ -293,6 +201,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = false
+                Replacements = []
             }
 
         let expectedResult =
@@ -319,6 +228,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = true
+                Replacements = []
             }
 
         let expectedResult =
@@ -345,12 +255,40 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = false
+                Replacements = []
             }
 
         let expectedResult =
             {
                 NewFileName = originalName
                 DetectedNames = []
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Replacements are replaced correctly`` () =
+        // Arrange
+        let originalName = "PHOTO... Uluru at night - DigitalCam (.Uluru.)"
+
+        let parameters =
+            {
+                SelectedFeatures = None
+                AllNames = allNames
+                SelectedNames = None
+                TreatParenthesizedPartAsNames = true
+                Replacements = [ "PHOTO...", "Photo -"; "- DigitalCam ", "" ]
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "Photo - Uluru at night (.Uluru.)"
+                DetectedNames = [ "Uluru" ]
                 DetectedFeatures = []
             }
 
@@ -371,6 +309,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = false
+                Replacements = []
             }
 
         let expectedResult =
@@ -378,6 +317,33 @@ module RenameTests =
                 NewFileName = "Aerial view over Uluru at night (.Uluru.) [.Ax.Bd.]"
                 DetectedNames = [ "Uluru" ]
                 DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Features are correctly detected`` () =
+        // Arrange
+        let originalName = "Aerial view over Uluru at night [.Ax.Xx.Bd.]"
+
+        let parameters =
+            {
+                SelectedFeatures = None
+                AllNames = allNames
+                SelectedNames = None
+                TreatParenthesizedPartAsNames = false
+                Replacements = []
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "Aerial view over Uluru at night (.Uluru.) [.Ax.Bd.Xx.]"
+                DetectedNames = [ "Uluru" ]
+                DetectedFeatures = [ "Ax"; "Bd"; "Xx" ]
             }
 
         // Act

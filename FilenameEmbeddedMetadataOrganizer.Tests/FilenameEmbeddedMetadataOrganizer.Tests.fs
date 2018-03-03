@@ -67,6 +67,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = false
+                FixupNamesInMainPart = false
                 Replacements = []
             }
 
@@ -94,6 +95,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = false
+                FixupNamesInMainPart = false
                 Replacements = []
             }
 
@@ -121,6 +123,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = true
+                FixupNamesInMainPart = false
                 Replacements = []
             }
 
@@ -148,12 +151,41 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = true
+                FixupNamesInMainPart = false
                 Replacements = []
             }
 
         let expectedResult =
             {
                 NewFileName = "View from mount mackenzie across the rainbow range (.Mount MacKenzie.Rainbow Range.)"
+                DetectedNames = [ "Mount MacKenzie"; "Rainbow Range" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Names in main part can be fixed up with proper capitalization`` () =
+        // Arrange
+        let originalName = "View from mount mackenzie across the rainbow range (mount mackenzie, rainbow range)"
+
+        let parameters =
+            {
+                SelectedFeatures = None
+                AllNames = allNames
+                SelectedNames = None
+                TreatParenthesizedPartAsNames = true
+                FixupNamesInMainPart = true
+                Replacements = []
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "View from Mount MacKenzie across the Rainbow Range (.Mount MacKenzie.Rainbow Range.)"
                 DetectedNames = [ "Mount MacKenzie"; "Rainbow Range" ]
                 DetectedFeatures = []
             }
@@ -175,6 +207,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = Some [ "Rocky Mountains"; "Pacific Ocean" ]
                 TreatParenthesizedPartAsNames = false
+                FixupNamesInMainPart = false
                 Replacements = []
             }
 
@@ -202,6 +235,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = true
+                FixupNamesInMainPart = false
                 Replacements = []
             }
 
@@ -229,6 +263,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = true
+                FixupNamesInMainPart = false
                 Replacements = []
             }
 
@@ -256,6 +291,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = false
+                FixupNamesInMainPart = false
                 Replacements = []
             }
 
@@ -283,6 +319,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = true
+                FixupNamesInMainPart = false
                 Replacements = []
             }
 
@@ -310,6 +347,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = false
+                FixupNamesInMainPart = false
                 Replacements = []
             }
 
@@ -337,6 +375,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = true
+                FixupNamesInMainPart = false
                 Replacements = [ "PHOTO...", "Photo -"; "- DigitalCam ", "" ]
             }
 
@@ -364,6 +403,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = false
+                FixupNamesInMainPart = false
                 Replacements = []
             }
 
@@ -391,6 +431,7 @@ module RenameTests =
                 AllNames = allNames
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = false
+                FixupNamesInMainPart = false
                 Replacements = []
             }
 

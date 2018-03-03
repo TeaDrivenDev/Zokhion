@@ -59,6 +59,7 @@ module Logic =
             AllNames : string list
             SelectedNames : string list option
             TreatParenthesizedPartAsNames : bool
+            FixupNamesInMainPart : bool
             Replacements : (string * string) list
         }
 
@@ -127,6 +128,14 @@ module Logic =
                 | JoinMatch (listed, detected) -> Some listed)
             |> Seq.toList
             |> List.sort
+
+        let mainPart =
+            if parameters.FixupNamesInMainPart
+            then
+                (mainPart, detectedNames)
+                ||> List.fold (fun acc current ->
+                    Regex.Replace(acc, current, current, RegexOptions.IgnoreCase))
+            else mainPart
 
         let namesToUse =
             parameters.SelectedNames

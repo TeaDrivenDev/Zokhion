@@ -101,6 +101,7 @@ type MainWindowViewModel() as this =
                         AllNames = []
                         SelectedNames = None
                         TreatParenthesizedPartAsNames = true
+                        FixupNamesInMainPart = false
                         Replacements = []
                     }
 

@@ -13,8 +13,9 @@
     </Window.DataContext>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="350" />
             <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="5" />
+            <ColumnDefinition Width="3*" />
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0">
@@ -46,8 +47,7 @@
                      ItemsSource="{Binding Directories}"
                      SelectedItem="{Binding SelectedDirectory}" />
             <TextBox Grid.Row="2"
-                     Width="120"
-                     Height="23"
+                     Height="25"
                      Margin="5"
                      Text=""
                      TextWrapping="NoWrap" />
@@ -59,7 +59,12 @@
                      SelectedItem="{Binding SelectedFile}" />
         </Grid>
 
-        <GroupBox Grid.Column="1"
+        <GridSplitter Grid.Column="1"
+                      Width="5"
+                      VerticalAlignment="Stretch"
+                      ResizeBehavior="PreviousAndNext" />
+
+        <GroupBox Grid.Column="2"
                   Margin="10"
                   Header="GroupBox">
             <Grid>
@@ -110,19 +115,22 @@
                              TextWrapping="NoWrap" />
                 </Grid>
 
-                <ListBox Grid.Row="1"
-                         Grid.Column="0"
-                         Width="200"
-                         Height="200" />
+                <GroupBox Grid.Row="1"
+                          Grid.Column="0"
+                          Header="Replace">
+                    <ListBox />
+                </GroupBox>
 
-                <ListBox Grid.Row="1"
-                         Grid.Column="1"
-                         Width="200"
-                         Height="200" />
-                <TreeView Grid.Row="1"
+                <GroupBox Grid.Row="1"
+                          Grid.Column="1"
+                          Header="Names">
+                    <ListBox />
+                </GroupBox>
+                <GroupBox Grid.Row="1"
                           Grid.Column="2"
-                          Width="200"
-                          Height="200" />
+                          Header="Features">
+                    <TreeView />
+                </GroupBox>
 
                 <Button Grid.Row="2"
                         Grid.Column="0"

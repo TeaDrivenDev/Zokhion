@@ -51,7 +51,8 @@
                      Margin="5"
                      Text=""
                      TextWrapping="NoWrap" />
-            <ListBox Grid.Row="3"
+            <ListBox x:Name="Files"
+                     Grid.Row="3"
                      Margin="5"
                      DisplayMemberPath="Name"
                      ItemsSource="{Binding Files}"
@@ -61,37 +62,79 @@
         <GroupBox Grid.Column="1"
                   Margin="10"
                   Header="GroupBox">
-            <Grid Margin="2,0,-2,0">
-                <TextBox x:Name="OriginalName"
-                         Width="120"
-                         Height="23"
-                         Margin="42,20,648,684"
-                         Text="OriginalName"
-                         TextWrapping="NoWrap" />
-                <TextBox x:Name="NewName"
-                         Width="120"
-                         Height="23"
-                         Margin="42,62,648,642"
-                         RenderTransformOrigin="0.1,-2.696"
-                         Text="NewName"
-                         TextWrapping="NoWrap" />
-                <CheckBox Width="100"
-                          Height="25"
-                          Margin="226,22,484,680"
-                          Content="Clear existing" />
-                <TreeView Width="200"
-                          Height="200"
-                          Margin="481,44,129,483" />
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
 
-                <ListBox Width="200"
-                         Height="200"
-                         Margin="481,290,129,237" />
-                <ListBox Width="200"
-                         Height="200"
-                         Margin="152,264,458,263" />
-                <Button Width="100"
+                <StackPanel Grid.Row="0"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="3"
+                            Margin="5">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="OriginalName"
+                                 Grid.Row="0"
+                                 Grid.Column="0"
+                                 Height="25"
+                                 Text="{Binding OriginalFileName}"
+                                 TextWrapping="NoWrap" />
+                        <CheckBox Grid.Row="0"
+                                  Grid.Column="1"
+                                  Width="100"
+                                  Height="25"
+                                  VerticalAlignment="Center"
+                                  Content="Clear existing" />
+
+                        <TextBox x:Name="NewName"
+                                 Grid.Row="1"
+                                 Grid.Column="0"
+                                 Height="25"
+                                 Text="{Binding NewFileName}"
+                                 TextWrapping="NoWrap" />
+                    </Grid>
+                </StackPanel>
+
+                <ListBox Grid.Row="1"
+                         Grid.Column="0"
+                         Width="200"
+                         Height="200" />
+
+                <ListBox Grid.Row="1"
+                         Grid.Column="1"
+                         Width="200"
+                         Height="200" />
+                <TreeView Grid.Row="1"
+                          Grid.Column="2"
+                          Width="200"
+                          Height="200" />
+
+                <Button Grid.Row="2"
+                        Grid.Column="0"
+                        Width="100"
                         Height="30"
-                        Margin="313,540,397,157"
+                        Command="{Binding OpenCommand}"
+                        CommandParameter="{Binding ElementName=Files, Path=SelectedItem}"
+                        Content="Open" />
+
+                <Button Grid.Row="2"
+                        Grid.Column="2"
+                        Width="100"
+                        Height="30"
                         Content="Apply" />
             </Grid>
         </GroupBox>

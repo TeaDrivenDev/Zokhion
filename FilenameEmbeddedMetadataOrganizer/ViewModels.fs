@@ -2,10 +2,12 @@
 
 open System
 open System.Collections.ObjectModel
+open System.Diagnostics
 open System.IO
 open System.Reactive.Concurrency
 open System.Reactive.Linq
 open System.Windows
+open System.Windows.Input
 
 open ReactiveUI
 
@@ -43,12 +45,20 @@ type MainWindowViewModel() as this =
     let mutable selectedDirectory = Unchecked.defaultof<string>
     let mutable selectedFile = Unchecked.defaultof<FileInfo>
 
+    let mutable originalFileName = Unchecked.defaultof<string>
+    let mutable newFileName = Unchecked.defaultof<string>
+
     let reverseString (s : string) = s |> Seq.rev |> String.Concat
     let directories = ObservableCollection<_>()
     let files = ObservableCollection<_>()
 
+    let mutable openCommand = Unchecked.defaultof<ReactiveCommand>
+
     do
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
+
+        openCommand <-
+            ReactiveCommand.Create(fun (fi : FileInfo) -> Process.Start fi.FullName |> ignore)
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.BaseDirectory @>)
             .Throttle(TimeSpan.FromSeconds 1., RxApp.MainThreadScheduler)
@@ -74,17 +84,50 @@ type MainWindowViewModel() as this =
                 |> Seq.iter files.Add)
         |> ignore
 
+        this.ObservableForProperty(toLinq <@ fun vm -> vm.SelectedFile @>)
+            .SubscribeOnDispatcher()
+            .Subscribe(fun (fi : IObservedChange<_, FileInfo>) ->
+                if not <| isNull fi.Value
+                then
+                    this.OriginalFileName <-string fi.Value.Name |> Path.GetFileNameWithoutExtension)
+        |> ignore
+
+        this.ObservableForProperty(toLinq <@ fun vm -> vm.OriginalFileName @>)
+            .SubscribeOnDispatcher()
+            .Subscribe(fun name ->
+                let parameters =
+                    {
+                        SelectedFeatures = None
+                        AllNames = []
+                        SelectedNames = None
+                        TreatParenthesizedPartAsNames = true
+                        Replacements = []
+                    }
+
+                this.NewFileName <- (rename parameters name.Value).NewFileName)
+        |> ignore
+
     member __.BaseDirectory
         with get () = baseDirectory
-        and set value = this.RaiseAndSetIfChanged(&baseDirectory, value, nameof <@ any<MainWindowViewModel>.BaseDirectory @>) |> ignore
+        and set value = this.RaiseAndSetIfChanged(&baseDirectory, value, nameof <@ __.BaseDirectory @>) |> ignore
 
     member __.Directories = directories
     member __.Files = files
 
     member __.SelectedDirectory
         with get () = selectedDirectory
-        and set value = this.RaiseAndSetIfChanged(&selectedDirectory, value, nameof <@ any<MainWindowViewModel>.SelectedDirectory @>) |> ignore
+        and set value = this.RaiseAndSetIfChanged(&selectedDirectory, value, nameof <@ __.SelectedDirectory @>) |> ignore
 
     member __.SelectedFile
         with get () = selectedFile
-        and set value = this.RaiseAndSetIfChanged(&selectedFile, value, nameof <@ any<MainWindowViewModel>.SelectedFile @>) |> ignore
+        and set value = this.RaiseAndSetIfChanged(&selectedFile, value, nameof <@ __.SelectedFile @>) |> ignore
+
+    member __.OriginalFileName
+        with get () = originalFileName
+        and set value = this.RaiseAndSetIfChanged(&originalFileName, value, nameof <@ __.OriginalFileName @>) |> ignore
+
+    member __.NewFileName
+        with get () = newFileName
+        and set value = this.RaiseAndSetIfChanged(&newFileName, value, nameof <@ __.NewFileName @>) |> ignore
+
+    member __.OpenCommand = openCommand :> ICommand

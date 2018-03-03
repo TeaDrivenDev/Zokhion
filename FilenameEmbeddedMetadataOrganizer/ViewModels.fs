@@ -48,11 +48,27 @@ type MainWindowViewModel() as this =
     let mutable originalFileName = Unchecked.defaultof<string>
     let mutable newFileName = Unchecked.defaultof<string>
 
+    let mutable treatParenthesizedPartAsNames = Unchecked.defaultof<bool>
+    let mutable fixupNamesInMainPart = Unchecked.defaultof<bool>
+
     let reverseString (s : string) = s |> Seq.rev |> String.Concat
     let directories = ObservableCollection<_>()
     let files = ObservableCollection<_>()
 
     let mutable openCommand = Unchecked.defaultof<ReactiveCommand>
+
+    let updateNewName () =
+        let parameters =
+            {
+                SelectedFeatures = None
+                AllNames = []
+                SelectedNames = None
+                TreatParenthesizedPartAsNames = this.TreatParenthesizedPartAsNames
+                FixupNamesInMainPart = this.FixupNamesInMainPart
+                Replacements = []
+            }
+
+        this.NewFileName <- (rename parameters this.OriginalFileName).NewFileName
 
     do
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
@@ -94,18 +110,21 @@ type MainWindowViewModel() as this =
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.OriginalFileName @>)
             .SubscribeOnDispatcher()
-            .Subscribe(fun name ->
-                let parameters =
-                    {
-                        SelectedFeatures = None
-                        AllNames = []
-                        SelectedNames = None
-                        TreatParenthesizedPartAsNames = true
-                        FixupNamesInMainPart = false
-                        Replacements = []
-                    }
+            .Subscribe(fun _ ->
+                this.TreatParenthesizedPartAsNames <- true
+                this.FixupNamesInMainPart <- true
 
-                this.NewFileName <- (rename parameters name.Value).NewFileName)
+                updateNewName())
+        |> ignore
+
+        this.ObservableForProperty(toLinq <@ fun vm -> vm.TreatParenthesizedPartAsNames @>)
+            .SubscribeOnDispatcher()
+            .Subscribe(fun _ -> updateNewName())
+        |> ignore
+
+        this.ObservableForProperty(toLinq <@ fun vm -> vm.FixupNamesInMainPart @>)
+            .SubscribeOnDispatcher()
+            .Subscribe(fun _ -> updateNewName())
         |> ignore
 
     member __.BaseDirectory
@@ -132,3 +151,11 @@ type MainWindowViewModel() as this =
         and set value = this.RaiseAndSetIfChanged(&newFileName, value, nameof <@ __.NewFileName @>) |> ignore
 
     member __.OpenCommand = openCommand :> ICommand
+
+    member __.TreatParenthesizedPartAsNames
+        with get () = treatParenthesizedPartAsNames
+        and set value = this.RaiseAndSetIfChanged(&treatParenthesizedPartAsNames, value, nameof <@ __.TreatParenthesizedPartAsNames @>) |> ignore
+
+    member __.FixupNamesInMainPart
+        with get () = fixupNamesInMainPart
+        and set value = this.RaiseAndSetIfChanged(&fixupNamesInMainPart, value, nameof <@ __.FixupNamesInMainPart @>) |> ignore

@@ -74,40 +74,41 @@
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Row="0"
-                            Grid.Column="0"
-                            Grid.ColumnSpan="3"
-                            Margin="5">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition />
-                            <RowDefinition />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="OriginalName"
-                                 Grid.Row="0"
-                                 Grid.Column="0"
-                                 Height="25"
-                                 Text="{Binding OriginalFileName}"
-                                 TextWrapping="NoWrap" />
-                        <CheckBox Grid.Row="0"
-                                  Grid.Column="1"
-                                  Width="100"
-                                  Height="25"
-                                  VerticalAlignment="Center"
-                                  Content="Clear existing" />
+                <Grid Grid.Row="0"
+                      Grid.Column="0"
+                      Grid.ColumnSpan="3"
+                      Margin="5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
 
-                        <TextBox x:Name="NewName"
-                                 Grid.Row="1"
-                                 Grid.Column="0"
-                                 Height="25"
-                                 Text="{Binding NewFileName}"
-                                 TextWrapping="NoWrap" />
-                    </Grid>
-                </StackPanel>
+                    <TextBox x:Name="OriginalName"
+                             Grid.Row="0"
+                             Height="25"
+                             Text="{Binding OriginalFileName}"
+                             TextWrapping="NoWrap" />
+
+                    <StackPanel Grid.Row="1"
+                                Orientation="Horizontal">
+                        <CheckBox Height="25"
+                                  VerticalAlignment="Center"
+                                  Content="Treat parenthesized part as names"
+                                  IsChecked="{Binding TreatParenthesizedPartAsNames}" />
+
+                        <CheckBox Height="25"
+                                  VerticalAlignment="Center"
+                                  Content="Fix up names in main part"
+                                  IsChecked="{Binding FixupNamesInMainPart}" />
+                    </StackPanel>
+
+                    <TextBox x:Name="NewName"
+                             Grid.Row="2"
+                             Height="25"
+                             Text="{Binding NewFileName}"
+                             TextWrapping="NoWrap" />
+                </Grid>
 
                 <ListBox Grid.Row="1"
                          Grid.Column="0"

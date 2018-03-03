@@ -1,12 +1,57 @@
 ﻿namespace FilenameEmbeddedMetadataOrganizer
 
 [<AutoOpen>]
+module Prelude =
+    open System.Linq
+
+    type FullJoinResult<'TLeft, 'TRight> =
+        | LeftOnly of 'TLeft
+        | RightOnly of 'TRight
+        | JoinMatch of 'TLeft * 'TRight
+
+    let asFst second first = first, second
+    let asSnd first second = first, second
+
+    let swap (a, b) = b, a
+
+    let leftJoin innerKeySelector outerKeySelector (inner : seq<'TInner>) (outer : seq<'TOuter>) =
+        query {
+            for o in outer do
+            leftOuterJoin i in inner on
+                (outerKeySelector o = innerKeySelector i) into result
+            for joined in result.DefaultIfEmpty() do
+            select (o, joined |> Option.ofObj)
+        }
+
+    let fullOuterJoin innerKeySelector outerKeySelector (right : 'TRight seq) (left : 'TLeft seq) =
+        let optionizeFirst (a, b) = Some a, b
+
+        let valueInOuter =
+            leftJoin innerKeySelector outerKeySelector right left
+            |> Seq.map optionizeFirst
+
+        let valueInInnerOnly =
+            leftJoin outerKeySelector innerKeySelector left right
+            |> Seq.filter (snd >> Option.isNone)
+            |> Seq.map (optionizeFirst >> swap)
+
+        Seq.append valueInOuter valueInInnerOnly
+        |> Seq.map (function
+            | Some leftItem, Some rightItem -> JoinMatch (leftItem, rightItem)
+            | Some leftItem, None -> LeftOnly leftItem
+            | None, Some rightItem -> RightOnly rightItem
+            | None, None -> failwith "This can never happen.")
+
+[<AutoOpen>]
 module Logic =
     open System
+    open System.Globalization
     open System.Text.RegularExpressions
 
     let inline (<||>) f g x = f x || g x
     let trim (s : string) = s.Trim()
+    let toUpper (s : string) = s.ToUpper()
+    let toTitleCase s = CultureInfo.CurrentCulture.TextInfo.ToTitleCase s
 
     type RenameParameters =
         {
@@ -69,7 +114,18 @@ module Logic =
 
         let detectedNames =
             evaluateNamesPart namesPart
-            |> Option.defaultWith (fun _ -> parameters.AllNames |> List.filter mainPart.Contains)
+            |> Option.defaultWith (fun _ ->
+                let mainPart = mainPart.ToUpper()
+
+                parameters.AllNames
+                |> List.filter (fun name -> mainPart.Contains(name.ToUpper())))
+            |> asFst parameters.AllNames
+            ||> fullOuterJoin toUpper toUpper
+            |> Seq.choose (function
+                | LeftOnly _ -> None
+                | RightOnly detected -> detected |> toTitleCase |> Some
+                | JoinMatch (listed, detected) -> Some listed)
+            |> Seq.toList
             |> List.sort
 
         let namesToUse =

@@ -53,6 +53,7 @@ module RenameTests =
             "Glasshouse Mountains"
             "Rocky Mountains"
             "Pacific Ocean"
+            "Mount MacKenzie"
         ]
 
     [<Fact>]
@@ -100,6 +101,60 @@ module RenameTests =
             {
                 NewFileName = "View from the Glasshouse Mountains to the Great Barrier Reef (.Glasshouse Mountains.Great Barrier Reef.)"
                 DetectedNames = [ "Glasshouse Mountains"; "Great Barrier Reef" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Names are detected regardless of case`` () =
+        // Arrange
+        let originalName = "View from the glasshouse mountains to the great barrier reef"
+
+        let parameters =
+            {
+                SelectedFeatures = None
+                AllNames = allNames
+                SelectedNames = None
+                TreatParenthesizedPartAsNames = true
+                Replacements = []
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "View from the glasshouse mountains to the great barrier reef (.Glasshouse Mountains.Great Barrier Reef.)"
+                DetectedNames = [ "Glasshouse Mountains"; "Great Barrier Reef" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Detected names are properly capitalized`` () =
+        // Arrange
+        let originalName = "View from mount mackenzie across the rainbow range (mount mackenzie, rainbow range)"
+
+        let parameters =
+            {
+                SelectedFeatures = None
+                AllNames = allNames
+                SelectedNames = None
+                TreatParenthesizedPartAsNames = true
+                Replacements = []
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "View from mount mackenzie across the rainbow range (.Mount MacKenzie.Rainbow Range.)"
+                DetectedNames = [ "Mount MacKenzie"; "Rainbow Range" ]
                 DetectedFeatures = []
             }
 

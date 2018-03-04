@@ -2,3 +2,4 @@ System.ValueTuple
 FSharp.Core
 ReactiveUI
 FsXaml.Wpf
+Extended.Wpf.Toolkit

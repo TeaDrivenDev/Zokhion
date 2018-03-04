@@ -8,7 +8,6 @@ open System.Reactive.Concurrency
 open System.Reactive.Linq
 open System.Windows
 open System.Windows.Input
-
 open ReactiveUI
 
 open FilenameEmbeddedMetadataOrganizer
@@ -38,6 +37,30 @@ module Utility =
         let lambda = toLambda exp
         Expression.Lambda<Func<'a, 'b>>(lambda.Body, lambda.Parameters)
 
+type NameViewModel() as this =
+    inherit ReactiveObject()
+
+    let mutable name = Unchecked.defaultof<string>
+    let mutable isSelected = Unchecked.defaultof<bool>
+    let mutable isNew = Unchecked.defaultof<bool>
+
+    let clearNewFlagCommand =
+        ReactiveCommand.Create(fun () -> this.IsNew <- false)
+
+    member __.Name
+        with get () = name
+        and set value = this.RaiseAndSetIfChanged(&name, value, nameof <@ __.Name @>) |> ignore
+
+    member __.IsSelected
+        with get () = isSelected
+        and set value = this.RaiseAndSetIfChanged(&isSelected, value, nameof <@ __.IsSelected @>) |> ignore
+
+    member __.IsNew
+        with get () = isNew
+        and set value = this.RaiseAndSetIfChanged(&isNew, value, nameof <@ __.IsNew @>) |> ignore
+
+    member __.ClearNewFlagCommand = clearNewFlagCommand :> ICommand
+
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
@@ -48,7 +71,7 @@ type MainWindowViewModel() as this =
     let mutable originalFileName = Unchecked.defaultof<string>
     let mutable newFileName = Unchecked.defaultof<string>
 
-    let mutable treatParenthesizedPartAsNames = Unchecked.defaultof<bool>
+    let mutable treatParenthesizedPartAsNames = true
     let mutable fixupNamesInMainPart = Unchecked.defaultof<bool>
     let mutable replaceUnderscores = true
     let mutable detectNamesInMainAndNamesParts = Unchecked.defaultof<bool>
@@ -63,6 +86,9 @@ type MainWindowViewModel() as this =
     let mutable resultingFilePath = Unchecked.defaultof<string>
 
     let mutable openCommand = Unchecked.defaultof<ReactiveCommand>
+
+    let names = ObservableCollection()
+    let mutable selectedNames = Unchecked.defaultof<string>
 
     let updateDestinationDirectories (currentFilePath : string) =
         let startsWith part (s : string) = s.StartsWith part
@@ -85,11 +111,20 @@ type MainWindowViewModel() as this =
             |> Seq.find (fun (d : DirectoryInfo) -> d.FullName = currentFileDirectory)
 
     let updateNewName () =
+        let allNames =
+            this.Names |> Seq.map (fun (n : NameViewModel) -> n.Name) |> Seq.toList
+
+        let selectedNames =
+            this.SelectedNames.Split([| "||" |], StringSplitOptions.RemoveEmptyEntries)
+            |> function
+                | [||] -> None
+                | names -> names |> Array.toList |> Some
+
         let parameters =
             {
                 SelectedFeatures = None
-                AllNames = []
-                SelectedNames = None
+                AllNames = allNames
+                SelectedNames = selectedNames
                 TreatParenthesizedPartAsNames = this.TreatParenthesizedPartAsNames
                 DetectNamesInMainAndNamesParts = false
                 FixupNamesInMainPart = this.FixupNamesInMainPart
@@ -176,6 +211,10 @@ type MainWindowViewModel() as this =
             .Subscribe(fun _ -> updateResultingFilePath ())
         |> ignore
 
+        this.ObservableForProperty(toLinq <@ fun vm -> vm.SelectedNames @>)
+            .Subscribe(fun _ -> updateNewName ())
+        |> ignore
+
     member __.BaseDirectory
         with get () = baseDirectory
         and set value = this.RaiseAndSetIfChanged(&baseDirectory, value, nameof <@ __.BaseDirectory @>) |> ignore
@@ -226,3 +265,9 @@ type MainWindowViewModel() as this =
     member __.ResultingFilePath
         with get () = resultingFilePath
         and set value = this.RaiseAndSetIfChanged(&resultingFilePath, value, nameof <@ __.ResultingFilePath @>) |> ignore
+
+    member __.Names = names
+
+    member __.SelectedNames
+        with get () : string = selectedNames
+        and set value = this.RaiseAndSetIfChanged(&selectedNames, value, nameof <@ __.SelectedNames @>) |> ignore

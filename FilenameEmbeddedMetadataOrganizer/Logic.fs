@@ -110,6 +110,8 @@ module Logic =
         allNames |> List.filter (toUpper >> part.Contains)
 
     let rename parameters (originalFileName : string) : RenameResult =
+        let originalFileName = string originalFileName
+
         let originalFileName =
             let originalFileName =
                 if parameters.ReplaceUnderscores

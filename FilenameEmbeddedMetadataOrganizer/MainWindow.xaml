@@ -4,6 +4,7 @@
         xmlns:local="clr-namespace:FilenameEmbeddedMetadataOrganizer"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewModels="clr-namespace:FilenameEmbeddedMetadataOrganizer.ViewModels;assembly=FilenameEmbeddedMetadataOrganizer"
+        xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
         Title="MainWindow"
         Width="1200"
         Height="800"
@@ -169,7 +170,50 @@
                 <GroupBox Grid.Row="1"
                           Grid.Column="1"
                           Header="Names">
-                    <ListBox />
+                    <xctk:CheckListBox Delimiter="||"
+                                       ItemsSource="{Binding Names}"
+                                       SelectedMemberPath="IsSelected"
+                                       SelectedValue="{Binding SelectedNames}"
+                                       ValueMemberPath="Name">
+                        <xctk:CheckListBox.ItemTemplate>
+                            <DataTemplate DataType="viewModels:NameViewModel">
+                                <StackPanel Orientation="Horizontal">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsNew}"
+                                                             Value="True">
+                                                    <Setter Property="Background" Value="MediumAquamarine" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <TextBlock Margin="5,0,15,0"
+                                               HorizontalAlignment="Stretch"
+                                               Text="{Binding Name}" />
+                                    <Button Width="12"
+                                            Height="12"
+                                            Margin="0,0,5,0"
+                                            Padding="0,-4,0,2"
+                                            Command="{Binding ClearNewFlagCommand}"
+                                            Content="+">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsNew}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </xctk:CheckListBox.ItemTemplate>
+                    </xctk:CheckListBox>
                 </GroupBox>
                 <GroupBox Grid.Row="1"
                           Grid.Column="2"

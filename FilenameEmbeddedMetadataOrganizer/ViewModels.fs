@@ -113,7 +113,7 @@ type MainWindowViewModel() as this =
 
     let updateNamesList detectedNames =
         (detectedNames, this.Names)
-        ||> fullOuterJoin id (fun (vm : NameViewModel) -> vm.Name)
+        ||> fullOuterJoin id (fun vm -> vm.Name)
         |> Seq.iter (function
             | LeftOnly vm -> vm.IsSelected <- false
             | RightOnly name ->
@@ -123,7 +123,7 @@ type MainWindowViewModel() as this =
 
     let updateNewName selectedNames =
         let allNames =
-            this.Names |> Seq.map (fun (n : NameViewModel) -> n.Name) |> Seq.toList
+            this.Names |> Seq.map (fun vm -> vm.Name) |> Seq.toList
 
         let parameters =
             {
@@ -158,9 +158,6 @@ type MainWindowViewModel() as this =
     do
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
 
-        NameViewModel(Name = "Ariel", IsSelected = false, IsNew = true)
-        |> names.Add
-
         openCommand <-
             ReactiveCommand.Create(fun (fi : FileInfo) -> Process.Start fi.FullName |> ignore)
 
@@ -193,7 +190,13 @@ type MainWindowViewModel() as this =
             .Subscribe(fun (fi : IObservedChange<_, FileInfo>) ->
                 if not <| isNull fi.Value
                 then
-                    this.OriginalFileName <-string fi.Value.Name |> Path.GetFileNameWithoutExtension)
+                    this.Names
+                    |> Seq.filter (fun vm -> vm.IsNew)
+                    |> Seq.toList
+                    |> List.iter (this.Names.Remove >> ignore)
+
+                    this.OriginalFileName <-
+                        string fi.Value.Name |> Path.GetFileNameWithoutExtension)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.OriginalFileName @>)
@@ -284,7 +287,7 @@ type MainWindowViewModel() as this =
         with get () = resultingFilePath
         and set value = this.RaiseAndSetIfChanged(&resultingFilePath, value, nameof <@ __.ResultingFilePath @>) |> ignore
 
-    member __.Names = names
+    member __.Names : ObservableCollection<NameViewModel> = names
 
     member __.SelectedNames
         with get () : string = selectedNames

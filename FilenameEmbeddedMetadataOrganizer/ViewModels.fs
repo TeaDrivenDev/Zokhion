@@ -155,6 +155,16 @@ type MainWindowViewModel() as this =
                 Path.Combine(this.SelectedDestinationDirectory.FullName,
                              this.NewFileName + Path.GetExtension(this.SelectedFile.Name))
 
+    let loadSettings baseDirectory =
+        let namesFilePath = Path.Combine(baseDirectory, ".names")
+
+        if File.Exists namesFilePath
+        then
+            let names = File.ReadAllLines namesFilePath
+
+            names
+            |> Seq.iter (fun name -> NameViewModel(Name = name) |> this.Names.Add)
+
     do
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
 
@@ -171,7 +181,9 @@ type MainWindowViewModel() as this =
                     |> Seq.map Path.GetFileName
                     |> Seq.filter (fun s -> s.StartsWith "_" || s.StartsWith "b")
                     |> Seq.sort
-                    |> Seq.iter directories.Add)
+                    |> Seq.iter directories.Add
+
+                    loadSettings x.Value)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.SelectedDirectory @>)
@@ -235,6 +247,19 @@ type MainWindowViewModel() as this =
         this.ObservableForProperty(toLinq <@ fun vm -> vm.SelectedNames @>)
             .Subscribe(fun _ -> updateNewNameFromNamesSelection ())
         |> ignore
+
+    member __.ShutDown () =
+        let names =
+            this.Names
+            |> Seq.filter (fun vm -> not vm.IsNew)
+            |> Seq.map (fun vm -> vm.Name)
+            |> Seq.sort
+
+        if not <| Seq.isEmpty names
+        then
+            let namesFilePath = Path.Combine(this.BaseDirectory, ".names")
+
+            File.WriteAllLines(namesFilePath, names)
 
     member __.BaseDirectory
         with get () = baseDirectory

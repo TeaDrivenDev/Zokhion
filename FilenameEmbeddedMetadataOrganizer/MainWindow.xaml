@@ -8,6 +8,7 @@
         Title="MainWindow"
         Width="1200"
         Height="800"
+        Closing="Window_OnClosing"
         mc:Ignorable="d">
     <Window.DataContext>
         <viewModels:MainWindowViewModel />

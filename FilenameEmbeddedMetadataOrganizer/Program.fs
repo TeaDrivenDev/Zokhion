@@ -1,11 +1,27 @@
 ﻿namespace FilenameEmbeddedMetadataOrganizer
 
 open System
+open System.Windows
 
 open FsXaml
 
-type App = XAML<"App.xaml">
-type MainWindow = XAML<"MainWindow.xaml">
+open FilenameEmbeddedMetadataOrganizer.ViewModels
+
+type MainWindowBase = XAML<"MainWindow.xaml">
+
+type MainWindow() =
+    inherit MainWindowBase()
+
+    override this.Window_OnClosing (_, _) =
+        (this.DataContext :?> MainWindowViewModel).ShutDown()
+
+type AppBase = XAML<"App.xaml">
+
+type App() =
+    inherit AppBase()
+
+    member __.Application_Startup (_ : obj, _ : StartupEventArgs) =
+        MainWindow().Show()
 
 module Program =
     [<STAThread>]

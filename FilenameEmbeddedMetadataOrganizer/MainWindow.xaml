@@ -108,20 +108,29 @@
                             CommandParameter="{Binding ElementName=Files, Path=SelectedItem}"
                             Content="Open" />
 
-                    <StackPanel Grid.Row="1"
-                                Grid.Column="0"
-                                Grid.ColumnSpan="2"
-                                Orientation="Horizontal">
-                        <CheckBox Height="25"
+                    <WrapPanel Grid.Row="1"
+                               Grid.Column="0"
+                               Grid.ColumnSpan="2"
+                               Margin="0,5"
+                               Orientation="Horizontal">
+                        <CheckBox Height="23"
+                                  Margin="0,0,20,0"
                                   VerticalAlignment="Center"
                                   Content="Treat parenthesized part as names"
                                   IsChecked="{Binding TreatParenthesizedPartAsNames}" />
 
-                        <CheckBox Height="25"
+                        <CheckBox Height="23"
+                                  Margin="0,0,20,0"
                                   VerticalAlignment="Center"
                                   Content="Fix up names in main part"
                                   IsChecked="{Binding FixupNamesInMainPart}" />
-                    </StackPanel>
+
+                        <CheckBox Height="23"
+                                  Margin="0,0,20,0"
+                                  VerticalAlignment="Center"
+                                  Content="Replace underscores"
+                                  IsChecked="{Binding ReplaceUnderscores}" />
+                    </WrapPanel>
 
                     <TextBox x:Name="NewName"
                              Grid.Row="2"

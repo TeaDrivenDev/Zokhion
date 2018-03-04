@@ -50,6 +50,7 @@ type MainWindowViewModel() as this =
 
     let mutable treatParenthesizedPartAsNames = Unchecked.defaultof<bool>
     let mutable fixupNamesInMainPart = Unchecked.defaultof<bool>
+    let mutable replaceUnderscores = true
 
     let reverseString (s : string) = s |> Seq.rev |> String.Concat
     let directories = ObservableCollection()
@@ -89,7 +90,9 @@ type MainWindowViewModel() as this =
                 AllNames = []
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = this.TreatParenthesizedPartAsNames
+                FindNamesInMainPartAndNamesPart = false
                 FixupNamesInMainPart = this.FixupNamesInMainPart
+                ReplaceUnderscores = this.ReplaceUnderscores
                 Replacements = []
             }
 
@@ -143,21 +146,20 @@ type MainWindowViewModel() as this =
         this.ObservableForProperty(toLinq <@ fun vm -> vm.OriginalFileName @>)
             .SubscribeOnDispatcher()
             .Subscribe(fun _ ->
-                this.TreatParenthesizedPartAsNames <- true
-                this.FixupNamesInMainPart <- true
-
                 updateNewName ()
 
                 updateDestinationDirectories this.SelectedFile.FullName)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.TreatParenthesizedPartAsNames @>)
-            .SubscribeOnDispatcher()
             .Subscribe(fun _ -> updateNewName ())
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.FixupNamesInMainPart @>)
-            .SubscribeOnDispatcher()
+            .Subscribe(fun _ -> updateNewName ())
+        |> ignore
+
+        this.ObservableForProperty(toLinq <@ fun vm -> vm.ReplaceUnderscores @>)
             .Subscribe(fun _ -> updateNewName ())
         |> ignore
 
@@ -201,6 +203,10 @@ type MainWindowViewModel() as this =
     member __.FixupNamesInMainPart
         with get () = fixupNamesInMainPart
         and set value = this.RaiseAndSetIfChanged(&fixupNamesInMainPart, value, nameof <@ __.FixupNamesInMainPart @>) |> ignore
+
+    member __.ReplaceUnderscores
+        with get () = replaceUnderscores
+        and set value = this.RaiseAndSetIfChanged(&replaceUnderscores, value, nameof <@ __.ReplaceUnderscores @>) |> ignore
 
     member __.DestinationDirectories = destinationDirectories
 

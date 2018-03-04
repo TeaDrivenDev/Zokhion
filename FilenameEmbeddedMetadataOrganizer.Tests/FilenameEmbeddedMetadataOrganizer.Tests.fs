@@ -56,20 +56,24 @@ module RenameTests =
             "Mount MacKenzie"
         ]
 
+    let baseParameters =
+        {
+            SelectedFeatures = None
+            AllNames = allNames
+            SelectedNames = None
+            TreatParenthesizedPartAsNames = true
+            FindNamesInMainPartAndNamesPart = false
+            FixupNamesInMainPart = false
+            ReplaceUnderscores = false
+            Replacements = []
+        }
+
     [<Fact>]
     let ``A single name is detected and written to metadata`` () =
         // Arrange
         let originalName = "Aerial view over Uluru at night"
 
-        let parameters =
-            {
-                SelectedFeatures = None
-                AllNames = allNames
-                SelectedNames = None
-                TreatParenthesizedPartAsNames = false
-                FixupNamesInMainPart = false
-                Replacements = []
-            }
+        let parameters = baseParameters
 
         let expectedResult =
             {
@@ -89,15 +93,7 @@ module RenameTests =
         // Arrange
         let originalName = "View from the Glasshouse Mountains to the Great Barrier Reef"
 
-        let parameters =
-            {
-                SelectedFeatures = None
-                AllNames = allNames
-                SelectedNames = None
-                TreatParenthesizedPartAsNames = false
-                FixupNamesInMainPart = false
-                Replacements = []
-            }
+        let parameters = baseParameters
 
         let expectedResult =
             {
@@ -117,15 +113,7 @@ module RenameTests =
         // Arrange
         let originalName = "View from the glasshouse mountains to the great barrier reef"
 
-        let parameters =
-            {
-                SelectedFeatures = None
-                AllNames = allNames
-                SelectedNames = None
-                TreatParenthesizedPartAsNames = true
-                FixupNamesInMainPart = false
-                Replacements = []
-            }
+        let parameters = baseParameters
 
         let expectedResult =
             {
@@ -145,15 +133,7 @@ module RenameTests =
         // Arrange
         let originalName = "View from mount mackenzie across the rainbow range (mount mackenzie, rainbow range)"
 
-        let parameters =
-            {
-                SelectedFeatures = None
-                AllNames = allNames
-                SelectedNames = None
-                TreatParenthesizedPartAsNames = true
-                FixupNamesInMainPart = false
-                Replacements = []
-            }
+        let parameters = baseParameters
 
         let expectedResult =
             {
@@ -175,12 +155,8 @@ module RenameTests =
 
         let parameters =
             {
-                SelectedFeatures = None
-                AllNames = allNames
-                SelectedNames = None
-                TreatParenthesizedPartAsNames = true
-                FixupNamesInMainPart = true
-                Replacements = []
+                baseParameters with
+                    FixupNamesInMainPart = true
             }
 
         let expectedResult =
@@ -203,12 +179,8 @@ module RenameTests =
 
         let parameters =
             {
-                SelectedFeatures = None
-                AllNames = allNames
-                SelectedNames = Some [ "Rocky Mountains"; "Pacific Ocean" ]
-                TreatParenthesizedPartAsNames = false
-                FixupNamesInMainPart = false
-                Replacements = []
+                baseParameters with
+                    SelectedNames = Some [ "Rocky Mountains"; "Pacific Ocean" ]
             }
 
         let expectedResult =
@@ -229,15 +201,7 @@ module RenameTests =
         // Arrange
         let originalName = "View from the Glasshouse Mountains to the Great Barrier Reef (Uluru, Pacific Ocean)"
 
-        let parameters =
-            {
-                SelectedFeatures = None
-                AllNames = allNames
-                SelectedNames = None
-                TreatParenthesizedPartAsNames = true
-                FixupNamesInMainPart = false
-                Replacements = []
-            }
+        let parameters = baseParameters
 
         let expectedResult =
             {
@@ -257,15 +221,7 @@ module RenameTests =
         // Arrange
         let originalName = "View from the Glasshouse Mountains to the Great Barrier Reef (Uluru, Andes)"
 
-        let parameters =
-            {
-                SelectedFeatures = None
-                AllNames = allNames
-                SelectedNames = None
-                TreatParenthesizedPartAsNames = true
-                FixupNamesInMainPart = false
-                Replacements = []
-            }
+        let parameters = baseParameters
 
         let expectedResult =
             {
@@ -287,12 +243,8 @@ module RenameTests =
 
         let parameters =
             {
-                SelectedFeatures = None
-                AllNames = allNames
-                SelectedNames = None
-                TreatParenthesizedPartAsNames = false
-                FixupNamesInMainPart = false
-                Replacements = []
+                baseParameters with
+                    TreatParenthesizedPartAsNames = false
             }
 
         let expectedResult =
@@ -313,15 +265,7 @@ module RenameTests =
         // Arrange
         let originalName = "Glasshouse Mountains at sunset (Glasshouse Mountains)"
 
-        let parameters =
-            {
-                SelectedFeatures = None
-                AllNames = allNames
-                SelectedNames = None
-                TreatParenthesizedPartAsNames = true
-                FixupNamesInMainPart = false
-                Replacements = []
-            }
+        let parameters = baseParameters
 
         let expectedResult =
             {
@@ -341,15 +285,7 @@ module RenameTests =
         // Arrange
         let originalName = "Here's that thing"
 
-        let parameters =
-            {
-                SelectedFeatures = None
-                AllNames = allNames
-                SelectedNames = None
-                TreatParenthesizedPartAsNames = false
-                FixupNamesInMainPart = false
-                Replacements = []
-            }
+        let parameters = baseParameters
 
         let expectedResult =
             {
@@ -371,12 +307,8 @@ module RenameTests =
 
         let parameters =
             {
-                SelectedFeatures = None
-                AllNames = allNames
-                SelectedNames = None
-                TreatParenthesizedPartAsNames = true
-                FixupNamesInMainPart = false
-                Replacements = [ "PHOTO...", "Photo -"; "- DigitalCam ", "" ]
+                baseParameters with
+                    Replacements = [ "PHOTO...", "Photo -"; "- DigitalCam ", "" ]
             }
 
         let expectedResult =
@@ -399,12 +331,8 @@ module RenameTests =
 
         let parameters =
             {
-                SelectedFeatures = Some [ "Bd"; "Ax" ]
-                AllNames = allNames
-                SelectedNames = None
-                TreatParenthesizedPartAsNames = false
-                FixupNamesInMainPart = false
-                Replacements = []
+                baseParameters with
+                    SelectedFeatures = Some [ "Bd"; "Ax" ]
             }
 
         let expectedResult =
@@ -425,21 +353,57 @@ module RenameTests =
         // Arrange
         let originalName = "Aerial view over Uluru at night [.Ax.Xx.Bd.]"
 
-        let parameters =
-            {
-                SelectedFeatures = None
-                AllNames = allNames
-                SelectedNames = None
-                TreatParenthesizedPartAsNames = false
-                FixupNamesInMainPart = false
-                Replacements = []
-            }
+        let parameters = baseParameters
 
         let expectedResult =
             {
                 NewFileName = "Aerial view over Uluru at night (.Uluru.) [.Ax.Bd.Xx.]"
                 DetectedNames = [ "Uluru" ]
                 DetectedFeatures = [ "Ax"; "Bd"; "Xx" ]
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Underscores are not replaced by default`` () =
+        // Arrange
+        let originalName = "Here_is_the_thing"
+
+        let parameters = baseParameters
+
+        let expectedResult =
+            {
+                NewFileName = originalName
+                DetectedNames = []
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Replacing underscores works`` () =
+        // Arrange
+        let originalName = "Here_is_the_thing"
+
+        let parameters =
+            {
+                baseParameters with
+                    ReplaceUnderscores = true
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "Here is the thing"
+                DetectedNames = []
+                DetectedFeatures = []
             }
 
         // Act

@@ -59,7 +59,9 @@ module Logic =
             AllNames : string list
             SelectedNames : string list option
             TreatParenthesizedPartAsNames : bool
+            FindNamesInMainPartAndNamesPart : bool
             FixupNamesInMainPart : bool
+            ReplaceUnderscores : bool
             Replacements : (string * string) list
         }
 
@@ -104,6 +106,11 @@ module Logic =
 
     let rename parameters (originalFileName : string) : RenameResult =
         let originalFileName =
+            let originalFileName =
+                if parameters.ReplaceUnderscores
+                then originalFileName.Replace("_", " ")
+                else originalFileName
+
             match parameters.Replacements with
             | [] -> originalFileName
             | replacements ->

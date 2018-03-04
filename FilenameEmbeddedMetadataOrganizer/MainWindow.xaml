@@ -88,14 +88,29 @@
                         <RowDefinition />
                         <RowDefinition />
                     </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                    <TextBox x:Name="OriginalName"
-                             Grid.Row="0"
-                             Height="25"
-                             Text="{Binding OriginalFileName}"
-                             TextWrapping="NoWrap" />
+                    <TextBlock x:Name="OriginalName"
+                               Grid.Row="0"
+                               Grid.Column="0"
+                               Height="25"
+                               Text="{Binding OriginalFileName}"
+                               TextWrapping="NoWrap" />
+
+                    <Button Grid.Row="0"
+                            Grid.Column="1"
+                            Width="100"
+                            Height="30"
+                            Command="{Binding OpenCommand}"
+                            CommandParameter="{Binding ElementName=Files, Path=SelectedItem}"
+                            Content="Open" />
 
                     <StackPanel Grid.Row="1"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="2"
                                 Orientation="Horizontal">
                         <CheckBox Height="25"
                                   VerticalAlignment="Center"
@@ -110,16 +125,31 @@
 
                     <TextBox x:Name="NewName"
                              Grid.Row="2"
+                             Grid.Column="0"
+                             Grid.ColumnSpan="2"
                              Height="25"
                              Text="{Binding NewFileName}"
                              TextWrapping="NoWrap" />
                 </Grid>
 
-                <GroupBox Grid.Row="1"
-                          Grid.Column="0"
-                          Header="Replace">
-                    <ListBox />
-                </GroupBox>
+                <Grid Grid.Row="1"
+                      Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+
+                    <GroupBox Grid.Row="0"
+                              Header="Replace">
+                        <ListBox />
+                    </GroupBox>
+                    <GroupBox Grid.Row="1"
+                              Header="Destination Directory">
+                        <ListBox DisplayMemberPath="Name"
+                                 ItemsSource="{Binding DestinationDirectories}"
+                                 SelectedItem="{Binding SelectedDestinationDirectory}" />
+                    </GroupBox>
+                </Grid>
 
                 <GroupBox Grid.Row="1"
                           Grid.Column="1"
@@ -132,19 +162,24 @@
                     <TreeView />
                 </GroupBox>
 
-                <Button Grid.Row="2"
-                        Grid.Column="0"
-                        Width="100"
-                        Height="30"
-                        Command="{Binding OpenCommand}"
-                        CommandParameter="{Binding ElementName=Files, Path=SelectedItem}"
-                        Content="Open" />
+                <Grid Grid.Row="2"
+                      Grid.Column="0"
+                      Grid.ColumnSpan="3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                <Button Grid.Row="2"
-                        Grid.Column="2"
-                        Width="100"
-                        Height="30"
-                        Content="Apply" />
+                    <TextBlock x:Name="ResultingFilePath"
+                               Grid.Column="0"
+                               Height="25"
+                               Text="{Binding ResultingFilePath}"
+                               TextWrapping="NoWrap" />
+                    <Button Grid.Column="1"
+                            Width="100"
+                            Height="30"
+                            Content="Apply" />
+                </Grid>
             </Grid>
         </GroupBox>
     </Grid>

@@ -52,10 +52,35 @@ type MainWindowViewModel() as this =
     let mutable fixupNamesInMainPart = Unchecked.defaultof<bool>
 
     let reverseString (s : string) = s |> Seq.rev |> String.Concat
-    let directories = ObservableCollection<_>()
-    let files = ObservableCollection<_>()
+    let directories = ObservableCollection()
+    let files = ObservableCollection()
+
+    let destinationDirectories = ObservableCollection()
+    let mutable selectedDestinationDirectory = Unchecked.defaultof<DirectoryInfo>
+
+    let mutable resultingFilePath = Unchecked.defaultof<string>
 
     let mutable openCommand = Unchecked.defaultof<ReactiveCommand>
+
+    let updateDestinationDirectories (currentFilePath : string) =
+        let startsWith part (s : string) = s.StartsWith part
+
+        let currentFileDirectory = Path.GetDirectoryName currentFilePath
+
+        destinationDirectories.Clear()
+
+        currentFileDirectory ::
+        (Directory.GetDirectories this.BaseDirectory
+        |> Array.filter (Path.GetFileName >> startsWith "_")
+        |> Array.sort
+        |> Array.toList)
+        |> List.distinct
+        |> List.map DirectoryInfo
+        |> List.iter destinationDirectories.Add
+
+        this.SelectedDestinationDirectory <-
+            destinationDirectories
+            |> Seq.find (fun (d : DirectoryInfo) -> d.FullName = currentFileDirectory)
 
     let updateNewName () =
         let parameters =
@@ -69,6 +94,13 @@ type MainWindowViewModel() as this =
             }
 
         this.NewFileName <- (rename parameters this.OriginalFileName).NewFileName
+
+    let updateResultingFilePath () =
+        if not <| isNull this.SelectedDestinationDirectory
+        then
+            this.ResultingFilePath <-
+                Path.Combine(this.SelectedDestinationDirectory.FullName,
+                             this.NewFileName + Path.GetExtension(this.SelectedFile.Name))
 
     do
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
@@ -114,17 +146,27 @@ type MainWindowViewModel() as this =
                 this.TreatParenthesizedPartAsNames <- true
                 this.FixupNamesInMainPart <- true
 
-                updateNewName())
+                updateNewName ()
+
+                updateDestinationDirectories this.SelectedFile.FullName)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.TreatParenthesizedPartAsNames @>)
             .SubscribeOnDispatcher()
-            .Subscribe(fun _ -> updateNewName())
+            .Subscribe(fun _ -> updateNewName ())
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.FixupNamesInMainPart @>)
             .SubscribeOnDispatcher()
-            .Subscribe(fun _ -> updateNewName())
+            .Subscribe(fun _ -> updateNewName ())
+        |> ignore
+
+        this.ObservableForProperty(toLinq <@ fun vm -> vm.NewFileName @>)
+            .Subscribe(fun _ -> updateResultingFilePath ())
+        |> ignore
+
+        this.ObservableForProperty(toLinq <@ fun vm -> vm.SelectedDestinationDirectory @>)
+            .Subscribe(fun _ -> updateResultingFilePath ())
         |> ignore
 
     member __.BaseDirectory
@@ -139,7 +181,7 @@ type MainWindowViewModel() as this =
         and set value = this.RaiseAndSetIfChanged(&selectedDirectory, value, nameof <@ __.SelectedDirectory @>) |> ignore
 
     member __.SelectedFile
-        with get () = selectedFile
+        with get () : FileInfo = selectedFile
         and set value = this.RaiseAndSetIfChanged(&selectedFile, value, nameof <@ __.SelectedFile @>) |> ignore
 
     member __.OriginalFileName
@@ -159,3 +201,13 @@ type MainWindowViewModel() as this =
     member __.FixupNamesInMainPart
         with get () = fixupNamesInMainPart
         and set value = this.RaiseAndSetIfChanged(&fixupNamesInMainPart, value, nameof <@ __.FixupNamesInMainPart @>) |> ignore
+
+    member __.DestinationDirectories = destinationDirectories
+
+    member __.SelectedDestinationDirectory
+        with get ()  : DirectoryInfo= selectedDestinationDirectory
+        and set value = this.RaiseAndSetIfChanged(&selectedDestinationDirectory, value, nameof <@ __.SelectedDestinationDirectory @>) |> ignore
+
+    member __.ResultingFilePath
+        with get () = resultingFilePath
+        and set value = this.RaiseAndSetIfChanged(&resultingFilePath, value, nameof <@ __.ResultingFilePath @>) |> ignore

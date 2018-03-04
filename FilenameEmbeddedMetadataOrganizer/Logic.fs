@@ -59,7 +59,7 @@ module Logic =
             AllNames : string list
             SelectedNames : string list option
             TreatParenthesizedPartAsNames : bool
-            FindNamesInMainPartAndNamesPart : bool
+            DetectNamesInMainAndNamesParts : bool
             FixupNamesInMainPart : bool
             ReplaceUnderscores : bool
             Replacements : (string * string) list
@@ -104,6 +104,11 @@ module Logic =
         then Some (m.Groups.["features"].Value.Split('.') |> Array.map trim |> Array.toList)
         else None
 
+    let detectListedNames (allNames : string list) (part : string) =
+        let part = part.ToUpper()
+
+        allNames |> List.filter (toUpper >> part.Contains)
+
     let rename parameters (originalFileName : string) : RenameResult =
         let originalFileName =
             let originalFileName =
@@ -122,17 +127,18 @@ module Logic =
 
         let detectedNames =
             evaluateNamesPart namesPart
-            |> Option.defaultWith (fun _ ->
-                let mainPart = mainPart.ToUpper()
-
-                parameters.AllNames
-                |> List.filter (fun name -> mainPart.Contains(name.ToUpper())))
+            |> Option.map (fun names ->
+                if parameters.DetectNamesInMainAndNamesParts
+                then names @ detectListedNames parameters.AllNames mainPart
+                else names)
+            |> Option.defaultWith (fun () -> detectListedNames parameters.AllNames mainPart)
             |> asFst parameters.AllNames
             ||> fullOuterJoin toUpper toUpper
             |> Seq.choose (function
                 | LeftOnly _ -> None
                 | RightOnly detected -> detected |> toTitleCase |> Some
                 | JoinMatch (listed, detected) -> Some listed)
+            |> Seq.distinct
             |> Seq.toList
             |> List.sort
 

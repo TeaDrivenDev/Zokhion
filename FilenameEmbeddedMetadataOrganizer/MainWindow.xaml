@@ -130,6 +130,12 @@
                                   VerticalAlignment="Center"
                                   Content="Replace underscores"
                                   IsChecked="{Binding ReplaceUnderscores}" />
+
+                        <CheckBox Height="23"
+                                  Margin="0,0,20,0"
+                                  VerticalAlignment="Center"
+                                  Content="Detect names in main and names parts"
+                                  IsChecked="{Binding DetectNamesInMainAndNamesParts}" />
                     </WrapPanel>
 
                     <TextBox x:Name="NewName"

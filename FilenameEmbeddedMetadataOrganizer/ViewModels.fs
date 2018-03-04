@@ -51,6 +51,7 @@ type MainWindowViewModel() as this =
     let mutable treatParenthesizedPartAsNames = Unchecked.defaultof<bool>
     let mutable fixupNamesInMainPart = Unchecked.defaultof<bool>
     let mutable replaceUnderscores = true
+    let mutable detectNamesInMainAndNamesParts = Unchecked.defaultof<bool>
 
     let reverseString (s : string) = s |> Seq.rev |> String.Concat
     let directories = ObservableCollection()
@@ -90,7 +91,7 @@ type MainWindowViewModel() as this =
                 AllNames = []
                 SelectedNames = None
                 TreatParenthesizedPartAsNames = this.TreatParenthesizedPartAsNames
-                FindNamesInMainPartAndNamesPart = false
+                DetectNamesInMainAndNamesParts = false
                 FixupNamesInMainPart = this.FixupNamesInMainPart
                 ReplaceUnderscores = this.ReplaceUnderscores
                 Replacements = []
@@ -163,6 +164,10 @@ type MainWindowViewModel() as this =
             .Subscribe(fun _ -> updateNewName ())
         |> ignore
 
+        this.ObservableForProperty(toLinq <@ fun vm -> vm.DetectNamesInMainAndNamesParts @>)
+            .Subscribe(fun _ -> updateNewName ())
+        |> ignore
+
         this.ObservableForProperty(toLinq <@ fun vm -> vm.NewFileName @>)
             .Subscribe(fun _ -> updateResultingFilePath ())
         |> ignore
@@ -207,6 +212,10 @@ type MainWindowViewModel() as this =
     member __.ReplaceUnderscores
         with get () = replaceUnderscores
         and set value = this.RaiseAndSetIfChanged(&replaceUnderscores, value, nameof <@ __.ReplaceUnderscores @>) |> ignore
+
+    member __.DetectNamesInMainAndNamesParts
+        with get () = detectNamesInMainAndNamesParts
+        and set value = this.RaiseAndSetIfChanged(&detectNamesInMainAndNamesParts, value, nameof <@ __.DetectNamesInMainAndNamesParts @>) |> ignore
 
     member __.DestinationDirectories = destinationDirectories
 

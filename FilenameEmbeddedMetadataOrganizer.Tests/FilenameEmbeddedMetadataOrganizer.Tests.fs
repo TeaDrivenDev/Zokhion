@@ -62,7 +62,7 @@ module RenameTests =
             AllNames = allNames
             SelectedNames = None
             TreatParenthesizedPartAsNames = true
-            FindNamesInMainPartAndNamesPart = false
+            DetectNamesInMainAndNamesParts = false
             FixupNamesInMainPart = false
             ReplaceUnderscores = false
             Replacements = []
@@ -207,6 +207,54 @@ module RenameTests =
             {
                 NewFileName = "View from the Glasshouse Mountains to the Great Barrier Reef (.Pacific Ocean.Uluru.)"
                 DetectedNames = [ "Pacific Ocean"; "Uluru" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Names can be detected in main part when a names part exists`` () =
+        // Arrange
+        let originalName = "View from the Glasshouse Mountains (Uluru)"
+
+        let parameters =
+            {
+                baseParameters with
+                    DetectNamesInMainAndNamesParts = true
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "View from the Glasshouse Mountains (.Glasshouse Mountains.Uluru.)"
+                DetectedNames = [ "Glasshouse Mountains"; "Uluru" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Names in both main and names part are reported only once`` () =
+        // Arrange
+        let originalName = "View from the Glasshouse Mountains (Glasshouse Mountains, Uluru)"
+
+        let parameters =
+            {
+                baseParameters with
+                    DetectNamesInMainAndNamesParts = true
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "View from the Glasshouse Mountains (.Glasshouse Mountains.Uluru.)"
+                DetectedNames = [ "Glasshouse Mountains"; "Uluru" ]
                 DetectedFeatures = []
             }
 

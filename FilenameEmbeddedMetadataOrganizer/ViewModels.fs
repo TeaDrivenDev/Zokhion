@@ -90,6 +90,9 @@ type MainWindowViewModel() as this =
 
     let names = ObservableCollection()
     let mutable selectedNames = Unchecked.defaultof<string>
+    let mutable newNameToAdd = Unchecked.defaultof<string>
+
+    let mutable addNameCommand = Unchecked.defaultof<ReactiveCommand>
 
     let updateDestinationDirectories (currentFilePath : string) =
         let startsWith part (s : string) = s.StartsWith part
@@ -151,9 +154,12 @@ type MainWindowViewModel() as this =
     let updateResultingFilePath () =
         if not <| isNull this.SelectedDestinationDirectory
         then
-            this.ResultingFilePath <-
-                Path.Combine(this.SelectedDestinationDirectory.FullName,
-                             this.NewFileName + Path.GetExtension(this.SelectedFile.Name))
+            this.SelectedFile
+            |> Option.ofObj
+            |> Option.iter (fun selectedFile ->
+                this.ResultingFilePath <-
+                    Path.Combine(this.SelectedDestinationDirectory.FullName,
+                                 this.NewFileName + Path.GetExtension(selectedFile.Name)))
 
     let loadSettings baseDirectory =
         let namesFilePath = Path.Combine(baseDirectory, ".names")
@@ -170,6 +176,12 @@ type MainWindowViewModel() as this =
 
         openCommand <-
             ReactiveCommand.Create(fun (fi : FileInfo) -> Process.Start fi.FullName |> ignore)
+
+        addNameCommand <-
+            ReactiveCommand.Create(fun name ->
+                if not <| String.IsNullOrWhiteSpace name
+                then
+                    NameViewModel(Name = name) |> this.Names.Add)
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.BaseDirectory @>)
             .Throttle(TimeSpan.FromSeconds 1., RxApp.MainThreadScheduler)
@@ -249,17 +261,19 @@ type MainWindowViewModel() as this =
         |> ignore
 
     member __.ShutDown () =
-        let names =
-            this.Names
-            |> Seq.filter (fun vm -> not vm.IsNew)
-            |> Seq.map (fun vm -> vm.Name)
-            |> Seq.sort
-
-        if not <| Seq.isEmpty names
+        if Directory.Exists this.BaseDirectory
         then
-            let namesFilePath = Path.Combine(this.BaseDirectory, ".names")
+            let names =
+                this.Names
+                |> Seq.filter (fun vm -> not vm.IsNew)
+                |> Seq.map (fun vm -> vm.Name)
+                |> Seq.sort
 
-            File.WriteAllLines(namesFilePath, names)
+            if not <| Seq.isEmpty names
+            then
+                let namesFilePath = Path.Combine(this.BaseDirectory, ".names")
+
+                File.WriteAllLines(namesFilePath, names)
 
     member __.BaseDirectory
         with get () = baseDirectory
@@ -317,3 +331,9 @@ type MainWindowViewModel() as this =
     member __.SelectedNames
         with get () : string = selectedNames
         and set value = this.RaiseAndSetIfChanged(&selectedNames, value, nameof <@ __.SelectedNames @>) |> ignore
+
+    member __.NewNameToAdd
+        with get () = newNameToAdd
+        and set value = this.RaiseAndSetIfChanged(&newNameToAdd, value, nameof <@ __.NewNameToAdd @>) |> ignore
+
+    member __.AddNameCommand = addNameCommand :> ICommand

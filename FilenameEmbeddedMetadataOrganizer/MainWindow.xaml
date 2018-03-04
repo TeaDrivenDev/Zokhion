@@ -13,6 +13,15 @@
     <Window.DataContext>
         <viewModels:MainWindowViewModel />
     </Window.DataContext>
+    <Window.Resources>
+        <Style x:Key="AddButtonStyle"
+               TargetType="Button">
+            <Setter Property="Height" Value="12" />
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Padding" Value="0,-4,0,2" />
+            <Setter Property="Content" Value="+" />
+        </Style>
+    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -177,9 +186,22 @@
                             <RowDefinition />
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0"
-                                   Text="{Binding SelectedNames}"
-                                   TextWrapping="NoWrap" />
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox x:Name="NewNameToAdd"
+                                     Grid.Column="0"
+                                     Text="{Binding NewNameToAdd}" />
+
+                            <Button Grid.Column="1"
+                                    Margin="5,0"
+                                    Command="{Binding AddNameCommand}"
+                                    CommandParameter="{Binding ElementName=NewNameToAdd, Path=Text}"
+                                    Style="{StaticResource AddButtonStyle}" />
+                        </Grid>
 
                         <xctk:CheckListBox Grid.Row="1"
                                            Delimiter="||"
@@ -203,14 +225,11 @@
                                         <TextBlock Margin="5,0,15,0"
                                                    HorizontalAlignment="Stretch"
                                                    Text="{Binding Name}" />
-                                        <Button Width="12"
-                                                Height="12"
-                                                Margin="0,0,5,0"
-                                                Padding="0,-4,0,2"
-                                                Command="{Binding ClearNewFlagCommand}"
-                                                Content="+">
+                                        <Button Margin="0,0,5,0"
+                                                Command="{Binding ClearNewFlagCommand}">
                                             <Button.Style>
-                                                <Style TargetType="Button">
+                                                <Style BasedOn="{StaticResource AddButtonStyle}"
+                                                       TargetType="Button">
                                                     <Setter Property="Visibility" Value="Collapsed" />
 
                                                     <Style.Triggers>

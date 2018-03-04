@@ -37,6 +37,7 @@ module Utility =
         let lambda = toLambda exp
         Expression.Lambda<Func<'a, 'b>>(lambda.Body, lambda.Parameters)
 
+[<AllowNullLiteral>]
 type NameViewModel() as this =
     inherit ReactiveObject()
 
@@ -110,15 +111,19 @@ type MainWindowViewModel() as this =
             destinationDirectories
             |> Seq.find (fun (d : DirectoryInfo) -> d.FullName = currentFileDirectory)
 
-    let updateNewName () =
+    let updateNamesList detectedNames =
+        (detectedNames, this.Names)
+        ||> fullOuterJoin id (fun (vm : NameViewModel) -> vm.Name)
+        |> Seq.iter (function
+            | LeftOnly vm -> vm.IsSelected <- false
+            | RightOnly name ->
+                NameViewModel(Name = name, IsSelected = true, IsNew = true)
+                |> names.Add
+            | JoinMatch (vm, name) -> vm.IsSelected <- true)
+
+    let updateNewName selectedNames =
         let allNames =
             this.Names |> Seq.map (fun (n : NameViewModel) -> n.Name) |> Seq.toList
-
-        let selectedNames =
-            this.SelectedNames.Split([| "||" |], StringSplitOptions.RemoveEmptyEntries)
-            |> function
-                | [||] -> None
-                | names -> names |> Array.toList |> Some
 
         let parameters =
             {
@@ -132,7 +137,16 @@ type MainWindowViewModel() as this =
                 Replacements = []
             }
 
-        this.NewFileName <- (rename parameters this.OriginalFileName).NewFileName
+        let result = rename parameters this.NewFileName
+        this.NewFileName <- result.NewFileName
+
+        updateNamesList result.DetectedNames
+
+    let updateNewNameFromNamesSelection () =
+        this.SelectedNames.Split([| "||" |], StringSplitOptions.RemoveEmptyEntries)
+        |> Array.toList
+        |> Some
+        |> updateNewName
 
     let updateResultingFilePath () =
         if not <| isNull this.SelectedDestinationDirectory
@@ -143,6 +157,9 @@ type MainWindowViewModel() as this =
 
     do
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
+
+        NameViewModel(Name = "Ariel", IsSelected = false, IsNew = true)
+        |> names.Add
 
         openCommand <-
             ReactiveCommand.Create(fun (fi : FileInfo) -> Process.Start fi.FullName |> ignore)
@@ -181,26 +198,27 @@ type MainWindowViewModel() as this =
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.OriginalFileName @>)
             .SubscribeOnDispatcher()
-            .Subscribe(fun _ ->
-                updateNewName ()
+            .Subscribe(fun name ->
+                this.NewFileName <- name.Value
+                updateNewName None
 
                 updateDestinationDirectories this.SelectedFile.FullName)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.TreatParenthesizedPartAsNames @>)
-            .Subscribe(fun _ -> updateNewName ())
+            .Subscribe(fun _ -> updateNewName None)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.FixupNamesInMainPart @>)
-            .Subscribe(fun _ -> updateNewName ())
+            .Subscribe(fun _ -> updateNewName None)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.ReplaceUnderscores @>)
-            .Subscribe(fun _ -> updateNewName ())
+            .Subscribe(fun _ -> updateNewName None)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.DetectNamesInMainAndNamesParts @>)
-            .Subscribe(fun _ -> updateNewName ())
+            .Subscribe(fun _ -> updateNewName None)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.NewFileName @>)
@@ -212,7 +230,7 @@ type MainWindowViewModel() as this =
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.SelectedNames @>)
-            .Subscribe(fun _ -> updateNewName ())
+            .Subscribe(fun _ -> updateNewNameFromNamesSelection ())
         |> ignore
 
     member __.BaseDirectory

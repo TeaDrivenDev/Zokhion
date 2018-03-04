@@ -186,7 +186,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "View from the Glasshouse Mountains to the Great Barrier Reef (.Pacific Ocean.Rocky Mountains.)"
-                DetectedNames = [ "Glasshouse Mountains"; "Great Barrier Reef" ]
+                DetectedNames = [ "Pacific Ocean"; "Rocky Mountains" ]
                 DetectedFeatures = []
             }
 

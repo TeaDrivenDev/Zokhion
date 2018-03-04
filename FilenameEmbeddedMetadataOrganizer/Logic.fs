@@ -199,6 +199,6 @@ module Logic =
 
         {
             NewFileName = newFileName
-            DetectedNames = detectedNames
+            DetectedNames = namesToUse
             DetectedFeatures = detectedFeatures |> Option.defaultValue []
         }

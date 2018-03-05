@@ -37,6 +37,30 @@ module Utility =
         let lambda = toLambda exp
         Expression.Lambda<Func<'a, 'b>>(lambda.Body, lambda.Parameters)
 
+type FeatureViewModel(name : string, code : string) =
+    inherit ReactiveObject()
+
+    let instances = ReactiveList<FeatureInstanceViewModel>()
+
+    member __.FeatureName = name
+
+    member __.FeatureCode = code
+
+    member __.Instances = instances
+
+and FeatureInstanceViewModel(featureName : string, featureCode : string, instanceName : string, instanceCode : string) =
+    inherit FeatureViewModel(featureName, featureCode)
+
+    let mutable isSelected = Unchecked.defaultof<bool>
+
+    member __.InstanceName = instanceName
+
+    member __.InstanceCode = instanceCode
+
+    member __.IsSelected
+        with get () = isSelected
+        and set value = __.RaiseAndSetIfChanged(&isSelected, value, nameof <@ __.IsSelected @>) |> ignore
+
 [<AllowNullLiteral>]
 type NameViewModel() as this =
     inherit ReactiveObject()
@@ -91,8 +115,20 @@ type MainWindowViewModel() as this =
     let names = ObservableCollection()
     let mutable selectedNames = Unchecked.defaultof<string>
     let mutable newNameToAdd = Unchecked.defaultof<string>
-
     let mutable addNameCommand = Unchecked.defaultof<ReactiveCommand>
+
+    let features = ReactiveList()
+    let featureInstances = ReactiveList()
+
+    let mutable featureToAdd = Unchecked.defaultof<string>
+
+    let mutable featureCodeToAdd = Unchecked.defaultof<string>
+
+    let mutable addFeatureRoot = Unchecked.defaultof<bool>
+
+    let mutable addFeatureCommand = Unchecked.defaultof<ReactiveCommand>
+
+    let mutable selectedFeature = Unchecked.defaultof<FeatureViewModel>
 
     let updateDestinationDirectories (currentFilePath : string) =
         let startsWith part (s : string) = s.StartsWith part
@@ -182,6 +218,26 @@ type MainWindowViewModel() as this =
                 if not <| String.IsNullOrWhiteSpace name
                 then
                     NameViewModel(Name = name) |> this.Names.Add)
+
+        addFeatureCommand <-
+            ReactiveCommand.Create(fun () ->
+                if not <| String.IsNullOrWhiteSpace this.FeatureToAdd
+                    && not <| String.IsNullOrWhiteSpace this.FeatureCodeToAdd
+                then
+                    if this.AddFeatureRoot
+                    then
+                        FeatureViewModel(this.FeatureToAdd, this.FeatureCodeToAdd)
+                        |> features.Add
+                    else
+                        match this.SelectedFeature with
+                        | :? FeatureInstanceViewModel -> ()
+                        | :? FeatureViewModel as feature ->
+                            let instance =
+                                FeatureInstanceViewModel(feature.FeatureName, feature.FeatureCode, this.FeatureToAdd, this.FeatureCodeToAdd)
+
+                            feature.Instances.Add instance
+                            featureInstances.Add instance
+                        | _ -> ())
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.BaseDirectory @>)
             .Throttle(TimeSpan.FromSeconds 1., RxApp.MainThreadScheduler)
@@ -337,3 +393,25 @@ type MainWindowViewModel() as this =
         and set value = this.RaiseAndSetIfChanged(&newNameToAdd, value, nameof <@ __.NewNameToAdd @>) |> ignore
 
     member __.AddNameCommand = addNameCommand :> ICommand
+
+    member __.Features : ReactiveList<FeatureViewModel> = features
+
+    member __.FeatureInstances : ReactiveList<FeatureInstanceViewModel> = featureInstances
+
+    member __.FeatureToAdd
+        with get () = featureToAdd
+        and set value = __.RaiseAndSetIfChanged(&featureToAdd, value, nameof <@ __.FeatureToAdd @>) |> ignore
+
+    member __.FeatureCodeToAdd
+        with get () = featureCodeToAdd
+        and set value = __.RaiseAndSetIfChanged(&featureCodeToAdd, value, nameof <@ __.FeatureCodeToAdd @>) |> ignore
+
+    member __.AddFeatureRoot
+        with get () = addFeatureRoot
+        and set value = __.RaiseAndSetIfChanged(&addFeatureRoot, value, nameof <@ __.AddFeatureRoot @>) |> ignore
+
+    member __.AddFeatureCommand = addFeatureCommand
+
+    member __.SelectedFeature
+        with get () : FeatureViewModel = selectedFeature
+        and set value = __.RaiseAndSetIfChanged(&selectedFeature, value, nameof <@ __.SelectedFeature @>) |> ignore

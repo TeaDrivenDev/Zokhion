@@ -1,7 +1,7 @@
 ﻿<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:local="clr-namespace:FilenameEmbeddedMetadataOrganizer"
+        xmlns:local="clr-namespace:FilenameEmbeddedMetadataOrganizer;assembly=FilenameEmbeddedMetadataOrganizer"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewModels="clr-namespace:FilenameEmbeddedMetadataOrganizer.ViewModels;assembly=FilenameEmbeddedMetadataOrganizer"
         xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
@@ -194,7 +194,8 @@
 
                             <TextBox x:Name="NewNameToAdd"
                                      Grid.Column="0"
-                                     Text="{Binding NewNameToAdd}" />
+                                     Margin="2"
+                                     Text="{Binding NewNameToAdd, UpdateSourceTrigger=PropertyChanged}" />
 
                             <Button Grid.Column="1"
                                     Margin="5,0"
@@ -250,7 +251,92 @@
                 <GroupBox Grid.Row="1"
                           Grid.Column="2"
                           Header="Features">
-                    <TreeView />
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <CheckBox Grid.Column="0"
+                                      VerticalAlignment="Center"
+                                      IsChecked="{Binding AddFeatureRoot}" />
+
+                            <TextBox Grid.Column="1"
+                                     Margin="2"
+                                     Text="{Binding FeatureToAdd, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Grid.Column="2"
+                                     Margin="2"
+                                     Text="{Binding FeatureCodeToAdd, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <Button Grid.Column="3"
+                                    Margin="5,0"
+                                    Command="{Binding AddFeatureCommand}"
+                                    Style="{StaticResource AddButtonStyle}" />
+                        </Grid>
+
+                        <Grid Grid.Row="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <TreeView x:Name="Features"
+                                      Grid.Row="0"
+                                      ItemsSource="{Binding Features}"
+                                      SelectedItemChanged="Features_SelectedItemChanged"
+                                      SelectedValuePath="">
+                                <TreeView.Resources>
+                                    <HierarchicalDataTemplate x:Key="FeatureRootDataTemplate"
+                                                              DataType="viewModels:FeatureViewModel"
+                                                              ItemsSource="{Binding Instances}">
+                                        <TextBlock>
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0} ({1})">
+                                                    <Binding Path="FeatureName" />
+                                                    <Binding Path="FeatureCode" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </HierarchicalDataTemplate>
+                                    <HierarchicalDataTemplate x:Key="FeatureInstanceDataTemplate"
+                                                              DataType="viewModels:FeatureInstanceViewModel"
+                                                              ItemsSource="{Binding Instances}">
+                                        <CheckBox Margin="0,3"
+                                                  IsChecked="{Binding IsSelected}">
+                                            <TextBlock>
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0}: ({1})">
+                                                        <Binding Path="InstanceName" />
+                                                        <Binding Path="InstanceCode" />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </CheckBox>
+                                    </HierarchicalDataTemplate>
+                                </TreeView.Resources>
+                                <TreeView.ItemTemplateSelector>
+                                    <local:FeaturesTreeViewItemTemplateSelector FeatureInstanceTemplate="{StaticResource FeatureInstanceDataTemplate}"
+                                                                                FeatureRootTemplate="{StaticResource FeatureRootDataTemplate}" />
+                                </TreeView.ItemTemplateSelector>
+                                <TreeView.ItemContainerStyle>
+                                    <Style TargetType="{x:Type TreeViewItem}">
+                                        <Setter Property="IsExpanded" Value="True" />
+                                    </Style>
+                                </TreeView.ItemContainerStyle>
+                            </TreeView>
+
+                            <ListBox Grid.Row="1"
+                                     DisplayMemberPath="InstanceName"
+                                     ItemsSource="{Binding FeatureInstances}" />
+                        </Grid>
+                    </Grid>
                 </GroupBox>
 
                 <Grid Grid.Row="2"

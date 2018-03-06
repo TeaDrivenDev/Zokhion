@@ -198,7 +198,10 @@
                                      Text="{Binding NewNameToAdd, UpdateSourceTrigger=PropertyChanged}" />
 
                             <Button Grid.Column="1"
+                                    Width="15"
+                                    Height="15"
                                     Margin="5,0"
+                                    Padding="-1,-3,-1,0"
                                     Command="{Binding AddNameCommand}"
                                     CommandParameter="{Binding ElementName=NewNameToAdd, Path=Text}"
                                     Style="{StaticResource AddButtonStyle}" />
@@ -277,7 +280,10 @@
                                      Text="{Binding FeatureCodeToAdd, UpdateSourceTrigger=PropertyChanged}" />
 
                             <Button Grid.Column="3"
+                                    Width="15"
+                                    Height="15"
                                     Margin="5,0"
+                                    Padding="-1,-3,-1,0"
                                     Command="{Binding AddFeatureCommand}"
                                     Style="{StaticResource AddButtonStyle}" />
                         </Grid>
@@ -333,8 +339,7 @@
                             </TreeView>
 
                             <ListBox Grid.Row="1"
-                                     DisplayMemberPath="InstanceName"
-                                     ItemsSource="{Binding FeatureInstances}" />
+                                     ItemsSource="{Binding SelectedFeatureInstances}" />
                         </Grid>
                     </Grid>
                 </GroupBox>

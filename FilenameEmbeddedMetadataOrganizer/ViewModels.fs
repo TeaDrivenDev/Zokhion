@@ -4,10 +4,12 @@ open System
 open System.Collections.ObjectModel
 open System.Diagnostics
 open System.IO
+open System.Linq
 open System.Reactive.Concurrency
 open System.Reactive.Linq
 open System.Windows
 open System.Windows.Input
+
 open ReactiveUI
 
 open FilenameEmbeddedMetadataOrganizer
@@ -118,7 +120,7 @@ type MainWindowViewModel() as this =
     let mutable addNameCommand = Unchecked.defaultof<ReactiveCommand>
 
     let features = ReactiveList()
-    let featureInstances = ReactiveList()
+    let featureInstances = ReactiveList(ChangeTrackingEnabled = true)
 
     let mutable featureToAdd = Unchecked.defaultof<string>
 
@@ -238,6 +240,11 @@ type MainWindowViewModel() as this =
                             feature.Instances.Add instance
                             featureInstances.Add instance
                         | _ -> ())
+
+        this.FeatureInstances.ItemChanged
+            .Where(fun change -> change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
+            .Subscribe(fun _ -> this.RaisePropertyChanged(nameof <@ this.SelectedFeatureInstances @>))
+        |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.BaseDirectory @>)
             .Throttle(TimeSpan.FromSeconds 1., RxApp.MainThreadScheduler)
@@ -415,3 +422,8 @@ type MainWindowViewModel() as this =
     member __.SelectedFeature
         with get () : FeatureViewModel = selectedFeature
         and set value = __.RaiseAndSetIfChanged(&selectedFeature, value, nameof <@ __.SelectedFeature @>) |> ignore
+
+    member __.SelectedFeatureInstances =
+        this.FeatureInstances
+            |> Seq.filter (fun vm -> vm.IsSelected)
+            |> Seq.map (fun vm -> vm.FeatureCode + vm.InstanceCode)

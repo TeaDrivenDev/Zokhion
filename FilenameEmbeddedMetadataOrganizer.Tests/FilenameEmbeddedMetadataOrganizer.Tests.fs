@@ -387,7 +387,7 @@ module RenameTests =
             {
                 NewFileName = "Aerial view over Uluru at night (.Uluru.) [.Ax.Bd.]"
                 DetectedNames = [ "Uluru" ]
-                DetectedFeatures = []
+                DetectedFeatures = [ "Ax"; "Bd" ]
             }
 
         // Act

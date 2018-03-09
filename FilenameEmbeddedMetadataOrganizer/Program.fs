@@ -6,16 +6,19 @@ open System.Windows
 open FsXaml
 
 open FilenameEmbeddedMetadataOrganizer.ViewModels
+open System.ComponentModel
 
 type MainWindowBase = XAML<"MainWindow.xaml">
 
-type MainWindow() =
+type MainWindow() as this =
     inherit MainWindowBase()
 
-    member this.ViewModel = this.DataContext :?> MainWindowViewModel
+    let onClosing (_ : CancelEventArgs) = this.ViewModel.ShutDown()
 
-    override this.Window_OnClosing (_, _) =
-        this.ViewModel.ShutDown()
+    do
+        this.Closing.Add onClosing
+
+    member this.ViewModel : MainWindowViewModel = this.DataContext :?> MainWindowViewModel
 
     member this.Features_SelectedItemChanged (_ : obj, e : RoutedPropertyChangedEventArgs<obj>) =
         match e.NewValue with

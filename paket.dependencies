@@ -4,6 +4,7 @@ framework: net461
 nuget Extended.Wpf.Toolkit
 nuget FSharp.Core
 nuget FsXaml.Wpf
+nuget MaterialDesignThemes
 nuget ReactiveUI prerelease
 
 nuget System.ValueTuple 4.3.1

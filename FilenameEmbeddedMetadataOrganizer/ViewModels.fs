@@ -4,7 +4,6 @@ open System
 open System.Collections.ObjectModel
 open System.Diagnostics
 open System.IO
-open System.Linq
 open System.Reactive.Concurrency
 open System.Reactive.Linq
 open System.Windows
@@ -114,7 +113,7 @@ type MainWindowViewModel() as this =
 
     let mutable openCommand = Unchecked.defaultof<ReactiveCommand>
 
-    let names = ObservableCollection()
+    let names = ReactiveList(ChangeTrackingEnabled = true)
     let mutable selectedNames = Unchecked.defaultof<string>
     let mutable newNameToAdd = Unchecked.defaultof<string>
     let mutable addNameCommand = Unchecked.defaultof<ReactiveCommand>
@@ -183,12 +182,6 @@ type MainWindowViewModel() as this =
 
         updateNamesList result.DetectedNames
 
-    let updateNewNameFromNamesSelection () =
-        this.SelectedNames.Split([| "||" |], StringSplitOptions.RemoveEmptyEntries)
-        |> Array.toList
-        |> Some
-        |> updateNewName
-
     let updateResultingFilePath () =
         if not <| isNull this.SelectedDestinationDirectory
         then
@@ -240,6 +233,17 @@ type MainWindowViewModel() as this =
                             feature.Instances.Add instance
                             featureInstances.Add instance
                         | _ -> ())
+
+        this.Names.ItemChanged
+            .Where(fun change -> change.PropertyName = nameof <@ any<NameViewModel>.IsSelected @>)
+            .Subscribe(fun _ ->
+                this.Names
+                |> Seq.filter (fun n -> n.IsSelected)
+                |> Seq.map (fun n-> n.Name)
+                |> Seq.toList
+                |> Some
+                |> updateNewName)
+        |> ignore
 
         this.FeatureInstances.ItemChanged
             .Where(fun change -> change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
@@ -319,10 +323,6 @@ type MainWindowViewModel() as this =
             .Subscribe(fun _ -> updateResultingFilePath ())
         |> ignore
 
-        this.ObservableForProperty(toLinq <@ fun vm -> vm.SelectedNames @>)
-            .Subscribe(fun _ -> updateNewNameFromNamesSelection ())
-        |> ignore
-
     member __.ShutDown () =
         if Directory.Exists this.BaseDirectory
         then
@@ -330,6 +330,7 @@ type MainWindowViewModel() as this =
                 this.Names
                 |> Seq.filter (fun vm -> not vm.IsNew)
                 |> Seq.map (fun vm -> vm.Name)
+                |> Seq.distinct
                 |> Seq.sort
 
             if not <| Seq.isEmpty names
@@ -389,11 +390,7 @@ type MainWindowViewModel() as this =
         with get () = resultingFilePath
         and set value = this.RaiseAndSetIfChanged(&resultingFilePath, value, nameof <@ __.ResultingFilePath @>) |> ignore
 
-    member __.Names : ObservableCollection<NameViewModel> = names
-
-    member __.SelectedNames
-        with get () : string = selectedNames
-        and set value = this.RaiseAndSetIfChanged(&selectedNames, value, nameof <@ __.SelectedNames @>) |> ignore
+    member __.Names : ReactiveList<NameViewModel> = names
 
     member __.NewNameToAdd
         with get () = newNameToAdd

@@ -112,6 +112,7 @@ type MainWindowViewModel() as this =
     let mutable resultingFilePath = Unchecked.defaultof<string>
 
     let mutable openCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable openExplorerCommand = Unchecked.defaultof<ReactiveCommand>
 
     let names = ReactiveList(ChangeTrackingEnabled = true)
     let mutable selectedNames = Unchecked.defaultof<string>
@@ -207,6 +208,14 @@ type MainWindowViewModel() as this =
 
         openCommand <-
             ReactiveCommand.Create(fun (fi : FileInfo) -> Process.Start fi.FullName |> ignore)
+
+        openExplorerCommand <-
+            ReactiveCommand.Create(fun (fi: FileInfo) ->
+                fi.FullName
+                |> sprintf "/select, \"%s\""
+                |> asSnd "explorer.exe"
+                |> Process.Start
+                |> ignore)
 
         addNameCommand <-
             ReactiveCommand.Create(fun name ->
@@ -363,6 +372,7 @@ type MainWindowViewModel() as this =
         and set value = this.RaiseAndSetIfChanged(&newFileName, value, nameof <@ __.NewFileName @>) |> ignore
 
     member __.OpenCommand = openCommand :> ICommand
+    member __.OpenExplorerCommand = openExplorerCommand :> ICommand
 
     member __.TreatParenthesizedPartAsNames
         with get () = treatParenthesizedPartAsNames

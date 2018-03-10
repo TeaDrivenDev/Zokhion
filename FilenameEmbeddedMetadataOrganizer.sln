@@ -11,8 +11,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{EB44DA
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FilenameEmbeddedMetadataOrganizer", "FilenameEmbeddedMetadataOrganizer\FilenameEmbeddedMetadataOrganizer.fsproj", "{20343DC6-232B-4241-A2CD-770B3E819DC1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FilenameEmbeddedMetadataOrganizerCS", "FilenameEmbeddedMetadataOrganizerCS\FilenameEmbeddedMetadataOrganizerCS.csproj", "{F7F12758-8C5A-4258-9492-82BD6F8C98BA}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution", "Solution", "{CC4C3174-3F8D-49DF-93A4-604AEB162DBD}"
 	ProjectSection(SolutionItems) = preProject
 		.gitattributes = .gitattributes
@@ -34,10 +32,6 @@ Global
 		{20343DC6-232B-4241-A2CD-770B3E819DC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{20343DC6-232B-4241-A2CD-770B3E819DC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{20343DC6-232B-4241-A2CD-770B3E819DC1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F7F12758-8C5A-4258-9492-82BD6F8C98BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F7F12758-8C5A-4258-9492-82BD6F8C98BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F7F12758-8C5A-4258-9492-82BD6F8C98BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F7F12758-8C5A-4258-9492-82BD6F8C98BA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{11456D25-8E74-46F3-B053-DB8C2A39417F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{11456D25-8E74-46F3-B053-DB8C2A39417F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11456D25-8E74-46F3-B053-DB8C2A39417F}.Release|Any CPU.ActiveCfg = Release|Any CPU

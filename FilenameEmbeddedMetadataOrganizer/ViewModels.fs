@@ -128,6 +128,13 @@ type MainWindowViewModel() as this =
 
     let mutable resultingFilePath = Unchecked.defaultof<string>
 
+    let getFiles directory part =
+        Directory.GetFiles(Path.Combine(this.BaseDirectory, directory), sprintf "*%s*" part, SearchOption.AllDirectories)
+        |> Seq.map FileInfo
+        |> Seq.filter (fun fi -> (fi.Name |> Path.GetFileNameWithoutExtension |> toUpper).Contains(toUpper part))
+        |> Seq.sortBy (fun fi -> fi.Name)
+        |> Observable.ofSeq
+
     let updateDestinationDirectories (currentFilePath : string) =
         let startsWith part (s : string) = s.StartsWith part
 
@@ -284,21 +291,18 @@ type MainWindowViewModel() as this =
                 |> Seq.iter files.Add)
         |> ignore
 
-        let getFiles directory part =
-            Directory.GetFiles(Path.Combine(this.BaseDirectory, directory), sprintf "*%s*" part, SearchOption.AllDirectories)
-            |> Seq.map FileInfo
-            |> Seq.filter (fun fi -> (fi.Name |> Path.GetFileNameWithoutExtension |> toUpper).Contains(toUpper part))
-            |> Seq.sortBy (fun fi -> fi.Name)
-            |> Observable.ofSeq
-
-        this.ObservableForProperty(toLinq <@ fun vm -> vm.SearchString @>)
-        |> Observable.throttle (TimeSpan.FromMilliseconds 500.)
-        |> Observable.observeOn RxApp.MainThreadScheduler
+        this.ObservableForProperty(toLinq <@ fun vm -> vm.SearchFromBaseDirectory @>)
         |> Observable.map (fun change -> change.Value)
+        |> Observable.startWith [ false ]
+        |> Observable.combineLatest (this.ObservableForProperty(toLinq <@ fun vm -> vm.SearchString @>))
+        |> Observable.throttle (TimeSpan.FromMilliseconds 200.)
+        |> Observable.observeOn RxApp.MainThreadScheduler
+        |> Observable.map (fun (searchString, flag) -> searchString.Value, flag)
         |> Observable.distinctUntilChanged
         |> Observable.iter (fun _ ->  files.Clear())
         |> Observable.observeOn Scheduler.Default
-        |> Observable.map (fun change -> getFiles this.SelectedDirectory change)
+        |> Observable.map (fun (searchString, flag) ->
+            getFiles (if flag then "" else this.SelectedDirectory) searchString)
         |> Observable.switch
         |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.subscribe files.Add

@@ -29,17 +29,17 @@ type MainWindow() as this =
         use folderBrowserDialog = new FolderBrowserDialog()
         folderBrowserDialog.ShowNewFolderButton <- false
 
-        if not <| String.IsNullOrWhiteSpace this.ViewModel.BaseDirectory
-            && System.IO.Directory.Exists this.ViewModel.BaseDirectory
+        if not <| String.IsNullOrWhiteSpace this.ViewModel.BaseDirectory.Value
+            && System.IO.Directory.Exists this.ViewModel.BaseDirectory.Value
         then
-            folderBrowserDialog.SelectedPath <- this.ViewModel.BaseDirectory
+            folderBrowserDialog.SelectedPath <- this.ViewModel.BaseDirectory.Value
 
         let win = Win32Window(System.Windows.Interop.WindowInteropHelper(this).Handle)
         let result = folderBrowserDialog.ShowDialog win
 
         if result = DialogResult.OK
         then
-            this.ViewModel.BaseDirectory <- folderBrowserDialog.SelectedPath
+            this.ViewModel.BaseDirectory.Value <- folderBrowserDialog.SelectedPath
 
     member this.Features_SelectedItemChanged (_ : obj, e : RoutedPropertyChangedEventArgs<obj>) =
         match e.NewValue with

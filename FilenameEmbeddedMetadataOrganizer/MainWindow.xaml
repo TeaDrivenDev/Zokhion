@@ -46,7 +46,7 @@
                          Height="25"
                          Margin="5"
                          materialDesign:HintAssist.Hint="Base Directory"
-                         Text="{Binding BaseDirectory, UpdateSourceTrigger=PropertyChanged}"
+                         Text="{Binding BaseDirectory.Value, UpdateSourceTrigger=PropertyChanged}"
                          TextWrapping="NoWrap" />
                 <Button Grid.Column="1"
                         Width="30"
@@ -60,7 +60,7 @@
             <ListBox Grid.Row="1"
                      Margin="5"
                      ItemsSource="{Binding Directories}"
-                     SelectedItem="{Binding SelectedDirectory}" />
+                     SelectedItem="{Binding SelectedDirectory.Value}" />
             <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
@@ -70,12 +70,12 @@
                          Height="25"
                          Margin="5"
                          materialDesign:HintAssist.Hint="Search"
-                         Text="{Binding SearchString, UpdateSourceTrigger=PropertyChanged}"
+                         Text="{Binding SearchString.Value, UpdateSourceTrigger=PropertyChanged}"
                          TextWrapping="NoWrap" />
                 <CheckBox Grid.Column="1"
                           Margin="0,0,5,0"
                           Content="From root"
-                          IsChecked="{Binding SearchFromBaseDirectory}" />
+                          IsChecked="{Binding SearchFromBaseDirectory.Value}" />
             </Grid>
 
             <ListBox x:Name="Files"
@@ -83,7 +83,7 @@
                      Margin="5"
                      DisplayMemberPath="Name"
                      ItemsSource="{Binding Files}"
-                     SelectedItem="{Binding SelectedFile}" />
+                     SelectedItem="{Binding SelectedFile.Value}" />
         </Grid>
 
         <GridSplitter Grid.Column="1"
@@ -124,7 +124,7 @@
                                Grid.Row="0"
                                Grid.Column="0"
                                Height="25"
-                               Text="{Binding OriginalFileName}"
+                               Text="{Binding OriginalFileName.Value}"
                                TextWrapping="NoWrap" />
 
                     <Button Grid.Row="0"
@@ -143,25 +143,25 @@
                                   Margin="0,0,20,0"
                                   VerticalAlignment="Center"
                                   Content="Treat parenthesized part as names"
-                                  IsChecked="{Binding TreatParenthesizedPartAsNames}" />
+                                  IsChecked="{Binding TreatParenthesizedPartAsNames.Value}" />
 
                         <CheckBox Height="23"
                                   Margin="0,0,20,0"
                                   VerticalAlignment="Center"
                                   Content="Fix up names in main part"
-                                  IsChecked="{Binding FixupNamesInMainPart}" />
+                                  IsChecked="{Binding FixupNamesInMainPart.Value}" />
 
                         <CheckBox Height="23"
                                   Margin="0,0,20,0"
                                   VerticalAlignment="Center"
                                   Content="Replace underscores"
-                                  IsChecked="{Binding ReplaceUnderscores}" />
+                                  IsChecked="{Binding ReplaceUnderscores.Value}" />
 
                         <CheckBox Height="23"
                                   Margin="0,0,20,0"
                                   VerticalAlignment="Center"
                                   Content="Detect names in main and names parts"
-                                  IsChecked="{Binding DetectNamesInMainAndNamesParts}" />
+                                  IsChecked="{Binding DetectNamesInMainAndNamesParts.Value}" />
                     </WrapPanel>
 
                     <Button Grid.Row="1"
@@ -178,7 +178,7 @@
                              Grid.Column="0"
                              Grid.ColumnSpan="2"
                              Height="25"
-                             Text="{Binding NewFileName}"
+                             Text="{Binding NewFileName.Value}"
                              TextWrapping="NoWrap" />
                 </Grid>
 
@@ -199,7 +199,7 @@
                               Header="Destination Directory">
                         <ListBox DisplayMemberPath="Name"
                                  ItemsSource="{Binding DestinationDirectories}"
-                                 SelectedItem="{Binding SelectedDestinationDirectory}" />
+                                 SelectedItem="{Binding SelectedDestinationDirectory.Value}" />
                     </GroupBox>
                 </Grid>
 
@@ -223,7 +223,7 @@
                                      Grid.Column="0"
                                      Margin="2"
                                      materialDesign:HintAssist.Hint="Add Name"
-                                     Text="{Binding NewNameToAdd, UpdateSourceTrigger=PropertyChanged}" />
+                                     Text="{Binding NewNameToAdd.Value, UpdateSourceTrigger=PropertyChanged}" />
 
                             <Button Grid.Column="1"
                                     Width="15"
@@ -292,11 +292,11 @@
                             <CheckBox x:Name="AddFeatureRoot"
                                       Grid.Column="0"
                                       VerticalAlignment="Center"
-                                      IsChecked="{Binding AddFeatureRoot}" />
+                                      IsChecked="{Binding AddFeatureRoot.Value}" />
 
                             <TextBox Grid.Column="1"
                                      Margin="2"
-                                     Text="{Binding FeatureToAdd, UpdateSourceTrigger=PropertyChanged}">
+                                     Text="{Binding FeatureToAdd.Value, UpdateSourceTrigger=PropertyChanged}">
                                 <TextBox.Style>
                                     <Style BasedOn="{StaticResource MaterialDesignTextBox}"
                                            TargetType="TextBox">
@@ -313,7 +313,7 @@
                             </TextBox>
                             <TextBox Grid.Column="2"
                                      Margin="2"
-                                     Text="{Binding FeatureCodeToAdd, UpdateSourceTrigger=PropertyChanged}">
+                                     Text="{Binding FeatureCodeToAdd.Value, UpdateSourceTrigger=PropertyChanged}">
                                 <TextBox.Style>
                                     <Style BasedOn="{StaticResource MaterialDesignTextBox}"
                                            TargetType="TextBox">
@@ -406,7 +406,7 @@
                     <TextBlock x:Name="ResultingFilePath"
                                Grid.Column="0"
                                Height="25"
-                               Text="{Binding ResultingFilePath}"
+                               Text="{Binding ResultingFilePath.Value}"
                                TextWrapping="NoWrap" />
                     <Button Grid.Column="1"
                             Width="100"

@@ -90,47 +90,42 @@ type NameViewModel() as this =
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
-    let mutable baseDirectory = Unchecked.defaultof<string>
-    let mutable selectedDirectory = Unchecked.defaultof<string>
-    let mutable selectedFile = Unchecked.defaultof<FileInfo>
-
-    let mutable originalFileName = Unchecked.defaultof<string>
-    let mutable newFileName = Unchecked.defaultof<string>
-
-    let mutable treatParenthesizedPartAsNames = true
-    let mutable fixupNamesInMainPart = Unchecked.defaultof<bool>
-    let mutable replaceUnderscores = true
-    let mutable detectNamesInMainAndNamesParts = Unchecked.defaultof<bool>
-
-    let reverseString (s : string) = s |> Seq.rev |> String.Concat
+    let mutable baseDirectory = ""
+    let mutable selectedDirectory = ""
     let directories = ObservableCollection()
+
+    let mutable searchString = ""
+    let mutable searchFromBaseDirectory = false
+    let mutable selectedFile = Unchecked.defaultof<FileInfo>
     let files = ObservableCollection()
 
-    let destinationDirectories = ObservableCollection()
-    let mutable selectedDestinationDirectory = Unchecked.defaultof<DirectoryInfo>
+    let mutable originalFileName = ""
+    let mutable newFileName = ""
 
-    let mutable resultingFilePath = Unchecked.defaultof<string>
+    let mutable treatParenthesizedPartAsNames = true
+    let mutable fixupNamesInMainPart = false
+    let mutable replaceUnderscores = true
+    let mutable detectNamesInMainAndNamesParts = false
 
     let mutable openCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable openExplorerCommand = Unchecked.defaultof<ReactiveCommand>
 
-    let names = ReactiveList(ChangeTrackingEnabled = true)
-    let mutable selectedNames = Unchecked.defaultof<string>
+    let mutable selectedDestinationDirectory = Unchecked.defaultof<DirectoryInfo>
+    let destinationDirectories = ObservableCollection()
+
     let mutable newNameToAdd = Unchecked.defaultof<string>
     let mutable addNameCommand = Unchecked.defaultof<ReactiveCommand>
+    let names = ReactiveList(ChangeTrackingEnabled = true)
 
+    let mutable addFeatureRoot = Unchecked.defaultof<bool>
+    let mutable featureToAdd = Unchecked.defaultof<string>
+    let mutable featureCodeToAdd = Unchecked.defaultof<string>
+    let mutable addFeatureCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable selectedFeature = Unchecked.defaultof<FeatureViewModel>
     let features = ReactiveList()
     let featureInstances = ReactiveList(ChangeTrackingEnabled = true)
 
-    let mutable featureToAdd = Unchecked.defaultof<string>
-
-    let mutable featureCodeToAdd = Unchecked.defaultof<string>
-
-    let mutable addFeatureRoot = Unchecked.defaultof<bool>
-
-    let mutable addFeatureCommand = Unchecked.defaultof<ReactiveCommand>
-
-    let mutable selectedFeature = Unchecked.defaultof<FeatureViewModel>
+    let mutable resultingFilePath = Unchecked.defaultof<string>
 
     let updateDestinationDirectories (currentFilePath : string) =
         let startsWith part (s : string) = s.StartsWith part
@@ -269,7 +264,7 @@ type MainWindowViewModel() as this =
 
                     Directory.GetDirectories x.Value
                     |> Seq.map Path.GetFileName
-                    |> Seq.filter (fun s -> s.StartsWith "_" || s.StartsWith "b")
+                    //|> Seq.filter (fun s -> s.StartsWith "_" || s.StartsWith "b")
                     |> Seq.sort
                     |> Seq.iter directories.Add
 
@@ -281,7 +276,7 @@ type MainWindowViewModel() as this =
             .Subscribe(fun dir ->
                 files.Clear()
 
-                Directory.GetFiles (Path.Combine(this.BaseDirectory, dir.Value))
+                Directory.GetFiles(Path.Combine(this.BaseDirectory, dir.Value), "*", SearchOption.AllDirectories)
                 |> Seq.map FileInfo
                 |> Seq.sortBy (fun fi -> fi.Name)
                 |> Seq.iter files.Add)
@@ -354,16 +349,25 @@ type MainWindowViewModel() as this =
         with get () = baseDirectory
         and set value = this.RaiseAndSetIfChanged(&baseDirectory, value, nameof <@ __.BaseDirectory @>) |> ignore
 
-    member __.Directories = directories
-    member __.Files = files
-
     member __.SelectedDirectory
         with get () = selectedDirectory
         and set value = this.RaiseAndSetIfChanged(&selectedDirectory, value, nameof <@ __.SelectedDirectory @>) |> ignore
 
+    member __.Directories = directories
+
+    member __.SearchString
+        with get () = searchString
+        and set value = __.RaiseAndSetIfChanged(&searchString, value, nameof <@ __.SearchString @>) |> ignore
+
+    member __.SearchFromBaseDirectory
+        with get () = searchFromBaseDirectory
+        and set value = __.RaiseAndSetIfChanged(&searchFromBaseDirectory, value, nameof <@ __.SearchFromBaseDirectory @>) |> ignore
+
     member __.SelectedFile
         with get () : FileInfo = selectedFile
         and set value = this.RaiseAndSetIfChanged(&selectedFile, value, nameof <@ __.SelectedFile @>) |> ignore
+
+    member __.Files = files
 
     member __.OriginalFileName
         with get () = originalFileName
@@ -372,9 +376,6 @@ type MainWindowViewModel() as this =
     member __.NewFileName
         with get () = newFileName
         and set value = this.RaiseAndSetIfChanged(&newFileName, value, nameof <@ __.NewFileName @>) |> ignore
-
-    member __.OpenCommand = openCommand :> ICommand
-    member __.OpenExplorerCommand = openExplorerCommand :> ICommand
 
     member __.TreatParenthesizedPartAsNames
         with get () = treatParenthesizedPartAsNames
@@ -392,17 +393,14 @@ type MainWindowViewModel() as this =
         with get () = detectNamesInMainAndNamesParts
         and set value = this.RaiseAndSetIfChanged(&detectNamesInMainAndNamesParts, value, nameof <@ __.DetectNamesInMainAndNamesParts @>) |> ignore
 
-    member __.DestinationDirectories = destinationDirectories
+    member __.OpenCommand = openCommand :> ICommand
+    member __.OpenExplorerCommand = openExplorerCommand :> ICommand
 
     member __.SelectedDestinationDirectory
         with get ()  : DirectoryInfo= selectedDestinationDirectory
         and set value = this.RaiseAndSetIfChanged(&selectedDestinationDirectory, value, nameof <@ __.SelectedDestinationDirectory @>) |> ignore
 
-    member __.ResultingFilePath
-        with get () = resultingFilePath
-        and set value = this.RaiseAndSetIfChanged(&resultingFilePath, value, nameof <@ __.ResultingFilePath @>) |> ignore
-
-    member __.Names : ReactiveList<NameViewModel> = names
+    member __.DestinationDirectories = destinationDirectories
 
     member __.NewNameToAdd
         with get () = newNameToAdd
@@ -410,9 +408,11 @@ type MainWindowViewModel() as this =
 
     member __.AddNameCommand = addNameCommand :> ICommand
 
-    member __.Features : ReactiveList<FeatureViewModel> = features
+    member __.Names : ReactiveList<NameViewModel> = names
 
-    member __.FeatureInstances : ReactiveList<FeatureInstanceViewModel> = featureInstances
+    member __.AddFeatureRoot
+        with get () = addFeatureRoot
+        and set value = __.RaiseAndSetIfChanged(&addFeatureRoot, value, nameof <@ __.AddFeatureRoot @>) |> ignore
 
     member __.FeatureToAdd
         with get () = featureToAdd
@@ -421,10 +421,6 @@ type MainWindowViewModel() as this =
     member __.FeatureCodeToAdd
         with get () = featureCodeToAdd
         and set value = __.RaiseAndSetIfChanged(&featureCodeToAdd, value, nameof <@ __.FeatureCodeToAdd @>) |> ignore
-
-    member __.AddFeatureRoot
-        with get () = addFeatureRoot
-        and set value = __.RaiseAndSetIfChanged(&addFeatureRoot, value, nameof <@ __.AddFeatureRoot @>) |> ignore
 
     member __.AddFeatureCommand = addFeatureCommand
 
@@ -436,3 +432,11 @@ type MainWindowViewModel() as this =
         this.FeatureInstances
             |> Seq.filter (fun vm -> vm.IsSelected)
             |> Seq.map (fun vm -> vm.FeatureCode + vm.InstanceCode)
+
+    member __.Features : ReactiveList<FeatureViewModel> = features
+
+    member __.FeatureInstances : ReactiveList<FeatureInstanceViewModel> = featureInstances
+
+    member __.ResultingFilePath
+        with get () = resultingFilePath
+        and set value = this.RaiseAndSetIfChanged(&resultingFilePath, value, nameof <@ __.ResultingFilePath @>) |> ignore

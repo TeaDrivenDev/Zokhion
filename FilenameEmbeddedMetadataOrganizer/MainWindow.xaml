@@ -45,6 +45,7 @@
                 <TextBox Grid.Column="0"
                          Height="25"
                          Margin="5"
+                         materialDesign:HintAssist.Hint="Base Directory"
                          Text="{Binding BaseDirectory, UpdateSourceTrigger=PropertyChanged}"
                          TextWrapping="NoWrap" />
                 <Button Grid.Column="1"
@@ -60,11 +61,23 @@
                      Margin="5"
                      ItemsSource="{Binding Directories}"
                      SelectedItem="{Binding SelectedDirectory}" />
-            <TextBox Grid.Row="2"
-                     Height="25"
-                     Margin="5"
-                     Text=""
-                     TextWrapping="NoWrap" />
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0"
+                         Height="25"
+                         Margin="5"
+                         materialDesign:HintAssist.Hint="Search"
+                         Text="{Binding SearchString}"
+                         TextWrapping="NoWrap" />
+                <CheckBox Grid.Column="1"
+                          Margin="0,0,5,0"
+                          Content="From root"
+                          IsChecked="{Binding SearchFromBaseDirectory}" />
+            </Grid>
+
             <ListBox x:Name="Files"
                      Grid.Row="3"
                      Margin="5"

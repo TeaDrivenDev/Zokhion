@@ -5,7 +5,6 @@ open System.Collections.ObjectModel
 open System.Diagnostics
 open System.IO
 open System.Reactive.Concurrency
-open System.Reactive.Linq
 open System.Windows
 open System.Windows.Input
 
@@ -241,116 +240,113 @@ type MainWindowViewModel() as this =
                         | _ -> ())
 
         this.Names.ItemChanged
-            .Where(fun change -> change.PropertyName = nameof <@ any<NameViewModel>.IsSelected @>)
-            .Subscribe(fun _ ->
-                this.Names
-                |> Seq.filter (fun n -> n.IsSelected)
-                |> Seq.map (fun n-> n.Name)
-                |> Seq.toList
-                |> Some
-                |> updateNewName)
+        |> Observable.filter (fun change ->
+            change.PropertyName = nameof <@ any<NameViewModel>.IsSelected @>)
+        |> Observable.subscribe (fun _ ->
+            this.Names
+            |> Seq.filter (fun n -> n.IsSelected)
+            |> Seq.map (fun n-> n.Name)
+            |> Seq.toList
+            |> Some
+            |> updateNewName)
         |> ignore
 
         this.FeatureInstances.ItemChanged
-            .Where(fun change -> change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
-            .Subscribe(fun _ -> this.RaisePropertyChanged(nameof <@ this.SelectedFeatureInstances @>))
+        |> Observable.filter (fun change -> change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
+        |> Observable.subscribe (fun _ -> this.RaisePropertyChanged(nameof <@ this.SelectedFeatureInstances @>))
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.BaseDirectory @>)
-            .Throttle(TimeSpan.FromSeconds 1., RxApp.MainThreadScheduler)
-            .SubscribeOnDispatcher()
-            .Subscribe(fun x ->
-                if Directory.Exists x.Value
-                then
-                    directories.Clear()
+        |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromSeconds 1.)
+        |> Observable.subscribe (fun x ->
+            if Directory.Exists x.Value
+            then
+                directories.Clear()
 
-                    Directory.GetDirectories x.Value
-                    |> Seq.map Path.GetFileName
-                    //|> Seq.filter (fun s -> s.StartsWith "_" || s.StartsWith "b")
-                    |> Seq.sort
-                    |> Seq.iter directories.Add
+                Directory.GetDirectories x.Value
+                |> Seq.map Path.GetFileName
+                //|> Seq.filter (fun s -> s.StartsWith "_" || s.StartsWith "b")
+                |> Seq.sort
+                |> Seq.iter directories.Add
 
-                    loadSettings x.Value)
+                loadSettings x.Value)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.SelectedDirectory @>)
-            .SubscribeOnDispatcher()
-            .Subscribe(fun dir ->
-                files.Clear()
+        |> Observable.subscribe (fun dir ->
+            files.Clear()
 
-                if not <| String.IsNullOrWhiteSpace dir.Value
-                then
-                    Directory.GetFiles(Path.Combine(this.BaseDirectory, dir.Value), "*", SearchOption.AllDirectories)
-                    |> Seq.map FileInfo
-                    |> Seq.sortBy (fun fi -> fi.Name)
-                    |> Seq.iter files.Add)
+            if not <| String.IsNullOrWhiteSpace dir.Value
+            then
+                Directory.GetFiles(Path.Combine(this.BaseDirectory, dir.Value), "*", SearchOption.AllDirectories)
+                |> Seq.map FileInfo
+                |> Seq.sortBy (fun fi -> fi.Name)
+                |> Seq.iter files.Add)
         |> ignore
 
         let getFiles directory part =
             Directory.GetFiles(Path.Combine(this.BaseDirectory, directory), sprintf "*%s*" part, SearchOption.AllDirectories)
-                |> Seq.map FileInfo
-                |> Seq.filter (fun fi -> (fi.Name |> Path.GetFileNameWithoutExtension |> toUpper).Contains(toUpper part))
-                |> Seq.sortBy (fun fi -> fi.Name)
-                |> Observable.ofSeq
+            |> Seq.map FileInfo
+            |> Seq.filter (fun fi -> (fi.Name |> Path.GetFileNameWithoutExtension |> toUpper).Contains(toUpper part))
+            |> Seq.sortBy (fun fi -> fi.Name)
+            |> Observable.ofSeq
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.SearchString @>)
-            .Throttle(TimeSpan.FromMilliseconds 100.)
-            .ObserveOnDispatcher()
-            .Select(fun change -> change.Value)
-            .DistinctUntilChanged()
-            .Do(fun _ ->  files.Clear())
-            .ObserveOn(Scheduler.Default)
-            .Select(getFiles this.SelectedDirectory)
-            .Switch()
-            .ObserveOnDispatcher()
-            .Subscribe(files.Add)
+        |> Observable.throttle (TimeSpan.FromMilliseconds 500.)
+        |> Observable.observeOn RxApp.MainThreadScheduler
+        |> Observable.map (fun change -> change.Value)
+        |> Observable.distinctUntilChanged
+        |> Observable.iter (fun _ ->  files.Clear())
+        |> Observable.observeOn Scheduler.Default
+        |> Observable.map (fun change -> getFiles this.SelectedDirectory change)
+        |> Observable.switch
+        |> Observable.observeOn RxApp.MainThreadScheduler
+        |> Observable.subscribe files.Add
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.SelectedFile @>)
-            .SubscribeOnDispatcher()
-            .Subscribe(fun (fi : IObservedChange<_, FileInfo>) ->
-                if not <| isNull fi.Value
-                then
-                    this.Names
-                    |> Seq.filter (fun vm -> vm.IsNew)
-                    |> Seq.toList
-                    |> List.iter (this.Names.Remove >> ignore)
+        |> Observable.subscribe (fun (fi : IObservedChange<_, FileInfo>) ->
+            if not <| isNull fi.Value
+            then
+                this.Names
+                |> Seq.filter (fun vm -> vm.IsNew)
+                |> Seq.toList
+                |> List.iter (this.Names.Remove >> ignore)
 
-                    this.OriginalFileName <-
-                        string fi.Value.Name |> Path.GetFileNameWithoutExtension)
+                this.OriginalFileName <-
+                    string fi.Value.Name |> Path.GetFileNameWithoutExtension)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.OriginalFileName @>)
-            .SubscribeOnDispatcher()
-            .Subscribe(fun name ->
-                this.NewFileName <- name.Value
-                updateNewName None
+        |> Observable.subscribe (fun name ->
+            this.NewFileName <- name.Value
+            updateNewName None
 
-                updateDestinationDirectories this.SelectedFile.FullName)
+            updateDestinationDirectories this.SelectedFile.FullName)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.NewFileName @>)
-            .Subscribe(fun _ -> updateResultingFilePath ())
+        |> Observable.subscribe (fun _ -> updateResultingFilePath ())
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.TreatParenthesizedPartAsNames @>)
-            .Subscribe(fun _ -> updateNewName None)
+        |> Observable.subscribe (fun _ -> updateNewName None)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.FixupNamesInMainPart @>)
-            .Subscribe(fun _ -> updateNewName None)
+        |> Observable.subscribe (fun _ -> updateNewName None)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.ReplaceUnderscores @>)
-            .Subscribe(fun _ -> updateNewName None)
+        |> Observable.subscribe (fun _ -> updateNewName None)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.DetectNamesInMainAndNamesParts @>)
-            .Subscribe(fun _ -> updateNewName None)
+        |> Observable.subscribe (fun _ -> updateNewName None)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.SelectedDestinationDirectory @>)
-            .Subscribe(fun _ -> updateResultingFilePath ())
+        |> Observable.subscribe (fun _ -> updateResultingFilePath ())
         |> ignore
 
     member __.ShutDown () =

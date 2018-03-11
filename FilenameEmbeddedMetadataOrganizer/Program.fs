@@ -43,7 +43,7 @@ type MainWindow() as this =
 
     member this.Features_SelectedItemChanged (_ : obj, e : RoutedPropertyChangedEventArgs<obj>) =
         match e.NewValue with
-        | :? FeatureViewModel as item -> this.ViewModel.SelectedFeature <- item
+        | :? FeatureViewModel as item -> this.ViewModel.SelectedFeature.Value <- item
         | _ -> ()
 
 type AppBase = XAML<"App.xaml">

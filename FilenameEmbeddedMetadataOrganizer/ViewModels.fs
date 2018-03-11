@@ -60,51 +60,32 @@ type ReactiveProperty<'a>(initialValue : 'a) =
 type FeatureViewModel(name : string, code : string) =
     inherit ReactiveObject()
 
-    let instances = ReactiveList<FeatureInstanceViewModel>()
-
     member __.FeatureName = name
 
     member __.FeatureCode = code
 
-    member __.Instances = instances
+    member val Instances = ReactiveList<FeatureInstanceViewModel>()
 
 and FeatureInstanceViewModel(featureName : string, featureCode : string, instanceName : string, instanceCode : string) =
     inherit FeatureViewModel(featureName, featureCode)
-
-    let mutable isSelected = Unchecked.defaultof<bool>
 
     member __.InstanceName = instanceName
 
     member __.InstanceCode = instanceCode
 
-    member __.IsSelected
-        with get () = isSelected
-        and set value = __.RaiseAndSetIfChanged(&isSelected, value, nameof <@ __.IsSelected @>) |> ignore
+    member val IsSelected = ReactiveProperty false
 
 [<AllowNullLiteral>]
-type NameViewModel() as this =
+type NameViewModel(name : string, isSelected : bool, isNew : bool) as this =
     inherit ReactiveObject()
 
-    let mutable name = Unchecked.defaultof<string>
-    let mutable isSelected = Unchecked.defaultof<bool>
-    let mutable isNew = Unchecked.defaultof<bool>
+    member __.Name = name
 
-    let clearNewFlagCommand =
-        ReactiveCommand.Create(fun () -> this.IsNew <- false)
+    member val IsSelected = ReactiveProperty isSelected
 
-    member __.Name
-        with get () = name
-        and set value = this.RaiseAndSetIfChanged(&name, value, nameof <@ __.Name @>) |> ignore
+    member val IsNew : ReactiveProperty<bool> = ReactiveProperty isNew
 
-    member __.IsSelected
-        with get () = isSelected
-        and set value = this.RaiseAndSetIfChanged(&isSelected, value, nameof <@ __.IsSelected @>) |> ignore
-
-    member __.IsNew
-        with get () = isNew
-        and set value = this.RaiseAndSetIfChanged(&isNew, value, nameof <@ __.IsNew @>) |> ignore
-
-    member __.ClearNewFlagCommand = clearNewFlagCommand :> ICommand
+    member __.ClearNewFlagCommand = ReactiveCommand.Create(fun () -> this.IsNew.Value <- false)
 
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
@@ -140,7 +121,7 @@ type MainWindowViewModel() as this =
     let featureToAdd = ReactiveProperty<string>()
     let featureCodeToAdd = ReactiveProperty<string>()
     let mutable addFeatureCommand = Unchecked.defaultof<ReactiveCommand>
-    let mutable selectedFeature = Unchecked.defaultof<FeatureViewModel>
+    let selectedFeature = ReactiveProperty<FeatureViewModel>()
     let features = ReactiveList()
     let featureInstances = ReactiveList(ChangeTrackingEnabled = true)
 
@@ -177,11 +158,11 @@ type MainWindowViewModel() as this =
         (detectedNames, this.Names)
         ||> fullOuterJoin id (fun vm -> vm.Name)
         |> Seq.iter (function
-            | LeftOnly vm -> vm.IsSelected <- false
+            | LeftOnly vm -> vm.IsSelected.Value <- false
             | RightOnly name ->
-                NameViewModel(Name = name, IsSelected = true, IsNew = true)
+                NameViewModel(name, true, true)
                 |> names.Add
-            | JoinMatch (vm, name) -> vm.IsSelected <- true)
+            | JoinMatch (vm, name) -> vm.IsSelected.Value <- true)
 
     let updateNewName selectedNames =
         let allNames =
@@ -222,7 +203,7 @@ type MainWindowViewModel() as this =
             let names = File.ReadAllLines namesFilePath
 
             names
-            |> Seq.iter (fun name -> NameViewModel(Name = name) |> this.Names.Add)
+            |> Seq.iter (fun name -> NameViewModel(name, false, false) |> this.Names.Add)
 
     do
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
@@ -242,7 +223,7 @@ type MainWindowViewModel() as this =
             ReactiveCommand.Create(fun name ->
                 if not <| String.IsNullOrWhiteSpace name
                 then
-                    NameViewModel(Name = name) |> this.Names.Add)
+                    NameViewModel(name, false, false) |> this.Names.Add)
 
         addFeatureCommand <-
             ReactiveCommand.Create(fun () ->
@@ -254,7 +235,7 @@ type MainWindowViewModel() as this =
                         FeatureViewModel(this.FeatureToAdd.Value, this.FeatureCodeToAdd.Value)
                         |> features.Add
                     else
-                        match this.SelectedFeature with
+                        match this.SelectedFeature.Value with
                         | :? FeatureInstanceViewModel -> ()
                         | :? FeatureViewModel as feature ->
                             let instance =
@@ -269,7 +250,7 @@ type MainWindowViewModel() as this =
             change.PropertyName = nameof <@ any<NameViewModel>.IsSelected @>)
         |> Observable.subscribe (fun _ ->
             this.Names
-            |> Seq.filter (fun n -> n.IsSelected)
+            |> Seq.filter (fun n -> n.IsSelected.Value)
             |> Seq.map (fun n-> n.Name)
             |> Seq.toList
             |> Some
@@ -311,7 +292,7 @@ type MainWindowViewModel() as this =
 
         this.SearchFromBaseDirectory
         |> Observable.startWith [ false ]
-        |> Observable.combineLatest this.SearchString //(this.ObservableForProperty(toLinq <@ fun vm -> vm.SearchString @>))
+        |> Observable.combineLatest this.SearchString
         |> Observable.throttle (TimeSpan.FromMilliseconds 200.)
         |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.map (fun (searchString, flag) -> searchString, flag)
@@ -330,7 +311,7 @@ type MainWindowViewModel() as this =
             if not <| isNull fi
             then
                 this.Names
-                |> Seq.filter (fun vm -> vm.IsNew)
+                |> Seq.filter (fun vm -> vm.IsNew.Value)
                 |> Seq.toList
                 |> List.iter (this.Names.Remove >> ignore)
 
@@ -371,7 +352,7 @@ type MainWindowViewModel() as this =
         then
             let names =
                 this.Names
-                |> Seq.filter (fun vm -> not vm.IsNew)
+                |> Seq.filter (fun vm -> not vm.IsNew.Value)
                 |> Seq.map (fun vm -> vm.Name)
                 |> Seq.distinct
                 |> Seq.sort
@@ -429,13 +410,11 @@ type MainWindowViewModel() as this =
 
     member __.AddFeatureCommand = addFeatureCommand
 
-    member __.SelectedFeature
-        with get () : FeatureViewModel = selectedFeature
-        and set value = __.RaiseAndSetIfChanged(&selectedFeature, value, nameof <@ __.SelectedFeature @>) |> ignore
+    member __.SelectedFeature : ReactiveProperty<FeatureViewModel> = selectedFeature
 
     member __.SelectedFeatureInstances =
         this.FeatureInstances
-        |> Seq.filter (fun vm -> vm.IsSelected)
+        |> Seq.filter (fun vm -> vm.IsSelected.Value)
         |> Seq.map (fun vm -> vm.FeatureCode + vm.InstanceCode)
 
     member __.Features : ReactiveList<FeatureViewModel> = features

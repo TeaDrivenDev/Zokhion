@@ -265,6 +265,8 @@ type MainWindowViewModel() as this =
             .Subscribe(fun x ->
                 if Directory.Exists x.Value
                 then
+                    directories.Clear()
+
                     Directory.GetDirectories x.Value
                     |> Seq.map Path.GetFileName
                     |> Seq.filter (fun s -> s.StartsWith "_" || s.StartsWith "b")

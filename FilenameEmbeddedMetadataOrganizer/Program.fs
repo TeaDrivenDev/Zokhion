@@ -1,12 +1,17 @@
 ﻿namespace FilenameEmbeddedMetadataOrganizer
 
 open System
+open System.ComponentModel
 open System.Windows
+open System.Windows.Forms
 
 open FsXaml
 
 open FilenameEmbeddedMetadataOrganizer.ViewModels
-open System.ComponentModel
+
+type Win32Window(handle : IntPtr) =
+    interface System.Windows.Forms.IWin32Window with
+        member __.Handle : IntPtr = handle
 
 type MainWindowBase = XAML<"MainWindow.xaml">
 
@@ -19,6 +24,22 @@ type MainWindow() as this =
         this.Closing.Add onClosing
 
     member this.ViewModel : MainWindowViewModel = this.DataContext :?> MainWindowViewModel
+
+    override this.SelectFolder_Click (_ : obj, e : RoutedEventArgs) =
+        use folderBrowserDialog = new FolderBrowserDialog()
+        folderBrowserDialog.ShowNewFolderButton <- false
+
+        if not <| String.IsNullOrWhiteSpace this.ViewModel.BaseDirectory
+            && System.IO.Directory.Exists this.ViewModel.BaseDirectory
+        then
+            folderBrowserDialog.SelectedPath <- this.ViewModel.BaseDirectory
+
+        let win = Win32Window(System.Windows.Interop.WindowInteropHelper(this).Handle)
+        let result = folderBrowserDialog.ShowDialog win
+
+        if result = DialogResult.OK
+        then
+            this.ViewModel.BaseDirectory <- folderBrowserDialog.SelectedPath
 
     member this.Features_SelectedItemChanged (_ : obj, e : RoutedPropertyChangedEventArgs<obj>) =
         match e.NewValue with

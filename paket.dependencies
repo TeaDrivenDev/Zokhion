@@ -1,6 +1,7 @@
 source https://www.nuget.org/api/v2
 framework: net461
 
+nuget FSharp.Control.Reactive
 nuget FSharp.Core
 nuget FsXaml.Wpf
 nuget MaterialDesignThemes

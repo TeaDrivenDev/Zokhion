@@ -9,6 +9,8 @@ open System.Reactive.Linq
 open System.Windows
 open System.Windows.Input
 
+open FSharp.Control.Reactive
+
 open ReactiveUI
 
 open FilenameEmbeddedMetadataOrganizer
@@ -276,10 +278,32 @@ type MainWindowViewModel() as this =
             .Subscribe(fun dir ->
                 files.Clear()
 
-                Directory.GetFiles(Path.Combine(this.BaseDirectory, dir.Value), "*", SearchOption.AllDirectories)
+                if not <| String.IsNullOrWhiteSpace dir.Value
+                then
+                    Directory.GetFiles(Path.Combine(this.BaseDirectory, dir.Value), "*", SearchOption.AllDirectories)
+                    |> Seq.map FileInfo
+                    |> Seq.sortBy (fun fi -> fi.Name)
+                    |> Seq.iter files.Add)
+        |> ignore
+
+        let getFiles directory part =
+            Directory.GetFiles(Path.Combine(this.BaseDirectory, directory), sprintf "*%s*" part, SearchOption.AllDirectories)
                 |> Seq.map FileInfo
+                |> Seq.filter (fun fi -> (fi.Name |> Path.GetFileNameWithoutExtension |> toUpper).Contains(toUpper part))
                 |> Seq.sortBy (fun fi -> fi.Name)
-                |> Seq.iter files.Add)
+                |> Observable.ofSeq
+
+        this.ObservableForProperty(toLinq <@ fun vm -> vm.SearchString @>)
+            .Throttle(TimeSpan.FromMilliseconds 100.)
+            .ObserveOnDispatcher()
+            .Select(fun change -> change.Value)
+            .DistinctUntilChanged()
+            .Do(fun _ ->  files.Clear())
+            .ObserveOn(Scheduler.Default)
+            .Select(getFiles this.SelectedDirectory)
+            .Switch()
+            .ObserveOnDispatcher()
+            .Subscribe(files.Add)
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.SelectedFile @>)
@@ -305,6 +329,10 @@ type MainWindowViewModel() as this =
                 updateDestinationDirectories this.SelectedFile.FullName)
         |> ignore
 
+        this.ObservableForProperty(toLinq <@ fun vm -> vm.NewFileName @>)
+            .Subscribe(fun _ -> updateResultingFilePath ())
+        |> ignore
+
         this.ObservableForProperty(toLinq <@ fun vm -> vm.TreatParenthesizedPartAsNames @>)
             .Subscribe(fun _ -> updateNewName None)
         |> ignore
@@ -319,10 +347,6 @@ type MainWindowViewModel() as this =
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.DetectNamesInMainAndNamesParts @>)
             .Subscribe(fun _ -> updateNewName None)
-        |> ignore
-
-        this.ObservableForProperty(toLinq <@ fun vm -> vm.NewFileName @>)
-            .Subscribe(fun _ -> updateResultingFilePath ())
         |> ignore
 
         this.ObservableForProperty(toLinq <@ fun vm -> vm.SelectedDestinationDirectory @>)

@@ -40,7 +40,7 @@ module Utility =
         let lambda = toLambda exp
         Expression.Lambda<Func<'a, 'b>>(lambda.Body, lambda.Parameters)
 
-type ReactiveProperty<'a>(initialValue : 'a) =
+type ReactiveProperty<'a>(initialValue : 'a, ?emitInitialValue : bool) =
     inherit ReactiveObject()
 
     let mutable xvalue = initialValue
@@ -55,7 +55,11 @@ type ReactiveProperty<'a>(initialValue : 'a) =
     new () = ReactiveProperty(Unchecked.defaultof<'a>)
 
     interface IObservable<'a>
-        with member __.Subscribe (observer : IObserver<'a>) = source.Subscribe observer
+        with member __.Subscribe (observer : IObserver<'a>) =
+                emitInitialValue
+                |> Option.iter (fun emit -> if emit then observer.OnNext __.Value)
+
+                source.Subscribe observer
 
 type FeatureViewModel(name : string, code : string) =
     inherit ReactiveObject()
@@ -91,6 +95,7 @@ type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
     let baseDirectory = ReactiveProperty ""
+    let sourceDirectoryPrefixes = ReactiveProperty("", true)
     let selectedDirectory = ReactiveProperty ""
     let directories = ObservableCollection()
 
@@ -200,6 +205,7 @@ type MainWindowViewModel() as this =
 
         if File.Exists namesFilePath
         then
+            names.Clear()
             let names = File.ReadAllLines namesFilePath
 
             names
@@ -262,20 +268,24 @@ type MainWindowViewModel() as this =
         |> Observable.subscribe (fun _ -> this.RaisePropertyChanged(nameof <@ this.SelectedFeatureInstances @>))
         |> ignore
 
-        this.BaseDirectory
+        this.SourceDirectoryPrefixes
+        |> Observable.combineLatest this.BaseDirectory
         |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromSeconds 1.)
-        |> Observable.subscribe (fun x ->
-            if Directory.Exists x
+        |> Observable.subscribe (fun (dir, prefixes) ->
+            if Directory.Exists dir
             then
                 directories.Clear()
 
-                Directory.GetDirectories x
+                Directory.GetDirectories dir
                 |> Seq.map Path.GetFileName
-                //|> Seq.filter (fun s -> s.StartsWith "_" || s.StartsWith "b")
+                |> Seq.filter (fun s ->
+                    match prefixes with
+                    | "" -> true
+                    | _ -> prefixes |> Seq.exists (string >> s.StartsWith))
                 |> Seq.sort
                 |> Seq.iter directories.Add
 
-                loadSettings x)
+                loadSettings dir)
         |> ignore
 
         this.SelectedDirectory
@@ -364,6 +374,8 @@ type MainWindowViewModel() as this =
                 File.WriteAllLines(namesFilePath, names)
 
     member __.BaseDirectory : ReactiveProperty<string> = baseDirectory
+
+    member __.SourceDirectoryPrefixes = sourceDirectoryPrefixes
 
     member __.SelectedDirectory : ReactiveProperty<string> = selectedDirectory
 

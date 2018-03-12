@@ -4,6 +4,7 @@
         xmlns:local="clr-namespace:FilenameEmbeddedMetadataOrganizer;assembly=FilenameEmbeddedMetadataOrganizer"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="clr-namespace:FilenameEmbeddedMetadataOrganizer.UIHelper;assembly=FilenameEmbeddedMetadataOrganizer"
         xmlns:viewModels="clr-namespace:FilenameEmbeddedMetadataOrganizer.ViewModels;assembly=FilenameEmbeddedMetadataOrganizer"
         Title="MainWindow"
         Width="1200"
@@ -20,7 +21,7 @@
         <viewModels:MainWindowViewModel />
     </Window.DataContext>
     <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <ui:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -40,15 +41,33 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <TextBox Grid.Column="0"
                          Height="25"
                          Margin="5"
                          materialDesign:HintAssist.Hint="Base Directory"
-                         Text="{Binding BaseDirectory.Value, UpdateSourceTrigger=PropertyChanged}"
-                         TextWrapping="NoWrap" />
-                <Button Grid.Column="1"
+                         Text="{Binding BaseDirectory.Value,
+                                        UpdateSourceTrigger=PropertyChanged}"
+                         TextWrapping="NoWrap"
+                         Visibility="{Binding ElementName=ShowSourceDirectoryPrefixes,
+                                              Path=IsChecked,
+                                              Converter={StaticResource BooleanToVisibilityConverter},
+                                              ConverterParameter=True}" />
+                <TextBox Grid.Column="0"
+                         Height="25"
+                         Margin="5"
+                         materialDesign:HintAssist.Hint="Source Directory Prefixes"
+                         Text="{Binding SourceDirectoryPrefixes.Value,
+                                        UpdateSourceTrigger=PropertyChanged}"
+                         TextWrapping="NoWrap"
+                         Visibility="{Binding ElementName=ShowSourceDirectoryPrefixes,
+                                              Path=IsChecked,
+                                              Converter={StaticResource BooleanToVisibilityConverter}}" />
+                <ToggleButton x:Name="ShowSourceDirectoryPrefixes"
+                              Grid.Column="1" />
+                <Button Grid.Column="2"
                         Width="30"
                         Margin="5"
                         Padding="0"
@@ -70,7 +89,8 @@
                          Height="25"
                          Margin="5"
                          materialDesign:HintAssist.Hint="Search"
-                         Text="{Binding SearchString.Value, UpdateSourceTrigger=PropertyChanged}"
+                         Text="{Binding SearchString.Value,
+                                        UpdateSourceTrigger=PropertyChanged}"
                          TextWrapping="NoWrap" />
                 <CheckBox Grid.Column="1"
                           Margin="0,0,5,0"
@@ -93,6 +113,8 @@
 
         <GroupBox Grid.Column="2"
                   Margin="10"
+                  materialDesign:ShadowAssist.ShadowDepth="Depth3"
+                  BorderThickness="0"
                   Header="GroupBox">
             <Grid>
                 <Grid.RowDefinitions>
@@ -132,7 +154,8 @@
                             Width="100"
                             Height="30"
                             Command="{Binding OpenCommand}"
-                            CommandParameter="{Binding ElementName=Files, Path=SelectedItem}"
+                            CommandParameter="{Binding ElementName=Files,
+                                                       Path=SelectedItem}"
                             Content="Open" />
 
                     <WrapPanel Grid.Row="1"
@@ -170,7 +193,8 @@
                             Height="30"
                             Margin="0,5"
                             Command="{Binding OpenExplorerCommand}"
-                            CommandParameter="{Binding ElementName=Files, Path=SelectedItem}"
+                            CommandParameter="{Binding ElementName=Files,
+                                                       Path=SelectedItem}"
                             Content="Explorer" />
 
                     <TextBox x:Name="NewName"
@@ -190,13 +214,15 @@
                     </Grid.RowDefinitions>
 
                     <GroupBox Grid.Row="0"
-                              Margin="2"
-                              Header="Replace">
+                              Margin="4"
+                              Header="Replace"
+                              Style="{DynamicResource MaterialDesignCardGroupBox}">
                         <ListBox />
                     </GroupBox>
                     <GroupBox Grid.Row="1"
-                              Margin="2"
-                              Header="Destination Directory">
+                              Margin="4"
+                              Header="Destination Directory"
+                              Style="{DynamicResource MaterialDesignCardGroupBox}">
                         <ListBox DisplayMemberPath="Name"
                                  ItemsSource="{Binding DestinationDirectories}"
                                  SelectedItem="{Binding SelectedDestinationDirectory.Value}" />
@@ -205,8 +231,9 @@
 
                 <GroupBox Grid.Row="1"
                           Grid.Column="1"
-                          Margin="2"
-                          Header="Names">
+                          Margin="4"
+                          Header="Names"
+                          Style="{DynamicResource MaterialDesignCardGroupBox}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -223,7 +250,8 @@
                                      Grid.Column="0"
                                      Margin="2"
                                      materialDesign:HintAssist.Hint="Add Name"
-                                     Text="{Binding NewNameToAdd.Value, UpdateSourceTrigger=PropertyChanged}" />
+                                     Text="{Binding NewNameToAdd.Value,
+                                                    UpdateSourceTrigger=PropertyChanged}" />
 
                             <Button Grid.Column="1"
                                     Width="15"
@@ -231,12 +259,13 @@
                                     Margin="5,0"
                                     Padding="0,-1,-1,0"
                                     Command="{Binding AddNameCommand}"
-                                    CommandParameter="{Binding ElementName=NewNameToAdd, Path=Text}"
+                                    CommandParameter="{Binding ElementName=NewNameToAdd,
+                                                               Path=Text}"
                                     Content="+" />
                         </Grid>
 
                         <ItemsControl Grid.Row="1"
-                                      Background="{DynamicResource MaterialDesignPaper}"
+                                      Background="Transparent"
                                       ItemsSource="{Binding Names}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="viewModels:NameViewModel">
@@ -263,7 +292,8 @@
                                                     Padding="0,-5,0,-4"
                                                     Command="{Binding ClearNewFlagCommand}"
                                                     Content="+"
-                                                    Visibility="{Binding IsNew.Value, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                    Visibility="{Binding IsNew.Value,
+                                                                         Converter={StaticResource BooleanToVisibilityConverter}}" />
                                         </StackPanel>
                                     </CheckBox>
                                 </DataTemplate>
@@ -273,8 +303,9 @@
                 </GroupBox>
                 <GroupBox Grid.Row="1"
                           Grid.Column="2"
-                          Margin="2"
-                          Header="Features">
+                          Margin="4"
+                          Header="Features"
+                          Style="{DynamicResource MaterialDesignCardGroupBox}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -296,14 +327,16 @@
 
                             <TextBox Grid.Column="1"
                                      Margin="2"
-                                     Text="{Binding FeatureToAdd.Value, UpdateSourceTrigger=PropertyChanged}">
+                                     Text="{Binding FeatureToAdd.Value,
+                                                    UpdateSourceTrigger=PropertyChanged}">
                                 <TextBox.Style>
                                     <Style BasedOn="{StaticResource MaterialDesignTextBox}"
                                            TargetType="TextBox">
                                         <Setter Property="materialDesign:HintAssist.Hint" Value="Instance Name" />
 
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding ElementName=AddFeatureRoot, Path=IsChecked}"
+                                            <DataTrigger Binding="{Binding ElementName=AddFeatureRoot,
+                                                                           Path=IsChecked}"
                                                          Value="True">
                                                 <Setter Property="materialDesign:HintAssist.Hint" Value="Feature Name" />
                                             </DataTrigger>
@@ -313,14 +346,16 @@
                             </TextBox>
                             <TextBox Grid.Column="2"
                                      Margin="2"
-                                     Text="{Binding FeatureCodeToAdd.Value, UpdateSourceTrigger=PropertyChanged}">
+                                     Text="{Binding FeatureCodeToAdd.Value,
+                                                    UpdateSourceTrigger=PropertyChanged}">
                                 <TextBox.Style>
                                     <Style BasedOn="{StaticResource MaterialDesignTextBox}"
                                            TargetType="TextBox">
                                         <Setter Property="materialDesign:HintAssist.Hint" Value="Instance Code" />
 
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding ElementName=AddFeatureRoot, Path=IsChecked}"
+                                            <DataTrigger Binding="{Binding ElementName=AddFeatureRoot,
+                                                                           Path=IsChecked}"
                                                          Value="True">
                                                 <Setter Property="materialDesign:HintAssist.Hint" Value="Feature Code" />
                                             </DataTrigger>
@@ -379,8 +414,8 @@
                                     </HierarchicalDataTemplate>
                                 </TreeView.Resources>
                                 <TreeView.ItemTemplateSelector>
-                                    <local:FeaturesTreeViewItemTemplateSelector FeatureInstanceTemplate="{StaticResource FeatureInstanceDataTemplate}"
-                                                                                FeatureRootTemplate="{StaticResource FeatureRootDataTemplate}" />
+                                    <ui:FeaturesTreeViewItemTemplateSelector FeatureInstanceTemplate="{StaticResource FeatureInstanceDataTemplate}"
+                                                                             FeatureRootTemplate="{StaticResource FeatureRootDataTemplate}" />
                                 </TreeView.ItemTemplateSelector>
                                 <TreeView.ItemContainerStyle>
                                     <Style TargetType="{x:Type TreeViewItem}">

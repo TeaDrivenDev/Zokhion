@@ -112,7 +112,7 @@ type MainWindowViewModel() as this =
 
     let newNameToAdd = ReactiveProperty ""
     let mutable addNameCommand = Unchecked.defaultof<ReactiveCommand>
-    let names = ReactiveList(ChangeTrackingEnabled = true)
+    let names = ReactiveList([], 0.5, DispatcherScheduler(Application.Current.Dispatcher), ChangeTrackingEnabled = true)
 
     let addFeatureRoot = ReactiveProperty false
     let featureToAdd = ReactiveProperty<string>()
@@ -163,8 +163,15 @@ type MainWindowViewModel() as this =
             | JoinMatch (vm, name) -> vm.IsSelected <- true)
 
     let updateNewName selectedNames =
+        this.Names
+        |> Seq.filter (fun vm -> vm.IsNew.Value)
+        |> Seq.toList
+        |> List.iter (this.Names.Remove >> ignore)
+
         let allNames =
-            this.Names |> Seq.map (fun vm -> vm.Name) |> Seq.toList
+            this.Names
+            |> Seq.map (fun vm -> vm.Name)
+            |> Seq.toList
 
         let parameters =
             {
@@ -178,7 +185,7 @@ type MainWindowViewModel() as this =
                 Replacements = []
             }
 
-        let result = rename parameters this.NewFileName.Value
+        let result = rename parameters this.OriginalFileName.Value
         this.NewFileName.Value <- result.NewFileName
 
         updateNamesList result.DetectedNames
@@ -249,8 +256,8 @@ type MainWindowViewModel() as this =
             change.PropertyName = nameof <@ any<NameViewModel>.IsSelected @>)
         |> Observable.subscribe (fun _ ->
             this.Names
-            |> Seq.filter (fun n -> n.IsSelected)
-            |> Seq.map (fun n-> n.Name)
+            |> Seq.filter (fun n -> n.IsSelected && not n.IsNew.Value)
+            |> Seq.map (fun n -> n.Name)
             |> Seq.toList
             |> Some
             |> updateNewName)

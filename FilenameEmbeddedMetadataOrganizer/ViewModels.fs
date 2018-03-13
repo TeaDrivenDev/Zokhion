@@ -13,7 +13,11 @@ open FSharp.Control.Reactive
 
 open ReactiveUI
 
+open Reactive.Bindings
+
 open FilenameEmbeddedMetadataOrganizer
+
+type ReactiveCommand = ReactiveUI.ReactiveCommand
 
 [<AutoOpen>]
 module Utility =
@@ -40,27 +44,6 @@ module Utility =
         let lambda = toLambda exp
         Expression.Lambda<Func<'a, 'b>>(lambda.Body, lambda.Parameters)
 
-type ReactiveProperty<'a>(initialValue : 'a, ?emitInitialValue : bool) =
-    inherit ReactiveObject()
-
-    let mutable xvalue = initialValue
-    let source = new Subject<'a>()
-
-    member __.Value
-        with get () = xvalue
-        and set value =
-            __.RaiseAndSetIfChanged(&xvalue, value, nameof <@ __.Value @>) |> ignore
-            source.OnNext value
-
-    new () = ReactiveProperty(Unchecked.defaultof<'a>)
-
-    interface IObservable<'a>
-        with member __.Subscribe (observer : IObserver<'a>) =
-                emitInitialValue
-                |> Option.iter (fun emit -> if emit then observer.OnNext __.Value)
-
-                source.Subscribe observer
-
 type FeatureViewModel(name : string, code : string) =
     inherit ReactiveObject()
 
@@ -73,39 +56,47 @@ type FeatureViewModel(name : string, code : string) =
 and FeatureInstanceViewModel(featureName : string, featureCode : string, instanceName : string, instanceCode : string) =
     inherit FeatureViewModel(featureName, featureCode)
 
+    let mutable isSelected = false
+
     member __.InstanceName = instanceName
 
     member __.InstanceCode = instanceCode
 
-    member val IsSelected = ReactiveProperty false
+    member __.IsSelected
+        with get () = isSelected
+        and set value = __.RaiseAndSetIfChanged(&isSelected, value, nameof <@ __.IsSelected @>) |> ignore
 
 [<AllowNullLiteral>]
-type NameViewModel(name : string, isSelected : bool, isNew : bool) as this =
+type NameViewModel(name : string, isSelected : bool, isNew : bool) =
     inherit ReactiveObject()
+
+    let mutable xIsSelected = isSelected
 
     member __.Name = name
 
-    member val IsSelected = ReactiveProperty isSelected
+    member __.IsSelected
+        with get () = xIsSelected
+        and set value = __.RaiseAndSetIfChanged(&xIsSelected, value, nameof <@ __.IsSelected @>) |> ignore
 
     member val IsNew : ReactiveProperty<bool> = ReactiveProperty isNew
 
-    member __.ClearNewFlagCommand = ReactiveCommand.Create(fun () -> this.IsNew.Value <- false)
+    member __.ClearNewFlagCommand = ReactiveCommand.Create(fun () -> __.IsNew.Value <- false)
 
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
-    let baseDirectory = ReactiveProperty ""
-    let sourceDirectoryPrefixes = ReactiveProperty("", true)
-    let selectedDirectory = ReactiveProperty ""
+    let baseDirectory = ReactiveProperty("", ReactivePropertyMode.None)
+    let sourceDirectoryPrefixes = ReactiveProperty("", ReactivePropertyMode.RaiseLatestValueOnSubscribe)
+    let selectedDirectory = ReactiveProperty("", ReactivePropertyMode.None)
     let directories = ObservableCollection()
 
-    let searchString = ReactiveProperty<string>()
-    let searchFromBaseDirectory = ReactiveProperty false
-    let selectedFile = ReactiveProperty<FileInfo>()
+    let searchString = ReactiveProperty<string>("", ReactivePropertyMode.None)
+    let searchFromBaseDirectory = ReactiveProperty(false, ReactivePropertyMode.None)
+    let selectedFile = ReactiveProperty<FileInfo>(Unchecked.defaultof<FileInfo>, ReactivePropertyMode.None)
     let files = ObservableCollection()
 
-    let originalFileName = ReactiveProperty ""
-    let newFileName = ReactiveProperty ""
+    let originalFileName = ReactiveProperty("", ReactivePropertyMode.None)
+    let newFileName = ReactiveProperty("", ReactivePropertyMode.None)
 
     let treatParenthesizedPartAsNames = ReactiveProperty true
     let fixupNamesInMainPart = ReactiveProperty false
@@ -115,7 +106,8 @@ type MainWindowViewModel() as this =
     let mutable openCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable openExplorerCommand = Unchecked.defaultof<ReactiveCommand>
 
-    let selectedDestinationDirectory = ReactiveProperty<DirectoryInfo>()
+    let selectedDestinationDirectory =
+        ReactiveProperty<DirectoryInfo>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
     let destinationDirectories = ObservableCollection()
 
     let newNameToAdd = ReactiveProperty ""
@@ -126,11 +118,12 @@ type MainWindowViewModel() as this =
     let featureToAdd = ReactiveProperty<string>()
     let featureCodeToAdd = ReactiveProperty<string>()
     let mutable addFeatureCommand = Unchecked.defaultof<ReactiveCommand>
-    let selectedFeature = ReactiveProperty<FeatureViewModel>()
+    let selectedFeature =
+        ReactiveProperty<FeatureViewModel>(Unchecked.defaultof<FeatureViewModel>, ReactivePropertyMode.None)
     let features = ReactiveList()
     let featureInstances = ReactiveList(ChangeTrackingEnabled = true)
 
-    let resultingFilePath = ReactiveProperty ""
+    let resultingFilePath = ReactiveProperty("", ReactivePropertyMode.None)
 
     let getFiles directory part =
         Directory.GetFiles(Path.Combine(this.BaseDirectory.Value, directory), sprintf "*%s*" part, SearchOption.AllDirectories)
@@ -163,11 +156,11 @@ type MainWindowViewModel() as this =
         (detectedNames, this.Names)
         ||> fullOuterJoin id (fun vm -> vm.Name)
         |> Seq.iter (function
-            | LeftOnly vm -> vm.IsSelected.Value <- false
+            | LeftOnly vm -> vm.IsSelected <- false
             | RightOnly name ->
                 NameViewModel(name, true, true)
                 |> names.Add
-            | JoinMatch (vm, name) -> vm.IsSelected.Value <- true)
+            | JoinMatch (vm, name) -> vm.IsSelected <- true)
 
     let updateNewName selectedNames =
         let allNames =
@@ -256,7 +249,7 @@ type MainWindowViewModel() as this =
             change.PropertyName = nameof <@ any<NameViewModel>.IsSelected @>)
         |> Observable.subscribe (fun _ ->
             this.Names
-            |> Seq.filter (fun n -> n.IsSelected.Value)
+            |> Seq.filter (fun n -> n.IsSelected)
             |> Seq.map (fun n-> n.Name)
             |> Seq.toList
             |> Some
@@ -426,7 +419,7 @@ type MainWindowViewModel() as this =
 
     member __.SelectedFeatureInstances =
         this.FeatureInstances
-        |> Seq.filter (fun vm -> vm.IsSelected.Value)
+        |> Seq.filter (fun vm -> vm.IsSelected)
         |> Seq.map (fun vm -> vm.FeatureCode + vm.InstanceCode)
 
     member __.Features : ReactiveList<FeatureViewModel> = features

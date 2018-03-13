@@ -4,3 +4,4 @@ ReactiveUI
 FsXaml.Wpf
 MaterialDesignThemes
 FSharp.Control.Reactive
+ReactiveProperty

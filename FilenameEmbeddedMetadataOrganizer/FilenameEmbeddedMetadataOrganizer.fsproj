@@ -156,6 +156,25 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.6.1'">
       <ItemGroup>
+        <Reference Include="System.ComponentModel.DataAnnotations">
+          <Paket>True</Paket>
+        </Reference>
+        <Reference Include="ReactiveProperty">
+          <HintPath>..\packages\ReactiveProperty\lib\net46\ReactiveProperty.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+        <Reference Include="ReactiveProperty.NET46">
+          <HintPath>..\packages\ReactiveProperty\lib\net46\ReactiveProperty.NET46.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.6.1'">
+      <ItemGroup>
         <Reference Include="ReactiveUI">
           <HintPath>..\packages\ReactiveUI\lib\net45\ReactiveUI.dll</HintPath>
           <Private>True</Private>

@@ -271,7 +271,7 @@
                                 <DataTemplate DataType="viewModels:NameViewModel">
                                     <CheckBox Margin="0,3"
                                               Foreground="{StaticResource MaterialDesignBody}"
-                                              IsChecked="{Binding IsSelected.Value}">
+                                              IsChecked="{Binding IsSelected}">
                                         <CheckBox.Style>
                                             <Style TargetType="CheckBox">
                                                 <Style.Triggers>
@@ -401,7 +401,7 @@
                                                               DataType="viewModels:FeatureInstanceViewModel"
                                                               ItemsSource="{Binding Instances}">
                                         <CheckBox Margin="0,3"
-                                                  IsChecked="{Binding IsSelected.Value}">
+                                                  IsChecked="{Binding IsSelected}">
                                             <TextBlock Foreground="{StaticResource SecondaryAccentForegroundBrush}">
                                                 <TextBlock.Text>
                                                     <MultiBinding StringFormat="{}{0}: ({1})">

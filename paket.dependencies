@@ -5,6 +5,7 @@ nuget FSharp.Control.Reactive
 nuget FSharp.Core
 nuget FsXaml.Wpf
 nuget MaterialDesignThemes
+nuget ReactiveProperty
 nuget ReactiveUI prerelease
 
 nuget System.ValueTuple 4.3.1

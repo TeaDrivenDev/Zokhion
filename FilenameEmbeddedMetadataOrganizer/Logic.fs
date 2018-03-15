@@ -9,6 +9,12 @@ module Prelude =
         | RightOnly of 'TRight
         | JoinMatch of 'TLeft * 'TRight
 
+    [<AllowNullLiteral>]
+    type JoinWrapper<'a>(value : 'a) =
+        member __.Value = value
+
+    let (|JoinWrapped|) (wrapper : JoinWrapper<_>) = wrapper.Value
+
     let asFst second first = first, second
     let asSnd first second = first, second
 
@@ -69,7 +75,7 @@ module Logic =
         {
             NewFileName : string
             DetectedFeatures : string list
-            DetectedNames : string list
+            DetectedNames : (string * bool) list
         }
 
     let splitFileName preserveSeparateNamesPart (fileName : string) =
@@ -199,6 +205,6 @@ module Logic =
 
         {
             NewFileName = newFileName
-            DetectedNames = namesToUse
+            DetectedNames = namesToUse |> List.map (asFst true)
             DetectedFeatures = featuresToUse |> Option.defaultValue []
         }

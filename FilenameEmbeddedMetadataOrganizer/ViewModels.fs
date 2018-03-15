@@ -5,7 +5,6 @@ open System.Collections.ObjectModel
 open System.Diagnostics
 open System.IO
 open System.Reactive.Concurrency
-open System.Reactive.Subjects
 open System.Windows
 open System.Windows.Input
 
@@ -153,20 +152,21 @@ type MainWindowViewModel() as this =
             |> Seq.find (fun (d : DirectoryInfo) -> d.FullName = currentFileDirectory)
 
     let updateNamesList detectedNames =
-        (detectedNames, this.Names)
-        ||> fullOuterJoin id (fun vm -> vm.Name)
-        |> Seq.iter (function
+        (detectedNames |> Seq.map JoinWrapper, this.Names)
+        ||> fullOuterJoin (fun n -> n.Value |> fst) (fun vm -> vm.Name)
+        |> Seq.iter (fun result ->
+            match result with
             | LeftOnly vm -> vm.IsSelected <- false
-            | RightOnly name ->
-                NameViewModel(name, true, true)
+            | RightOnly (JoinWrapped (name, isSelected)) ->
+                NameViewModel(name, isSelected, true)
                 |> names.Add
-            | JoinMatch (vm, name) -> vm.IsSelected <- true)
+            | JoinMatch (vm, JoinWrapped (name, isSelected)) -> vm.IsSelected <- isSelected)
 
     let updateNewName selectedNames =
-        this.Names
-        |> Seq.filter (fun vm -> vm.IsNew.Value)
-        |> Seq.toList
-        |> List.iter (this.Names.Remove >> ignore)
+        //this.Names
+        //|> Seq.filter (fun vm -> vm.IsNew.Value)
+        //|> Seq.toList
+        //|> List.iter (this.Names.Remove >> ignore)
 
         let allNames =
             this.Names
@@ -188,7 +188,8 @@ type MainWindowViewModel() as this =
         let result = rename parameters this.OriginalFileName.Value
         this.NewFileName.Value <- result.NewFileName
 
-        updateNamesList result.DetectedNames
+        result.DetectedNames
+        |> updateNamesList
 
     let updateResultingFilePath () =
         if not <| isNull this.SelectedDestinationDirectory.Value
@@ -254,13 +255,13 @@ type MainWindowViewModel() as this =
         this.Names.ItemChanged
         |> Observable.filter (fun change ->
             change.PropertyName = nameof <@ any<NameViewModel>.IsSelected @>)
-        |> Observable.subscribe (fun _ ->
+        |> Observable.map (fun _ ->
             this.Names
             |> Seq.filter (fun n -> n.IsSelected && not n.IsNew.Value)
             |> Seq.map (fun n -> n.Name)
             |> Seq.toList
-            |> Some
-            |> updateNewName)
+            |> Some)
+        |> Observable.subscribe updateNewName
         |> ignore
 
         this.FeatureInstances.ItemChanged
@@ -337,7 +338,7 @@ type MainWindowViewModel() as this =
             updateDestinationDirectories this.SelectedFile.Value.FullName)
         |> ignore
 
-        this.ObservableForProperty(toLinq <@ fun vm -> vm.NewFileName @>)
+        this.NewFileName
         |> Observable.subscribe (fun _ -> updateResultingFilePath ())
         |> ignore
 

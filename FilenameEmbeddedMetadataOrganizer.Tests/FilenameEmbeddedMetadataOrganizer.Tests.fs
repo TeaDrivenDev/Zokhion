@@ -78,7 +78,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "Aerial view over Uluru at night (.Uluru.)"
-                DetectedNames = [ "Uluru", true ]
+                DetectedNames = [ "Uluru" ]
                 DetectedFeatures = []
             }
 
@@ -98,7 +98,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "View from the Glasshouse Mountains to the Great Barrier Reef (.Glasshouse Mountains.Great Barrier Reef.)"
-                DetectedNames = [ "Glasshouse Mountains", true; "Great Barrier Reef", true ]
+                DetectedNames = [ "Glasshouse Mountains"; "Great Barrier Reef" ]
                 DetectedFeatures = []
             }
 
@@ -118,7 +118,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "View from the glasshouse mountains to the great barrier reef (.Glasshouse Mountains.Great Barrier Reef.)"
-                DetectedNames = [ "Glasshouse Mountains", true; "Great Barrier Reef", true ]
+                DetectedNames = [ "Glasshouse Mountains"; "Great Barrier Reef" ]
                 DetectedFeatures = []
             }
 
@@ -138,7 +138,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "View from mount mackenzie across the rainbow range (.Mount MacKenzie.Rainbow Range.)"
-                DetectedNames = [ "Mount MacKenzie", true; "Rainbow Range", true ]
+                DetectedNames = [ "Mount MacKenzie"; "Rainbow Range" ]
                 DetectedFeatures = []
             }
 
@@ -162,7 +162,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "View from Mount MacKenzie across the Rainbow Range (.Mount MacKenzie.Rainbow Range.)"
-                DetectedNames = [ "Mount MacKenzie", true; "Rainbow Range", true ]
+                DetectedNames = [ "Mount MacKenzie"; "Rainbow Range" ]
                 DetectedFeatures = []
             }
 
@@ -186,7 +186,31 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "View from the Glasshouse Mountains to the Great Barrier Reef (.Pacific Ocean.Rocky Mountains.)"
-                DetectedNames = [ "Pacific Ocean", true; "Rocky Mountains", true ]
+                DetectedNames = [ "Pacific Ocean"; "Rocky Mountains" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Detected names can be re-selected`` () =
+        // Arrange
+        let originalName = "View from the Glasshouse Mountains to the Great Barrier Reef (Denali)"
+
+        let parameters =
+            {
+                baseParameters with
+                    SelectedNames = Some [ "Rocky Mountains"; "Pacific Ocean"; "Denali" ]
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "View from the Glasshouse Mountains to the Great Barrier Reef (.Denali.Pacific Ocean.Rocky Mountains.)"
+                DetectedNames = [ "Denali"; "Pacific Ocean"; "Rocky Mountains" ]
                 DetectedFeatures = []
             }
 
@@ -206,7 +230,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "View from the Glasshouse Mountains to the Great Barrier Reef (.Pacific Ocean.Uluru.)"
-                DetectedNames = [ "Pacific Ocean", true; "Uluru", true ]
+                DetectedNames = [ "Pacific Ocean"; "Uluru" ]
                 DetectedFeatures = []
             }
 
@@ -230,7 +254,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "View from the Glasshouse Mountains (.Glasshouse Mountains.Uluru.)"
-                DetectedNames = [ "Glasshouse Mountains", true; "Uluru", true ]
+                DetectedNames = [ "Glasshouse Mountains"; "Uluru" ]
                 DetectedFeatures = []
             }
 
@@ -254,7 +278,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "View from the Glasshouse Mountains (.Glasshouse Mountains.Uluru.)"
-                DetectedNames = [ "Glasshouse Mountains", true; "Uluru", true ]
+                DetectedNames = [ "Glasshouse Mountains"; "Uluru" ]
                 DetectedFeatures = []
             }
 
@@ -274,7 +298,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "View from the Glasshouse Mountains to the Great Barrier Reef (.Andes.Uluru.)"
-                DetectedNames = [ "Andes", true; "Uluru", true ]
+                DetectedNames = [ "Andes"; "Uluru" ]
                 DetectedFeatures = []
             }
 
@@ -298,7 +322,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "Glasshouse Mountains at sunset (Glasshouse Mountains) (.Glasshouse Mountains.)"
-                DetectedNames = [ "Glasshouse Mountains", true ]
+                DetectedNames = [ "Glasshouse Mountains" ]
                 DetectedFeatures = []
             }
 
@@ -318,7 +342,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "Glasshouse Mountains at sunset (.Glasshouse Mountains.)"
-                DetectedNames = [ "Glasshouse Mountains", true ]
+                DetectedNames = [ "Glasshouse Mountains" ]
                 DetectedFeatures = []
             }
 
@@ -362,7 +386,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "Photo - Uluru at night (.Uluru.)"
-                DetectedNames = [ "Uluru", true ]
+                DetectedNames = [ "Uluru" ]
                 DetectedFeatures = []
             }
 
@@ -386,7 +410,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "Aerial view over Uluru at night (.Uluru.) [.Ax.Bd.]"
-                DetectedNames = [ "Uluru", true ]
+                DetectedNames = [ "Uluru" ]
                 DetectedFeatures = [ "Ax"; "Bd" ]
             }
 
@@ -406,7 +430,7 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "Aerial view over Uluru at night (.Uluru.) [.Ax.Bd.Xx.]"
-                DetectedNames = [ "Uluru", true ]
+                DetectedNames = [ "Uluru" ]
                 DetectedFeatures = [ "Ax"; "Bd"; "Xx" ]
             }
 

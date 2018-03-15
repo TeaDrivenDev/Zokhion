@@ -152,22 +152,17 @@ type MainWindowViewModel() as this =
             |> Seq.find (fun (d : DirectoryInfo) -> d.FullName = currentFileDirectory)
 
     let updateNamesList detectedNames =
-        (detectedNames |> Seq.map JoinWrapper, this.Names)
-        ||> fullOuterJoin (fun n -> n.Value |> fst) (fun vm -> vm.Name)
+        (detectedNames, this.Names)
+        ||> fullOuterJoin id (fun vm -> vm.Name)
         |> Seq.iter (fun result ->
             match result with
             | LeftOnly vm -> vm.IsSelected <- false
-            | RightOnly (JoinWrapped (name, isSelected)) ->
-                NameViewModel(name, isSelected, true)
+            | RightOnly name ->
+                NameViewModel(name, true, true)
                 |> names.Add
-            | JoinMatch (vm, JoinWrapped (name, isSelected)) -> vm.IsSelected <- isSelected)
+            | JoinMatch (vm, name) -> vm.IsSelected <- true)
 
     let updateNewName selectedNames =
-        //this.Names
-        //|> Seq.filter (fun vm -> vm.IsNew.Value)
-        //|> Seq.toList
-        //|> List.iter (this.Names.Remove >> ignore)
-
         let allNames =
             this.Names
             |> Seq.map (fun vm -> vm.Name)
@@ -257,7 +252,7 @@ type MainWindowViewModel() as this =
             change.PropertyName = nameof <@ any<NameViewModel>.IsSelected @>)
         |> Observable.map (fun _ ->
             this.Names
-            |> Seq.filter (fun n -> n.IsSelected && not n.IsNew.Value)
+            |> Seq.filter (fun n -> n.IsSelected)
             |> Seq.map (fun n -> n.Name)
             |> Seq.toList
             |> Some)

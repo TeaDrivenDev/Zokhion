@@ -75,7 +75,7 @@ module Logic =
         {
             NewFileName : string
             DetectedFeatures : string list
-            DetectedNames : (string * bool) list
+            DetectedNames : string list
         }
 
     let splitFileName preserveSeparateNamesPart (fileName : string) =
@@ -150,18 +150,18 @@ module Logic =
             |> Seq.toList
             |> List.sort
 
-        let mainPart =
-            if parameters.FixupNamesInMainPart
-            then
-                (mainPart, detectedNames)
-                ||> List.fold (fun acc current ->
-                    Regex.Replace(acc, current, current, RegexOptions.IgnoreCase))
-            else mainPart
-
         let namesToUse =
             parameters.SelectedNames
             |> Option.defaultValue detectedNames
             |> List.sort
+
+        let mainPart =
+            if parameters.FixupNamesInMainPart
+            then
+                (mainPart, namesToUse)
+                ||> List.fold (fun acc current ->
+                    Regex.Replace(acc, current, current, RegexOptions.IgnoreCase))
+            else mainPart
 
         let detectedFeatures =
             evaluateFeaturesPart featuresPart
@@ -205,6 +205,6 @@ module Logic =
 
         {
             NewFileName = newFileName
-            DetectedNames = namesToUse |> List.map (asFst true)
+            DetectedNames = namesToUse
             DetectedFeatures = featuresToUse |> Option.defaultValue []
         }

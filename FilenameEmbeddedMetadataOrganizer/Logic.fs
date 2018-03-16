@@ -71,6 +71,28 @@ module Logic =
             Replacements : (string * string) list
         }
 
+    type OptionChange =
+        | TreatParenthesizedPartAsNames of bool
+        | FixupNamesInMainPart of bool
+        | ReplaceUnderscores of bool
+        | DetectNamesInMainAndNamesParts of bool
+        | SelectedNames of string list option
+
+    let updateParameters getAllNames parameters change =
+        let parameters = { parameters with AllNames = getAllNames () }
+
+        match change with
+        | TreatParenthesizedPartAsNames value ->
+            { parameters with TreatParenthesizedPartAsNames = value }
+        | FixupNamesInMainPart value ->
+            { parameters with FixupNamesInMainPart = value }
+        | ReplaceUnderscores value ->
+            { parameters with ReplaceUnderscores = value }
+        | DetectNamesInMainAndNamesParts value ->
+            { parameters with DetectNamesInMainAndNamesParts = value }
+        | SelectedNames value ->
+            { parameters with SelectedNames = value }
+
     type RenameResult =
         {
             NewFileName : string

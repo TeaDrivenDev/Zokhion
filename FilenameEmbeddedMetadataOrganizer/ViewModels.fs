@@ -162,25 +162,10 @@ type MainWindowViewModel() as this =
                 |> names.Add
             | JoinMatch (vm, name) -> vm.IsSelected <- true)
 
-    let updateNewName selectedNames =
-        let allNames =
-            this.Names
-            |> Seq.map (fun vm -> vm.Name)
-            |> Seq.toList
+    let getAllNames () = this.Names |> Seq.map (fun vm -> vm.Name) |> Seq.toList
 
-        let parameters =
-            {
-                SelectedFeatures = None
-                AllNames = allNames
-                SelectedNames = selectedNames
-                TreatParenthesizedPartAsNames = this.TreatParenthesizedPartAsNames.Value
-                DetectNamesInMainAndNamesParts = this.DetectNamesInMainAndNamesParts.Value
-                FixupNamesInMainPart = this.FixupNamesInMainPart.Value
-                ReplaceUnderscores = this.ReplaceUnderscores.Value
-                Replacements = []
-            }
-
-        let result = rename parameters this.OriginalFileName.Value
+    let updateNewName parameters originalFileName =
+        let result = rename parameters originalFileName
         this.NewFileName.Value <- result.NewFileName
 
         result.DetectedNames
@@ -247,18 +232,6 @@ type MainWindowViewModel() as this =
                             featureInstances.Add instance
                         | _ -> ())
 
-        this.Names.ItemChanged
-        |> Observable.filter (fun change ->
-            change.PropertyName = nameof <@ any<NameViewModel>.IsSelected @>)
-        |> Observable.map (fun _ ->
-            this.Names
-            |> Seq.filter (fun n -> n.IsSelected)
-            |> Seq.map (fun n -> n.Name)
-            |> Seq.toList
-            |> Some)
-        |> Observable.subscribe updateNewName
-        |> ignore
-
         this.FeatureInstances.ItemChanged
         |> Observable.filter (fun change -> change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
         |> Observable.subscribe (fun _ -> this.RaisePropertyChanged(nameof <@ this.SelectedFeatureInstances @>))
@@ -321,31 +294,47 @@ type MainWindowViewModel() as this =
                 |> Seq.toList
                 |> List.iter (this.Names.Remove >> ignore)
 
+                updateDestinationDirectories fi.FullName
+
                 this.OriginalFileName.Value <-
                     string fi.Name |> Path.GetFileNameWithoutExtension)
         |> ignore
 
-        this.OriginalFileName
-        |> Observable.subscribe (fun name ->
-            this.NewFileName.Value <- name
-            updateNewName None
-
-            updateDestinationDirectories this.SelectedFile.Value.FullName)
-        |> ignore
-
-        this.NewFileName
-        |> Observable.subscribe (fun _ -> updateResultingFilePath ())
-        |> ignore
-
         [
-            this.TreatParenthesizedPartAsNames
-            this.FixupNamesInMainPart
-            this.ReplaceUnderscores
-            this.DetectNamesInMainAndNamesParts
+            this.TreatParenthesizedPartAsNames |> Observable.map TreatParenthesizedPartAsNames
+            this.FixupNamesInMainPart |> Observable.map FixupNamesInMainPart
+            this.ReplaceUnderscores |> Observable.map ReplaceUnderscores
+            this.DetectNamesInMainAndNamesParts |> Observable.map DetectNamesInMainAndNamesParts
+
+            this.Names.ItemChanged
+            |> Observable.filter (fun change ->
+                change.PropertyName = nameof <@ any<NameViewModel>.IsSelected @>)
+            |> Observable.map (fun _ ->
+                this.Names
+                |> Seq.filter (fun n -> n.IsSelected)
+                |> Seq.map (fun n -> n.Name)
+                |> Seq.toList
+                |> Some
+                |> SelectedNames)
+
+            this.OriginalFileName |> Observable.map (fun _ -> SelectedNames None)
         ]
-        |> Seq.cast<IObservable<bool>>
         |> Observable.mergeSeq
-        |> Observable.subscribe (fun _ -> updateNewName None)
+        |> Observable.scanInit
+            {
+                TreatParenthesizedPartAsNames = this.TreatParenthesizedPartAsNames.Value
+                FixupNamesInMainPart = this.FixupNamesInMainPart.Value
+                ReplaceUnderscores = this.ReplaceUnderscores.Value
+                DetectNamesInMainAndNamesParts = this.DetectNamesInMainAndNamesParts.Value
+                SelectedNames = None
+                SelectedFeatures = None
+                Replacements = []
+                AllNames = getAllNames ()
+            }
+            (updateParameters getAllNames)
+        |> Observable.combineLatest this.OriginalFileName
+        |> Observable.subscribe (fun (originalFileName, parameters) ->
+            updateNewName parameters originalFileName)
         |> ignore
 
         this.NewFileName

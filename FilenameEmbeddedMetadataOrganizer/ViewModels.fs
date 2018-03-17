@@ -71,7 +71,7 @@ type NameViewModel(name : string, isSelected : bool, isNew : bool) =
 
     let mutable xIsSelected = isSelected
 
-    member __.Name = name
+    member val Name = ReactiveProperty name
 
     member __.IsSelected
         with get () = xIsSelected
@@ -101,6 +101,7 @@ type MainWindowViewModel() as this =
     let fixupNamesInMainPart = ReactiveProperty false
     let replaceUnderscores = ReactiveProperty true
     let detectNamesInMainAndNamesParts = ReactiveProperty false
+    let recapitalizeNames = ReactiveProperty false
 
     let mutable openCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable openExplorerCommand = Unchecked.defaultof<ReactiveCommand>
@@ -154,16 +155,22 @@ type MainWindowViewModel() as this =
 
     let updateNamesList detectedNames =
         (detectedNames, this.Names)
-        ||> fullOuterJoin id (fun vm -> vm.Name)
+        ||> fullOuterJoin toUpper (fun vm -> vm.Name.Value |> toUpper)
         |> Seq.iter (fun result ->
             match result with
             | LeftOnly vm -> vm.IsSelected <- false
             | RightOnly name ->
                 NameViewModel(name, true, true)
                 |> names.Add
-            | JoinMatch (vm, name) -> vm.IsSelected <- true)
+            | JoinMatch (vm, name) ->
+                vm.Name.Value <- name
+                vm.IsSelected <- true)
 
-    let getAllNames () = this.Names |> Seq.map (fun vm -> vm.Name) |> Seq.toList
+    let getAllNames () =
+        this.Names
+        |> Seq.filter (fun vm -> not vm.IsNew.Value)
+        |> Seq.map (fun vm -> vm.Name.Value)
+        |> Seq.toList
 
     let updateNewName parameters originalFileName =
         let result = rename parameters originalFileName
@@ -319,6 +326,7 @@ type MainWindowViewModel() as this =
             this.FixupNamesInMainPart |> Observable.map FixupNamesInMainPart
             this.ReplaceUnderscores |> Observable.map ReplaceUnderscores
             this.DetectNamesInMainAndNamesParts |> Observable.map DetectNamesInMainAndNamesParts
+            this.RecapitalizeNames |> Observable.map RecapitalizeNames
 
             this.Names.ItemChanged
             |> Observable.filter (fun change ->
@@ -326,7 +334,7 @@ type MainWindowViewModel() as this =
             |> Observable.map (fun _ ->
                 this.Names
                 |> Seq.filter (fun n -> n.IsSelected)
-                |> Seq.map (fun n -> n.Name)
+                |> Seq.map (fun n -> n.Name.Value)
                 |> Seq.toList
                 |> Some
                 |> SelectedNames)
@@ -343,6 +351,7 @@ type MainWindowViewModel() as this =
             {
                 TreatParenthesizedPartAsNames = this.TreatParenthesizedPartAsNames.Value
                 FixupNamesInMainPart = this.FixupNamesInMainPart.Value
+                RecapitalizeNames = this.RecapitalizeNames.Value
                 ReplaceUnderscores = this.ReplaceUnderscores.Value
                 DetectNamesInMainAndNamesParts = this.DetectNamesInMainAndNamesParts.Value
                 SelectedNames = None
@@ -367,7 +376,7 @@ type MainWindowViewModel() as this =
             let names =
                 this.Names
                 |> Seq.filter (fun vm -> not vm.IsNew.Value)
-                |> Seq.map (fun vm -> vm.Name)
+                |> Seq.map (fun vm -> vm.Name.Value)
                 |> Seq.distinct
                 |> Seq.sort
 
@@ -404,6 +413,8 @@ type MainWindowViewModel() as this =
     member __.ReplaceUnderscores : ReactiveProperty<bool> = replaceUnderscores
 
     member __.DetectNamesInMainAndNamesParts : ReactiveProperty<bool> = detectNamesInMainAndNamesParts
+
+    member __.RecapitalizeNames : ReactiveProperty<bool> = recapitalizeNames
 
     member __.OpenCommand = openCommand :> ICommand
     member __.OpenExplorerCommand = openExplorerCommand :> ICommand

@@ -65,6 +65,7 @@ module RenameTests =
             DetectNamesInMainAndNamesParts = false
             FixupNamesInMainPart = false
             ReplaceUnderscores = false
+            RecapitalizeNames = false
             Replacements = []
         }
 
@@ -129,11 +130,56 @@ module RenameTests =
         Assert.StrictEqual (expectedResult, result)
 
     [<Fact>]
-    let ``Detected names are properly capitalized`` () =
+    let ``Detected existing names are properly capitalized`` () =
         // Arrange
         let originalName = "View from mount mackenzie across the rainbow range (mount mackenzie, rainbow range)"
 
         let parameters = baseParameters
+
+        let expectedResult =
+            {
+                NewFileName = "View from mount mackenzie across the rainbow range (.Mount MacKenzie.rainbow range.)"
+                DetectedNames = [ "Mount MacKenzie"; "rainbow range" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Detected new names are not automatically capitalized`` () =
+        // Arrange
+        let originalName = "View from mount mcloughlin across the cascades range (Mount McLoughlin, cascades range)"
+
+        let parameters = baseParameters
+
+        let expectedResult =
+            {
+                NewFileName = "View from mount mcloughlin across the cascades range (.cascades range.Mount McLoughlin.)"
+                DetectedNames = [ "cascades range"; "Mount McLoughlin" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Selected new names can change capitalization`` () =
+        // Arrange
+        let originalName = "View from mount mackenzie across the rainbow range (mount mackenzie, rainbow range)"
+
+        let parameters =
+            {
+                baseParameters with
+                    SelectedNames = Some [ "Mount MacKenzie"; "rainbow range" ]
+                    RecapitalizeNames = true
+            }
 
         let expectedResult =
             {
@@ -156,6 +202,7 @@ module RenameTests =
         let parameters =
             {
                 baseParameters with
+                    RecapitalizeNames = true
                     FixupNamesInMainPart = true
             }
 

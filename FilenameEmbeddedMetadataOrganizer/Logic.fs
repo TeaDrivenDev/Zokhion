@@ -67,6 +67,7 @@ module Logic =
             TreatParenthesizedPartAsNames : bool
             DetectNamesInMainAndNamesParts : bool
             FixupNamesInMainPart : bool
+            RecapitalizeNames : bool
             ReplaceUnderscores : bool
             Replacements : (string * string) list
         }
@@ -74,6 +75,7 @@ module Logic =
     type OptionChange =
         | TreatParenthesizedPartAsNames of bool
         | FixupNamesInMainPart of bool
+        | RecapitalizeNames of bool
         | ReplaceUnderscores of bool
         | DetectNamesInMainAndNamesParts of bool
         | SelectedNames of string list option
@@ -86,6 +88,8 @@ module Logic =
             { parameters with TreatParenthesizedPartAsNames = value }
         | FixupNamesInMainPart value ->
             { parameters with FixupNamesInMainPart = value }
+        | RecapitalizeNames value ->
+            { parameters with RecapitalizeNames = value }
         | ReplaceUnderscores value ->
             { parameters with ReplaceUnderscores = value }
         | DetectNamesInMainAndNamesParts value ->
@@ -166,7 +170,8 @@ module Logic =
             ||> fullOuterJoin toUpper toUpper
             |> Seq.choose (function
                 | LeftOnly _ -> None
-                | RightOnly detected -> detected |> toTitleCase |> Some
+                | RightOnly detected ->
+                    detected |> (if parameters.RecapitalizeNames then toTitleCase else id) |> Some
                 | JoinMatch (listed, detected) -> Some listed)
             |> Seq.distinct
             |> Seq.toList
@@ -174,8 +179,18 @@ module Logic =
 
         let namesToUse =
             parameters.SelectedNames
+            |> Option.map (fun selected ->
+                (parameters.AllNames, selected)
+                ||> leftJoin toUpper toUpper
+                |> Seq.map (function
+                    | selected, Some inAll -> selected
+                    | selected, None ->
+                        detectedNames
+                        |> List.tryFind (toUpper >> ((=) (toUpper selected)))
+                        |> Option.defaultValue selected)
+                |> Seq.toList)
             |> Option.defaultValue detectedNames
-            |> List.sort
+            |> List.sortBy toUpper
 
         let mainPart =
             if parameters.FixupNamesInMainPart

@@ -112,6 +112,7 @@ type MainWindowViewModel() as this =
     let newNameToAdd = ReactiveProperty ""
     let mutable addNameCommand = Unchecked.defaultof<ReactiveCommand>
     let names = ReactiveList([], 0.5, DispatcherScheduler(Application.Current.Dispatcher), ChangeTrackingEnabled = true)
+    let mutable resetNameSelectionCommand = Unchecked.defaultof<ReactiveCommand>
 
     let addFeatureRoot = ReactiveProperty false
     let featureToAdd = ReactiveProperty<string>()
@@ -218,6 +219,8 @@ type MainWindowViewModel() as this =
                 if not <| String.IsNullOrWhiteSpace name
                 then
                     NameViewModel(name, false, false) |> this.Names.Add)
+
+        resetNameSelectionCommand <- ReactiveCommand.Create(fun () -> ignore ())
 
         addFeatureCommand <-
             ReactiveCommand.Create(fun () ->
@@ -329,6 +332,11 @@ type MainWindowViewModel() as this =
                 |> SelectedNames)
 
             this.OriginalFileName |> Observable.map (fun _ -> SelectedNames None)
+
+            this.ResetNameSelectionCommand.IsExecuting
+            |> Observable.distinctUntilChanged
+            |> Observable.filter id
+            |> Observable.map (fun _ -> SelectedNames None)
         ]
         |> Observable.mergeSeq
         |> Observable.scanInit
@@ -409,6 +417,8 @@ type MainWindowViewModel() as this =
     member __.AddNameCommand = addNameCommand :> ICommand
 
     member __.Names : ReactiveList<NameViewModel> = names
+
+    member __.ResetNameSelectionCommand : ReactiveCommand = resetNameSelectionCommand
 
     member __.AddFeatureRoot : ReactiveProperty<bool> = addFeatureRoot
 

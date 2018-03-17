@@ -6,6 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="clr-namespace:FilenameEmbeddedMetadataOrganizer.UIHelper;assembly=FilenameEmbeddedMetadataOrganizer"
         xmlns:viewModels="clr-namespace:FilenameEmbeddedMetadataOrganizer.ViewModels;assembly=FilenameEmbeddedMetadataOrganizer"
+        x:Name="MainWindowView"
         Title="Filename Embedded Metadata Organizer"
         Width="1600"
         Height="900"
@@ -234,6 +235,26 @@
                           Margin="4"
                           Header="Names"
                           Style="{DynamicResource MaterialDesignCardGroupBox}">
+                    <GroupBox.HeaderTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="Names" />
+                                <Button Grid.Column="1"
+                                        Height="16"
+                                        Padding="0,-10"
+                                        Command="{Binding ElementName=MainWindowView,
+                                                          Path=DataContext.ResetNameSelectionCommand}"
+                                        ToolTip="Reset selection">
+                                    <materialDesign:PackIcon Kind="Reload" />
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </GroupBox.HeaderTemplate>
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />

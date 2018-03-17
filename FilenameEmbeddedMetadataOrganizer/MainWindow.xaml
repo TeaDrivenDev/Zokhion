@@ -6,9 +6,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="clr-namespace:FilenameEmbeddedMetadataOrganizer.UIHelper;assembly=FilenameEmbeddedMetadataOrganizer"
         xmlns:viewModels="clr-namespace:FilenameEmbeddedMetadataOrganizer.ViewModels;assembly=FilenameEmbeddedMetadataOrganizer"
-        Title="MainWindow"
-        Width="1200"
-        Height="800"
+        Title="Filename Embedded Metadata Organizer"
+        Width="1600"
+        Height="900"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{StaticResource MaterialDesignFont}"
         TextElement.FontSize="13"
@@ -320,10 +320,10 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <CheckBox x:Name="AddFeatureRoot"
-                                      Grid.Column="0"
-                                      VerticalAlignment="Center"
-                                      IsChecked="{Binding AddFeatureRoot.Value}" />
+                            <ToggleButton x:Name="AddFeatureRoot"
+                                          Grid.Column="0"
+                                          VerticalAlignment="Center"
+                                          IsChecked="{Binding AddFeatureRoot.Value}" />
 
                             <TextBox Grid.Column="1"
                                      Margin="2"

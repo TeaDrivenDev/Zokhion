@@ -200,11 +200,18 @@ type MainWindowViewModel() as this =
 
         openExplorerCommand <-
             ReactiveCommand.Create(fun (fi: FileInfo) ->
-                fi.FullName
-                |> sprintf "/select, \"%s\""
-                |> asSnd "explorer.exe"
-                |> Process.Start
-                |> ignore)
+                if not <| isNull fi
+                then
+                    fi.FullName
+                    |> sprintf "/select, \"%s\""
+                    |> Some
+                elif not <| String.IsNullOrWhiteSpace this.SelectedDirectory.Value
+                then
+                    Path.Combine(this.BaseDirectory.Value, this.SelectedDirectory.Value)
+                    |> sprintf "\"%s\""
+                    |> Some
+                else None
+                |> Option.iter (asSnd "explorer.exe" >> Process.Start >> ignore))
 
         addNameCommand <-
             ReactiveCommand.Create(fun name ->
@@ -289,10 +296,14 @@ type MainWindowViewModel() as this =
         |> Observable.subscribe (fun fi ->
             if not <| isNull fi
             then
-                this.Names
-                |> Seq.filter (fun vm -> vm.IsNew.Value)
-                |> Seq.toList
-                |> List.iter (this.Names.Remove >> ignore)
+                let newNamesToRemove =
+                    this.Names
+                    |> Seq.filter (fun vm -> vm.IsNew.Value)
+                    |> Seq.toList
+
+                let successes =
+                    newNamesToRemove
+                    |> List.map (fun vm -> vm.Name, this.Names.Remove vm)
 
                 updateDestinationDirectories fi.FullName
 

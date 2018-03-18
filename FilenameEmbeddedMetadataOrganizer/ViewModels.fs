@@ -339,11 +339,15 @@ type MainWindowViewModel() as this =
                 |> Some
                 |> SelectedNames)
 
-            this.OriginalFileName |> Observable.map (fun _ -> SelectedNames None)
+            [
+                this.OriginalFileName |> Observable.map ignore
 
-            this.ResetNameSelectionCommand.IsExecuting
-            |> Observable.distinctUntilChanged
-            |> Observable.filter id
+                this.ResetNameSelectionCommand.IsExecuting
+                |> Observable.distinctUntilChanged
+                |> Observable.filter id
+                |> Observable.map ignore
+            ]
+            |> Observable.mergeSeq
             |> Observable.map (fun _ -> SelectedNames None)
         ]
         |> Observable.mergeSeq

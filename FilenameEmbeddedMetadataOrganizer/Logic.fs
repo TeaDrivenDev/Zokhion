@@ -85,7 +85,11 @@ module Logic =
 
         match change with
         | TreatParenthesizedPartAsNames value ->
-            { parameters with TreatParenthesizedPartAsNames = value }
+            {
+                parameters with
+                    TreatParenthesizedPartAsNames = value
+                    SelectedNames = None
+            }
         | FixupNamesInMainPart value ->
             { parameters with FixupNamesInMainPart = value }
         | RecapitalizeNames value ->

@@ -93,7 +93,11 @@ module Logic =
         | ReplaceUnderscores value ->
             { parameters with ReplaceUnderscores = value }
         | DetectNamesInMainAndNamesParts value ->
-            { parameters with DetectNamesInMainAndNamesParts = value }
+            {
+                parameters with
+                    DetectNamesInMainAndNamesParts = value
+                    SelectedNames = None
+            }
         | SelectedNames value ->
             { parameters with SelectedNames = value }
 

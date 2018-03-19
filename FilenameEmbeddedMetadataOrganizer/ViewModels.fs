@@ -218,6 +218,10 @@ type MainWindowViewModel() as this =
         readFeatures baseDirectory
         |> List.iter (FeatureViewModel >> features.Add)
 
+        features
+        |> Seq.collect (fun vm -> vm.Instances)
+        |> featureInstances.AddRange
+
     do
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
 
@@ -370,6 +374,14 @@ type MainWindowViewModel() as this =
             ]
             |> Observable.mergeSeq
             |> Observable.map (fun _ -> SelectedNames None)
+
+            this.FeatureInstances.ItemChanged
+            |> Observable.filter (fun change -> change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
+            |> Observable.map (fun _ ->
+                this.SelectedFeatureInstances
+                |> Seq.toList
+                |> Some
+                |> SelectedFeatures)
         ]
         |> Observable.mergeSeq
         |> Observable.scanInit

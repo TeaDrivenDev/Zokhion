@@ -162,6 +162,7 @@ module Logic =
         | ReplaceUnderscores of bool
         | DetectNamesInMainAndNamesParts of bool
         | SelectedNames of string list option
+        | SelectedFeatures of string list option
 
     let updateParameters getAllNames parameters change =
         let parameters = { parameters with AllNames = getAllNames () }
@@ -187,6 +188,8 @@ module Logic =
             }
         | SelectedNames value ->
             { parameters with SelectedNames = value }
+        | SelectedFeatures value ->
+            { parameters with SelectedFeatures = value }
 
     type RenameResult =
         {

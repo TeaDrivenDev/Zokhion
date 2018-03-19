@@ -18,7 +18,7 @@ type MainWindowBase = XAML<"MainWindow.xaml">
 type MainWindow() as this =
     inherit MainWindowBase()
 
-    let onClosing (_ : CancelEventArgs) = this.ViewModel.ShutDown()
+    let onClosing (_ : CancelEventArgs) = this.ViewModel.Shutdown()
 
     do
         this.Closing.Add onClosing

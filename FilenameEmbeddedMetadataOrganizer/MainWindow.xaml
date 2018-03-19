@@ -415,9 +415,9 @@
                                     <HierarchicalDataTemplate x:Key="FeatureRootDataTemplate"
                                                               DataType="viewModels:FeatureViewModel"
                                                               ItemsSource="{Binding Instances}">
-                                        <TextBlock Foreground="{StaticResource SecondaryAccentForegroundBrush}">
+                                        <TextBlock Foreground="{StaticResource MaterialDesignBody}">
                                             <TextBlock.Text>
-                                                <MultiBinding StringFormat="{}{0} ({1})">
+                                                <MultiBinding StringFormat="{}{0}: {1}">
                                                     <Binding Path="FeatureName" />
                                                     <Binding Path="FeatureCode" />
                                                 </MultiBinding>
@@ -429,9 +429,9 @@
                                                               ItemsSource="{Binding Instances}">
                                         <CheckBox Margin="0,3"
                                                   IsChecked="{Binding IsSelected}">
-                                            <TextBlock Foreground="{StaticResource SecondaryAccentForegroundBrush}">
+                                            <TextBlock Foreground="{StaticResource MaterialDesignBody}">
                                                 <TextBlock.Text>
-                                                    <MultiBinding StringFormat="{}{0}: ({1})">
+                                                    <MultiBinding StringFormat="{}{0}: {1}">
                                                         <Binding Path="InstanceName" />
                                                         <Binding Path="InstanceCode" />
                                                     </MultiBinding>

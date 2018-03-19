@@ -49,6 +49,89 @@ module Prelude =
             | None, None -> failwith "This can never happen.")
 
 [<AutoOpen>]
+module Persistence =
+    open System.IO
+    open System.Text.RegularExpressions
+
+    type Feature = { Name : string; Code : string;Instances : FeatureInstance list }
+    and FeatureInstance = { Name : string; Code : string }
+
+    let featuresFilePath directory = Path.Combine(directory, ".features")
+
+    let serializeFeatures features =
+        let serializeInstance featureCode instance =
+            sprintf "\t%s%s|%s"featureCode instance.Code instance.Name
+
+        let serializeFeature (feature : Feature) =
+            [
+                yield sprintf "%s|%s"feature.Code feature.Name
+
+                yield! feature.Instances |> List.map (serializeInstance feature.Code)
+            ]
+
+        features |> List.collect serializeFeature
+
+    let writeFeatures directory (features : Feature list) =
+        features
+        |> List.sortBy (fun f -> f.Code)
+        |> serializeFeatures
+        |> asSnd (featuresFilePath directory)
+        |> File.WriteAllLines
+
+    let instanceRegex = Regex "^\t(?<code>.+)\\|(?<name>.+)$"
+    let featureRegex = Regex "^(?<code>.+)\\|(?<name>.+)$"
+
+    let deserializeFeatures serialized =
+        let (|Instance|_|) featureCode s =
+            let m = instanceRegex.Match s
+
+            if m.Success
+            then Some (m.Groups.["name"].Value, Regex.Replace(m.Groups.["code"].Value, "^" + featureCode, ""))
+            else None
+
+        let (|Feature|_|) s =
+            let m = featureRegex.Match s
+
+            if m.Success
+            then Some (m.Groups.["name"].Value, m.Groups.["code"].Value)
+            else None
+
+        let rec getInstances featureCode lines =
+            match lines with
+            | Instance featureCode (name, code) :: tail ->
+                let instances, tail = getInstances featureCode tail
+                (name, code) :: instances, tail
+            | _ -> [], lines
+
+        let rec deserialize lines =
+            match lines with
+            | Feature (name, code) :: tail ->
+                let instances, tail = getInstances code tail
+
+                {
+                    Name = name
+                    Code = code
+                    Instances =
+                        instances
+                        |> List.map (fun (name, code) -> { Name = name; Code = code })
+                }
+                :: deserialize tail
+            | _ -> []
+
+        deserialize serialized
+
+    let readFeatures directory =
+        let featuresFilePath = featuresFilePath directory
+
+        if File.Exists featuresFilePath
+        then
+            featuresFilePath
+            |> File.ReadAllLines
+            |> Array.toList
+            |> deserializeFeatures
+        else []
+
+[<AutoOpen>]
 module Logic =
     open System
     open System.Globalization

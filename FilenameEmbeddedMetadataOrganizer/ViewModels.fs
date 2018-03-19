@@ -43,27 +43,42 @@ module Utility =
         let lambda = toLambda exp
         Expression.Lambda<Func<'a, 'b>>(lambda.Body, lambda.Parameters)
 
-type FeatureViewModel(name : string, code : string) =
+type FeatureViewModel(feature : Feature) as this =
     inherit ReactiveObject()
 
-    member __.FeatureName = name
+    let instances = ReactiveList<FeatureInstanceViewModel>()
 
-    member __.FeatureCode = code
+    do
+        match this with
+        | :? FeatureInstanceViewModel -> ()
+        | _ ->
+            feature.Instances
+            |> List.map (fun instance -> FeatureInstanceViewModel(feature, instance))
+            |> instances.AddRange
 
-    member val Instances = ReactiveList<FeatureInstanceViewModel>()
+    member __.FeatureName = feature.Name
 
-and FeatureInstanceViewModel(featureName : string, featureCode : string, instanceName : string, instanceCode : string) =
-    inherit FeatureViewModel(featureName, featureCode)
+    member __.FeatureCode = feature.Code
+
+    member __.Instances = instances
+
+    member __.Feature =
+        { feature with Instances = instances |> Seq.map (fun vm -> vm.Instance) |> Seq.toList }
+
+and FeatureInstanceViewModel(feature : Feature, instance : FeatureInstance) =
+    inherit FeatureViewModel(feature)
 
     let mutable isSelected = false
 
-    member __.InstanceName = instanceName
+    member __.InstanceName = instance.Name
 
-    member __.InstanceCode = instanceCode
+    member __.InstanceCode = instance.Code
 
     member __.IsSelected
         with get () = isSelected
         and set value = __.RaiseAndSetIfChanged(&isSelected, value, nameof <@ __.IsSelected @>) |> ignore
+
+    member __.Instance = instance
 
 [<AllowNullLiteral>]
 type NameViewModel(name : string, isSelected : bool, isNew : bool) =
@@ -200,6 +215,9 @@ type MainWindowViewModel() as this =
             names
             |> Seq.iter (fun name -> NameViewModel(name, false, false) |> this.Names.Add)
 
+        readFeatures baseDirectory
+        |> List.iter (FeatureViewModel >> features.Add)
+
     do
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
 
@@ -236,18 +254,21 @@ type MainWindowViewModel() as this =
                 then
                     if this.AddFeatureRoot.Value
                     then
-                        FeatureViewModel(this.FeatureToAdd.Value, this.FeatureCodeToAdd.Value)
+                        FeatureViewModel({ Name = this.FeatureToAdd.Value; Code = this.FeatureCodeToAdd.Value; Instances = [] })
                         |> features.Add
                     else
                         match this.SelectedFeature.Value with
                         | :? FeatureInstanceViewModel -> ()
                         | :? FeatureViewModel as feature ->
                             let instance =
-                                FeatureInstanceViewModel(feature.FeatureName, feature.FeatureCode, this.FeatureToAdd.Value, this.FeatureCodeToAdd.Value)
+                                FeatureInstanceViewModel(feature.Feature, { Name = this.FeatureToAdd.Value; Code = this.FeatureCodeToAdd.Value })
 
                             feature.Instances.Add instance
                             featureInstances.Add instance
-                        | _ -> ())
+                        | _ -> ()
+
+                    this.FeatureToAdd.Value <- ""
+                    this.FeatureCodeToAdd.Value <- "")
 
         this.FeatureInstances.ItemChanged
         |> Observable.filter (fun change -> change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
@@ -374,7 +395,7 @@ type MainWindowViewModel() as this =
         |> Observable.subscribe (fun _ -> updateResultingFilePath ())
         |> ignore
 
-    member __.ShutDown () =
+    member __.Shutdown () =
         if Directory.Exists this.BaseDirectory.Value
         then
             let names =
@@ -389,6 +410,13 @@ type MainWindowViewModel() as this =
                 let namesFilePath = Path.Combine(this.BaseDirectory.Value, ".names")
 
                 File.WriteAllLines(namesFilePath, names)
+
+            if not <| Seq.isEmpty this.Features
+            then
+                this.Features
+                |> Seq.map (fun vm -> vm.Feature)
+                |> Seq.toList
+                |> writeFeatures this.BaseDirectory.Value
 
     member __.BaseDirectory : ReactiveProperty<string> = baseDirectory
 

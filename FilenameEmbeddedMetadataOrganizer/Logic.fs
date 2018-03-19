@@ -299,8 +299,8 @@ module Logic =
             |> Option.map List.sort
 
         let featuresToUse =
-            detectedFeatures
-            |> Option.orElse parameters.SelectedFeatures
+            parameters.SelectedFeatures
+            |> Option.orElse detectedFeatures
             |> Option.map List.sort
 
         let names =
@@ -319,14 +319,17 @@ module Logic =
         let features =
             featuresToUse
             |> Option.map (fun features ->
-                [
-                    yield "["
+                match features with
+                | [] -> ""
+                | _ ->
+                    [
+                        yield "["
 
-                    yield! features
+                        yield! features
 
-                    yield "]"
-                ]
-                |> String.concat ".")
+                        yield "]"
+                    ]
+                    |> String.concat ".")
             |> Option.defaultValue ""
 
         let newFileName =

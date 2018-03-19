@@ -43,6 +43,7 @@ module Utility =
         let lambda = toLambda exp
         Expression.Lambda<Func<'a, 'b>>(lambda.Body, lambda.Parameters)
 
+[<AllowNullLiteral>]
 type FeatureViewModel(feature : Feature) as this =
     inherit ReactiveObject()
 
@@ -65,7 +66,8 @@ type FeatureViewModel(feature : Feature) as this =
     member __.Feature =
         { feature with Instances = instances |> Seq.map (fun vm -> vm.Instance) |> Seq.toList }
 
-and FeatureInstanceViewModel(feature : Feature, instance : FeatureInstance) =
+and [<AllowNullLiteral>]
+    FeatureInstanceViewModel(feature : Feature, instance : FeatureInstance) =
     inherit FeatureViewModel(feature)
 
     let mutable isSelected = false
@@ -73,6 +75,8 @@ and FeatureInstanceViewModel(feature : Feature, instance : FeatureInstance) =
     member __.InstanceName = instance.Name
 
     member __.InstanceCode = instance.Code
+
+    member __.CompositeInstanceCode = feature.Code + instance.Code
 
     member __.IsSelected
         with get () = isSelected
@@ -171,8 +175,7 @@ type MainWindowViewModel() as this =
     let updateNamesList detectedNames =
         (detectedNames, this.Names)
         ||> fullOuterJoin toUpper (fun vm -> vm.Name.Value |> toUpper)
-        |> Seq.iter (fun result ->
-            match result with
+        |> Seq.iter (function
             | LeftOnly vm -> vm.IsSelected <- false
             | RightOnly name ->
                 NameViewModel(name, true, true)
@@ -180,6 +183,14 @@ type MainWindowViewModel() as this =
             | JoinMatch (vm, name) ->
                 vm.Name.Value <- name
                 vm.IsSelected <- true)
+
+    let updateSelectedFeatures selectedFeatures =
+        (selectedFeatures, featureInstances)
+        ||> fullOuterJoin id (fun (vm : FeatureInstanceViewModel) -> vm.CompositeInstanceCode)
+        |> Seq.iter (function
+            | LeftOnly vm -> vm.IsSelected <- false
+            | RightOnly _ -> ()
+            | JoinMatch (vm, _) -> vm.IsSelected <- true)
 
     let getAllNames () =
         this.Names
@@ -193,6 +204,9 @@ type MainWindowViewModel() as this =
 
         result.DetectedNames
         |> updateNamesList
+
+        result.DetectedFeatures
+        |> updateSelectedFeatures
 
     let updateResultingFilePath () =
         if not <| isNull this.SelectedDestinationDirectory.Value

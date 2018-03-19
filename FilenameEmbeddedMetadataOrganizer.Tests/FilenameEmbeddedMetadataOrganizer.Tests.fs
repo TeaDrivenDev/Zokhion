@@ -488,6 +488,54 @@ module RenameTests =
         Assert.StrictEqual (expectedResult, result)
 
     [<Fact>]
+    let ``Features can be added`` () =
+        // Arrange
+        let originalName = "Aerial view over Uluru at night [.Ax.Xx.]"
+
+        let parameters =
+            {
+                baseParameters with
+                    SelectedFeatures = Some [ "Ax"; "Xx"; "Bd" ]
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "Aerial view over Uluru at night (.Uluru.) [.Ax.Bd.Xx.]"
+                DetectedNames = [ "Uluru" ]
+                DetectedFeatures = [ "Ax"; "Bd"; "Xx" ]
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``An empty selected features list is omitted`` () =
+        // Arrange
+        let originalName = "Aerial view over Uluru at night [.Ax.Xx.]"
+
+        let parameters =
+            {
+                baseParameters with
+                    SelectedFeatures = Some []
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "Aerial view over Uluru at night (.Uluru.)"
+                DetectedNames = [ "Uluru" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
     let ``Underscores are not replaced by default`` () =
         // Arrange
         let originalName = "Here_is_the_thing"

@@ -90,60 +90,60 @@ type NameViewModel(name : string, isSelected : bool, isNew : bool) =
 
     let mutable xIsSelected = isSelected
 
-    member val Name = ReactiveProperty name
+    member val Name = new ReactiveProperty<_>(name)
 
     member __.IsSelected
         with get () = xIsSelected
         and set value = __.RaiseAndSetIfChanged(&xIsSelected, value, nameof <@ __.IsSelected @>) |> ignore
 
-    member val IsNew : ReactiveProperty<bool> = ReactiveProperty isNew
+    member val IsNew : ReactiveProperty<bool> = new ReactiveProperty<_>(isNew)
 
     member __.ClearNewFlagCommand = ReactiveCommand.Create(fun () -> __.IsNew.Value <- false)
 
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
-    let baseDirectory = ReactiveProperty("", ReactivePropertyMode.None)
-    let sourceDirectoryPrefixes = ReactiveProperty("", ReactivePropertyMode.RaiseLatestValueOnSubscribe)
-    let selectedDirectory = ReactiveProperty("", ReactivePropertyMode.None)
+    let baseDirectory = new ReactiveProperty<_>("", ReactivePropertyMode.None)
+    let sourceDirectoryPrefixes = new ReactiveProperty<_>("", ReactivePropertyMode.RaiseLatestValueOnSubscribe)
+    let selectedDirectory = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let directories = ObservableCollection()
 
-    let searchString = ReactiveProperty<string>("", ReactivePropertyMode.None)
-    let searchFromBaseDirectory = ReactiveProperty(false, ReactivePropertyMode.None)
-    let selectedFile = ReactiveProperty<FileInfo>(Unchecked.defaultof<FileInfo>, ReactivePropertyMode.None)
+    let searchString = new ReactiveProperty<_>("", ReactivePropertyMode.None)
+    let searchFromBaseDirectory = new ReactiveProperty<_>(false, ReactivePropertyMode.None)
+    let selectedFile = new ReactiveProperty<_>(Unchecked.defaultof<FileInfo>, ReactivePropertyMode.None)
     let files = ObservableCollection()
 
-    let originalFileName = ReactiveProperty("", ReactivePropertyMode.None)
-    let newFileName = ReactiveProperty("", ReactivePropertyMode.None)
+    let originalFileName = new ReactiveProperty<_>("", ReactivePropertyMode.None)
+    let newFileName = new ReactiveProperty<_>("", ReactivePropertyMode.None)
 
-    let treatParenthesizedPartAsNames = ReactiveProperty true
-    let fixupNamesInMainPart = ReactiveProperty false
-    let replaceUnderscores = ReactiveProperty true
-    let detectNamesInMainAndNamesParts = ReactiveProperty false
-    let recapitalizeNames = ReactiveProperty false
+    let treatParenthesizedPartAsNames = new ReactiveProperty<_>(true)
+    let fixupNamesInMainPart = new ReactiveProperty<_>(false)
+    let replaceUnderscores = new ReactiveProperty<_>(true)
+    let detectNamesInMainAndNamesParts = new ReactiveProperty<_>(false)
+    let recapitalizeNames = new ReactiveProperty<_>(false)
 
     let mutable openCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable openExplorerCommand = Unchecked.defaultof<ReactiveCommand>
 
     let selectedDestinationDirectory =
-        ReactiveProperty<DirectoryInfo>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
+        new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
     let destinationDirectories = ObservableCollection()
 
-    let newNameToAdd = ReactiveProperty ""
+    let newNameToAdd = new ReactiveProperty<_>("")
     let mutable addNameCommand = Unchecked.defaultof<ReactiveCommand>
     let names = ReactiveList([], 0.5, DispatcherScheduler(Application.Current.Dispatcher), ChangeTrackingEnabled = true)
     let mutable resetNameSelectionCommand = Unchecked.defaultof<ReactiveCommand>
 
-    let addFeatureRoot = ReactiveProperty false
-    let featureToAdd = ReactiveProperty<string>()
-    let featureCodeToAdd = ReactiveProperty<string>()
+    let addFeatureRoot = new ReactiveProperty<_>(false)
+    let featureToAdd = new ReactiveProperty<_>()
+    let featureCodeToAdd = new ReactiveProperty<_>()
     let mutable addFeatureCommand = Unchecked.defaultof<ReactiveCommand>
     let selectedFeature =
-        ReactiveProperty<FeatureViewModel>(Unchecked.defaultof<FeatureViewModel>, ReactivePropertyMode.None)
+        new ReactiveProperty<_>(Unchecked.defaultof<FeatureViewModel>, ReactivePropertyMode.None)
     let features = ReactiveList()
     let featureInstances = ReactiveList(ChangeTrackingEnabled = true)
 
-    let resultingFilePath = ReactiveProperty("", ReactivePropertyMode.None)
+    let resultingFilePath = new ReactiveProperty<_>("", ReactivePropertyMode.None)
 
     let getFiles directory part =
         Directory.GetFiles(Path.Combine(this.BaseDirectory.Value, directory), sprintf "*%s*" part, SearchOption.AllDirectories)

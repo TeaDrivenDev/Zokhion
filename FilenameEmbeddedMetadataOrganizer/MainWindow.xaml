@@ -79,6 +79,7 @@
             </Grid>
             <ListBox Grid.Row="1"
                      Margin="5"
+                     DisplayMemberPath="Name"
                      ItemsSource="{Binding Directories}"
                      SelectedItem="{Binding SelectedDirectory.Value}" />
             <Grid Grid.Row="2">
@@ -90,13 +91,15 @@
                          Height="25"
                          Margin="5"
                          materialDesign:HintAssist.Hint="Search"
+                         IsEnabled="{Binding IsSearchEnabled.Value}"
                          Text="{Binding SearchString.Value,
                                         UpdateSourceTrigger=PropertyChanged}"
                          TextWrapping="NoWrap" />
                 <CheckBox Grid.Column="1"
                           Margin="0,0,5,0"
                           Content="From root"
-                          IsChecked="{Binding SearchFromBaseDirectory.Value}" />
+                          IsChecked="{Binding SearchFromBaseDirectory.Value}"
+                          IsEnabled="{Binding IsSearchEnabled.Value}" />
             </Grid>
 
             <ListBox x:Name="Files"
@@ -473,6 +476,7 @@
                     <Button Grid.Column="1"
                             Width="100"
                             Height="30"
+                            Command="{Binding ApplyCommand}"
                             Content="Apply" />
                 </Grid>
             </Grid>

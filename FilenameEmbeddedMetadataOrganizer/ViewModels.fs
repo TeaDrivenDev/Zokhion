@@ -23,6 +23,7 @@ module Utility =
     open System.Linq.Expressions
     open FSharp.Quotations
 
+    // see https://stackoverflow.com/a/48311816/236507
     let nameof (q:Expr<_>) =
         match q with
         | Patterns.Let(_, _, DerivedPatterns.Lambdas(_, Patterns.Call(_, mi, _))) -> mi.Name
@@ -105,10 +106,12 @@ type MainWindowViewModel() as this =
 
     let baseDirectory = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let sourceDirectoryPrefixes = new ReactiveProperty<_>("", ReactivePropertyMode.RaiseLatestValueOnSubscribe)
-    let selectedDirectory = new ReactiveProperty<_>("", ReactivePropertyMode.None)
+    let selectedDirectory = new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
     let directories = ObservableCollection()
 
     let searchString = new ReactiveProperty<_>("", ReactivePropertyMode.None)
+    let isSearchEnabled =
+        new ReactiveProperty<bool>(selectedDirectory |> Observable.map (isNull >> not))
     let searchFromBaseDirectory = new ReactiveProperty<_>(false, ReactivePropertyMode.None)
     let selectedFile = new ReactiveProperty<_>(Unchecked.defaultof<FileInfo>, ReactivePropertyMode.None)
     let files = ObservableCollection()
@@ -144,9 +147,10 @@ type MainWindowViewModel() as this =
     let featureInstances = ReactiveList(ChangeTrackingEnabled = true)
 
     let resultingFilePath = new ReactiveProperty<_>("", ReactivePropertyMode.None)
+    let mutable applyCommand = Unchecked.defaultof<ReactiveCommand>
 
     let getFiles directory part =
-        Directory.GetFiles(Path.Combine(this.BaseDirectory.Value, directory), sprintf "*%s*" part, SearchOption.AllDirectories)
+        Directory.GetFiles(directory, sprintf "*%s*" part, SearchOption.AllDirectories)
         |> Seq.map FileInfo
         |> Seq.filter (fun fi -> (fi.Name |> Path.GetFileNameWithoutExtension |> toUpper).Contains(toUpper part))
         |> Seq.sortBy (fun fi -> fi.Name)
@@ -240,7 +244,9 @@ type MainWindowViewModel() as this =
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
 
         openCommand <-
-            ReactiveCommand.Create(fun (fi : FileInfo) -> Process.Start fi.FullName |> ignore)
+            ReactiveCommand.Create(
+                (fun (fi : FileInfo) -> Process.Start fi.FullName |> ignore),
+                this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists))
 
         openExplorerCommand <-
             ReactiveCommand.Create(fun (fi: FileInfo) ->
@@ -249,9 +255,9 @@ type MainWindowViewModel() as this =
                     fi.FullName
                     |> sprintf "/select, \"%s\""
                     |> Some
-                elif not <| String.IsNullOrWhiteSpace this.SelectedDirectory.Value
+                elif not <| isNull this.SelectedDirectory.Value
                 then
-                    Path.Combine(this.BaseDirectory.Value, this.SelectedDirectory.Value)
+                    this.SelectedDirectory.Value.FullName
                     |> sprintf "\"%s\""
                     |> Some
                 else None
@@ -288,6 +294,11 @@ type MainWindowViewModel() as this =
                     this.FeatureToAdd.Value <- ""
                     this.FeatureCodeToAdd.Value <- "")
 
+        applyCommand <-
+            ReactiveCommand.Create(
+                (fun () -> File.Move(this.SelectedFile.Value.FullName, this.ResultingFilePath.Value)),
+                this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists))
+
         this.FeatureInstances.ItemChanged
         |> Observable.filter (fun change -> change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
         |> Observable.subscribe (fun _ -> this.RaisePropertyChanged(nameof <@ this.SelectedFeatureInstances @>))
@@ -302,12 +313,12 @@ type MainWindowViewModel() as this =
                 directories.Clear()
 
                 Directory.GetDirectories dir
-                |> Seq.map Path.GetFileName
-                |> Seq.filter (fun s ->
+                |> Seq.map DirectoryInfo
+                |> Seq.filter (fun di ->
                     match prefixes with
                     | "" -> true
-                    | _ -> prefixes |> Seq.exists (string >> s.StartsWith))
-                |> Seq.sort
+                    | _ -> prefixes |> Seq.exists (string >> di.Name.StartsWith))
+                |> Seq.sortBy (fun di -> di.Name)
                 |> Seq.iter directories.Add
 
                 loadSettings dir)
@@ -317,9 +328,10 @@ type MainWindowViewModel() as this =
         |> Observable.subscribe (fun dir ->
             files.Clear()
 
-            if not <| String.IsNullOrWhiteSpace dir
+            if not <| isNull dir
             then
-                Directory.GetFiles(Path.Combine(this.BaseDirectory.Value, dir), "*", SearchOption.AllDirectories)
+                // TODO Deduplicate with getFiles
+                Directory.GetFiles(dir.FullName, "*", SearchOption.AllDirectories)
                 |> Seq.map FileInfo
                 |> Seq.sortBy (fun fi -> fi.Name)
                 |> Seq.iter files.Add)
@@ -335,7 +347,7 @@ type MainWindowViewModel() as this =
         |> Observable.iter (fun _ ->  files.Clear())
         |> Observable.observeOn Scheduler.Default
         |> Observable.map (fun (searchString, flag) ->
-            getFiles (if flag then "" else this.SelectedDirectory.Value) searchString)
+            getFiles (if flag then this.BaseDirectory.Value else this.SelectedDirectory.Value.FullName) searchString)
         |> Observable.switch
         |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.subscribe files.Add
@@ -448,11 +460,13 @@ type MainWindowViewModel() as this =
 
     member __.SourceDirectoryPrefixes = sourceDirectoryPrefixes
 
-    member __.SelectedDirectory : ReactiveProperty<string> = selectedDirectory
+    member __.SelectedDirectory : ReactiveProperty<DirectoryInfo> = selectedDirectory
 
     member __.Directories = directories
 
     member __.SearchString = searchString
+
+    member __.IsSearchEnabled = isSearchEnabled
 
     member __.SearchFromBaseDirectory = searchFromBaseDirectory
 
@@ -509,3 +523,5 @@ type MainWindowViewModel() as this =
     member __.FeatureInstances : ReactiveList<FeatureInstanceViewModel> = featureInstances
 
     member __.ResultingFilePath : ReactiveProperty<string> = resultingFilePath
+
+    member __.ApplyCommand = applyCommand

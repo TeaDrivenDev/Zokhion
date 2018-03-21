@@ -26,7 +26,7 @@
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="2*" />
             <ColumnDefinition Width="5" />
             <ColumnDefinition Width="3*" />
         </Grid.ColumnDefinitions>
@@ -45,7 +45,8 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <TextBox Grid.Column="0"
+                <TextBox x:Name="BaseDirectory"
+                         Grid.Column="0"
                          Height="25"
                          Margin="5"
                          materialDesign:HintAssist.Hint="Base Directory"
@@ -102,12 +103,37 @@
                           IsEnabled="{Binding IsSearchEnabled.Value}" />
             </Grid>
 
-            <ListBox x:Name="Files"
-                     Grid.Row="3"
-                     Margin="5"
-                     DisplayMemberPath="Name"
-                     ItemsSource="{Binding Files}"
-                     SelectedItem="{Binding SelectedFile.Value}" />
+            <DataGrid x:Name="Files"
+                      Grid.Row="3"
+                      Margin="5"
+                      AutoGenerateColumns="False"
+                      ItemsSource="{Binding Files}"
+                      SelectedItem="{Binding SelectedFile.Value}"
+                      SelectionMode="Single">
+                <DataGrid.Columns>
+                    <materialDesign:MaterialDataGridTextColumn Width="450"
+                                                               Binding="{Binding Name}"
+                                                               Header="Name"
+                                                               IsReadOnly="True" />
+                    <materialDesign:MaterialDataGridTextColumn Width="100"
+                                                               Header="Directory"
+                                                               IsReadOnly="True"
+                                                               SortMemberPath="DirectoryName">
+                        <DataGridTextColumn.Binding>
+                            <MultiBinding Converter="{x:Static ui:RelativePathConverter.Instance}">
+                                <Binding Path="DirectoryName" />
+                                <Binding ElementName="BaseDirectory"
+                                         Path="Text" />
+                            </MultiBinding>
+                        </DataGridTextColumn.Binding>
+                    </materialDesign:MaterialDataGridTextColumn>
+                    <materialDesign:MaterialDataGridTextColumn Width="150"
+                                                               Binding="{Binding LastWriteTime,
+                                                                                 StringFormat=s}"
+                                                               Header="Date"
+                                                               IsReadOnly="True" />
+                </DataGrid.Columns>
+            </DataGrid>
         </Grid>
 
         <GridSplitter Grid.Column="1"

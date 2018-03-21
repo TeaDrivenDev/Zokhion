@@ -432,8 +432,8 @@
 
                         <Grid Grid.Row="1">
                             <Grid.RowDefinitions>
-                                <RowDefinition />
-                                <RowDefinition />
+                                <RowDefinition Height="4*" />
+                                <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
                             <TreeView x:Name="Features"
                                       Grid.Row="0"

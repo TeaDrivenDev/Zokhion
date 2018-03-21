@@ -163,6 +163,7 @@ module Logic =
         | DetectNamesInMainAndNamesParts of bool
         | SelectedNames of string list option
         | SelectedFeatures of string list option
+        | ResetSelections
 
     let updateParameters getAllNames parameters change =
         let parameters = { parameters with AllNames = getAllNames () }
@@ -190,6 +191,12 @@ module Logic =
             { parameters with SelectedNames = value }
         | SelectedFeatures value ->
             { parameters with SelectedFeatures = value }
+        | ResetSelections ->
+            {
+                parameters with
+                    SelectedFeatures = None
+                    SelectedNames = None
+            }
 
     type RenameResult =
         {

@@ -42,12 +42,14 @@ type RelativePathConverter() =
 
     interface IMultiValueConverter with
         member this.Convert(values: obj [], targetType: System.Type, parameter: obj, culture: System.Globalization.CultureInfo): obj =
-            let [| fullPath; baseDirectory |] = values |> Seq.cast<string> |> Seq.toArray
+            match values with
+            | [| :? string as fullPath; :? string as baseDirectory |] ->
+                let baseUri = Uri(if baseDirectory.EndsWith "\\" then baseDirectory else baseDirectory + "\\")
+                let fullUri = Uri fullPath
 
-            let baseUri = Uri(if baseDirectory.EndsWith "\\" then baseDirectory else baseDirectory + "\\")
-            let fullUri = Uri fullPath
-
-            baseUri.MakeRelativeUri(fullUri).ToString().Replace("/", "\\") :> obj
+                baseUri.MakeRelativeUri(fullUri).ToString().Replace("/", "\\")
+            | _ -> ""
+            :> obj
 
         member this.ConvertBack(value: obj, targetTypes: System.Type [], parameter: obj, culture: System.Globalization.CultureInfo): obj [] =
             raise (System.NotImplementedException())

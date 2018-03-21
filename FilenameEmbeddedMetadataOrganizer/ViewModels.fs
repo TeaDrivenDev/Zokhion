@@ -233,6 +233,9 @@ type MainWindowViewModel() as this =
             names
             |> Seq.iter (fun name -> NameViewModel(name, false, false) |> this.Names.Add)
 
+        features.Clear()
+        featureInstances.Clear()
+
         readFeatures baseDirectory
         |> List.iter (FeatureViewModel >> features.Add)
 
@@ -390,16 +393,12 @@ type MainWindowViewModel() as this =
                 |> Some
                 |> SelectedNames)
 
-            [
-                this.OriginalFileName |> Observable.map ignore
-
-                this.ResetNameSelectionCommand.IsExecuting
-                |> Observable.distinctUntilChanged
-                |> Observable.filter id
-                |> Observable.map ignore
-            ]
-            |> Observable.mergeSeq
+            this.ResetNameSelectionCommand.IsExecuting
+            |> Observable.distinctUntilChanged
+            |> Observable.filter id
             |> Observable.map (fun _ -> SelectedNames None)
+
+            this.OriginalFileName |> Observable.map (fun _ -> ResetSelections)
 
             this.FeatureInstances.ItemChanged
             |> Observable.filter (fun change -> change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)

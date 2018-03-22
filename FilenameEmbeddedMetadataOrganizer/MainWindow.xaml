@@ -17,6 +17,7 @@
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="Auto"
+        WindowState="Maximized"
         mc:Ignorable="d">
     <Window.DataContext>
         <viewModels:MainWindowViewModel />
@@ -475,7 +476,7 @@
                                 </TreeView.ItemTemplateSelector>
                                 <TreeView.ItemContainerStyle>
                                     <Style TargetType="{x:Type TreeViewItem}">
-                                        <Setter Property="IsExpanded" Value="True" />
+                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded.Value, Mode=TwoWay}" />
                                     </Style>
                                 </TreeView.ItemContainerStyle>
                             </TreeView>

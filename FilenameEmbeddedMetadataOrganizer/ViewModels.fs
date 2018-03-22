@@ -5,6 +5,8 @@ open System.Collections.ObjectModel
 open System.Diagnostics
 open System.IO
 open System.Reactive.Concurrency
+open System.Reactive.Linq
+open System.Reactive.Subjects
 open System.Windows
 open System.Windows.Input
 
@@ -44,6 +46,12 @@ module Utility =
         let lambda = toLambda exp
         Expression.Lambda<Func<'a, 'b>>(lambda.Body, lambda.Parameters)
 
+    let withLatestFrom (observable1 : IObservable<_>) (observable2 : IObservable<_>) =
+        observable2.WithLatestFrom(observable1, fun a b -> a, b)
+
+    let xwhen (observable2 : IObservable<_>) (observable1 : IObservable<_>) =
+        observable1 |> withLatestFrom observable2 |> Observable.filter snd
+
 [<AllowNullLiteral>]
 type FeatureViewModel(feature : Feature) as this =
     inherit ReactiveObject()
@@ -66,6 +74,11 @@ type FeatureViewModel(feature : Feature) as this =
 
     member __.Feature =
         { feature with Instances = instances |> Seq.map (fun vm -> vm.Instance) |> Seq.toList }
+
+    member val IsExpanded = new ReactiveProperty<_>(false)
+
+    member __.ResetExpanded () =
+        __.IsExpanded.Value <- __.Instances |> Seq.exists (fun vm -> vm.IsSelected)
 
 and [<AllowNullLiteral>]
     FeatureInstanceViewModel(feature : Feature, instance : FeatureInstance) =
@@ -188,13 +201,26 @@ type MainWindowViewModel() as this =
                 vm.Name.Value <- name
                 vm.IsSelected <- true)
 
-    let updateSelectedFeatures selectedFeatures =
+    let updateSelectedFeatures isInitial selectedFeatures =
         (selectedFeatures, featureInstances)
         ||> fullOuterJoin id (fun (vm : FeatureInstanceViewModel) -> vm.CompositeInstanceCode)
-        |> Seq.iter (function
+        |> Seq.iter (fun result ->
+            match result with
             | LeftOnly vm -> vm.IsSelected <- false
             | RightOnly _ -> ()
             | JoinMatch (vm, _) -> vm.IsSelected <- true)
+
+        if isInitial
+        then
+            let anyFeaturesSelected = featureInstances |> Seq.exists (fun vm -> vm.IsSelected)
+
+            features
+            |> Seq.iter (fun (vm : FeatureViewModel) ->
+                if anyFeaturesSelected
+                then
+                    vm.ResetExpanded()
+                else
+                    vm.IsExpanded.Value <- true)
 
     let getAllNames () =
         this.Names
@@ -202,7 +228,7 @@ type MainWindowViewModel() as this =
         |> Seq.map (fun vm -> vm.Name.Value)
         |> Seq.toList
 
-    let updateNewName parameters originalFileName =
+    let updateNewName originalFileName parameters =
         let result = rename parameters originalFileName
         this.NewFileName.Value <- result.NewFileName
 
@@ -210,7 +236,7 @@ type MainWindowViewModel() as this =
         |> updateNamesList
 
         result.DetectedFeatures
-        |> updateSelectedFeatures
+        |> updateSelectedFeatures (parameters.SelectedFeatures |> Option.isNone)
 
     let updateResultingFilePath () =
         if not <| isNull this.SelectedDestinationDirectory.Value
@@ -375,6 +401,8 @@ type MainWindowViewModel() as this =
                     string fi.Name |> Path.GetFileNameWithoutExtension)
         |> ignore
 
+        let gate = new BehaviorSubject<bool>(true)
+
         [
             this.TreatParenthesizedPartAsNames |> Observable.map TreatParenthesizedPartAsNames
             this.FixupNamesInMainPart |> Observable.map FixupNamesInMainPart
@@ -385,6 +413,7 @@ type MainWindowViewModel() as this =
             this.Names.ItemChanged
             |> Observable.filter (fun change ->
                 change.PropertyName = nameof <@ any<NameViewModel>.IsSelected @>)
+            |> xwhen gate
             |> Observable.map (fun _ ->
                 this.Names
                 |> Seq.filter (fun n -> n.IsSelected)
@@ -401,7 +430,10 @@ type MainWindowViewModel() as this =
             this.OriginalFileName |> Observable.map (fun _ -> ResetSelections)
 
             this.FeatureInstances.ItemChanged
-            |> Observable.filter (fun change -> change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
+            |> Observable.filter (fun change ->
+                change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
+            |> xwhen gate
+            |> Observable.filter snd
             |> Observable.map (fun _ ->
                 this.SelectedFeatureInstances
                 |> Seq.toList
@@ -422,9 +454,10 @@ type MainWindowViewModel() as this =
                 AllNames = getAllNames ()
             }
             (updateParameters getAllNames)
-        |> Observable.combineLatest this.OriginalFileName
-        |> Observable.subscribe (fun (originalFileName, parameters) ->
-            updateNewName parameters originalFileName)
+        |> Observable.subscribe (fun parameters ->
+            gate.OnNext false
+            updateNewName this.OriginalFileName.Value parameters
+            gate.OnNext true)
         |> ignore
 
         this.NewFileName

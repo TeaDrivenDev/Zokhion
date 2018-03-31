@@ -130,7 +130,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
     let searchString = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let searchFromBaseDirectory = new ReactiveProperty<_>(false)
-    let isActive = new ReactiveProperty<_>(false)
+    let isActive = new ReactiveProperty<_>(true)
     let files = ObservableCollection()
     let mutable header = Unchecked.defaultof<ReadOnlyReactiveProperty<string>>
     let selectedFile = new ReactiveProperty<FileInfo>()
@@ -167,10 +167,16 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                 | "" ->
                     if isNull selectedDirectory
                     then ""
-                    else selectedDirectory.Name
+                    else sprintf "<%s>" selectedDirectory.Name
                 | search -> search)
             |> Observable.startWith [ "Search" ]
             |> toReadOnlyReactiveProperty
+
+        searchString
+        |> Observable.combineLatest searchFromBaseDirectory
+        |> Observable.subscribe (fun (fromBaseDirectory, searchString) ->
+            getFiles searchString fromBaseDirectory)
+        |> ignore
 
         commands
         |> Observable.subscribe (fun command ->
@@ -180,15 +186,10 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                 | SelectedDirectory (selected, ``base``) ->
                     selectedDirectory <- selected
                     baseDirectory <- ``base``
+                    searchFromBaseDirectory.Value <- false
                 | ResetSearch -> ()
 
                 searchString.Value <- "")
-        |> ignore
-
-        searchString
-        |> Observable.combineLatest searchFromBaseDirectory
-        |> Observable.subscribe (fun (fromBaseDirectory, searchString) ->
-            getFiles searchString fromBaseDirectory)
         |> ignore
 
     member __.SearchString = searchString
@@ -209,7 +210,7 @@ type MainWindowViewModel() as this =
     let isSearchEnabled =
         new ReactiveProperty<bool>(selectedDirectory |> Observable.map (isNull >> not))
 
-    let searchCommands = new Subject<SearchViewModelCommand>()
+    let searchCommands = new ReplaySubject<SearchViewModelCommand>(1)
     let searches = ObservableCollection<SearchViewModel>()
     let activeSearchTab = new ReactiveProperty<SearchViewModel>()
     let selectedFilesSubject = new Subject<IObservable<FileInfo>>()
@@ -351,7 +352,6 @@ type MainWindowViewModel() as this =
 
     let createSearchTab () =
         let search = SearchViewModel(searchCommands.AsObservable())
-        search.IsActive.Value <- true
 
         selectedFilesSubject.OnNext search.SelectedFile
         this.ActiveSearchTab.Value <- search

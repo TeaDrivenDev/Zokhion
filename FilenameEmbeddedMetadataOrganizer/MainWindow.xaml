@@ -40,7 +40,7 @@
                                MinHeight="37" />
                 <RowDefinition Height="5" />
                 <RowDefinition Height="*"
-                               MinHeight="200" />
+                               MinHeight="230" />
             </Grid.RowDefinitions>
             <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
@@ -95,6 +95,7 @@
                           ResizeBehavior="PreviousAndNext"
                           ResizeDirection="Rows" />
 
+            <!--  Search  -->
             <dragablz:TabablzControl Grid.Row="3"
                                      AddLocationHint="Last"
                                      HeaderMemberPath="Header.Value"
@@ -109,6 +110,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid Grid.Row="0">
                                 <Grid.ColumnDefinitions>
@@ -127,6 +129,7 @@
                                           Content="From root"
                                           IsChecked="{Binding SearchFromBaseDirectory.Value}" />
                             </Grid>
+
                             <DataGrid x:Name="Files"
                                       Grid.Row="1"
                                       Margin="5"
@@ -158,6 +161,11 @@
                                                                                IsReadOnly="True" />
                                 </DataGrid.Columns>
                             </DataGrid>
+
+                            <TextBlock Grid.Row="2"
+                                       Margin="5 3 5 5"
+                                       Text="{Binding Files.Count,
+                                                      StringFormat={}{0} items}" />
                         </Grid>
                     </DataTemplate>
                 </TabControl.ContentTemplate>

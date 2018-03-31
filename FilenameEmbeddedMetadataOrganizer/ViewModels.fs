@@ -163,7 +163,10 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
         header <-
             searchString
             |> Observable.map (function
-                | "" -> selectedDirectory.Name
+                | "" ->
+                    if isNull selectedDirectory
+                    then ""
+                    else selectedDirectory.Name
                 | search -> search)
             |> Observable.startWith [ "Search" ]
             |> toReadOnlyReactiveProperty

@@ -48,6 +48,7 @@ type RelativePathConverter() =
                 let fullUri = Uri fullPath
 
                 baseUri.MakeRelativeUri(fullUri).ToString().Replace("/", "\\")
+                |> System.Web.HttpUtility.UrlDecode
             | _ -> ""
             :> obj
 

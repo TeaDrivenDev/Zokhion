@@ -150,14 +150,15 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                         |> toUpper
                         |> contains (toUpper searchString))
 
-            let directory = if fromBaseDirectory then baseDirectory else selectedDirectory.FullName
+            let directory =
+                if fromBaseDirectory && not <| String.IsNullOrWhiteSpace searchString
+                then baseDirectory
+                else selectedDirectory.FullName
 
-            if not <| String.IsNullOrWhiteSpace searchString || not fromBaseDirectory
-            then
-                Directory.GetFiles(directory, "*", SearchOption.AllDirectories)
-                |> Seq.map FileInfo
-                |> Seq.filter (filter searchString)
-                |> Seq.iter files.Add
+            Directory.GetFiles(directory, "*", SearchOption.AllDirectories)
+            |> Seq.map FileInfo
+            |> Seq.filter (filter searchString)
+            |> Seq.iter files.Add
 
     do
         header <-

@@ -1,6 +1,7 @@
 ﻿<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:dragablz="clr-namespace:Dragablz;assembly=Dragablz"
         xmlns:local="clr-namespace:FilenameEmbeddedMetadataOrganizer;assembly=FilenameEmbeddedMetadataOrganizer"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -36,7 +37,6 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Grid Grid.Row="0">
@@ -79,62 +79,80 @@
                         Click="SelectFolder_Click"
                         Content="…" />
             </Grid>
+
             <ListBox Grid.Row="1"
                      Margin="5"
                      DisplayMemberPath="Name"
                      ItemsSource="{Binding Directories}"
                      SelectedItem="{Binding SelectedDirectory.Value}" />
-            <Grid Grid.Row="2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBox Grid.Column="0"
-                         Height="25"
-                         Margin="5"
-                         materialDesign:HintAssist.Hint="Search"
-                         IsEnabled="{Binding IsSearchEnabled.Value}"
-                         Text="{Binding SearchString.Value,
-                                        UpdateSourceTrigger=PropertyChanged}"
-                         TextWrapping="NoWrap" />
-                <CheckBox Grid.Column="1"
-                          Margin="0,0,5,0"
-                          Content="From root"
-                          IsChecked="{Binding SearchFromBaseDirectory.Value}"
-                          IsEnabled="{Binding IsSearchEnabled.Value}" />
-            </Grid>
 
-            <DataGrid x:Name="Files"
-                      Grid.Row="3"
-                      Margin="5"
-                      AutoGenerateColumns="False"
-                      ItemsSource="{Binding Files}"
-                      SelectedItem="{Binding SelectedFile.Value}"
-                      SelectionMode="Single">
-                <DataGrid.Columns>
-                    <materialDesign:MaterialDataGridTextColumn Width="450"
-                                                               Binding="{Binding Name}"
-                                                               Header="Name"
-                                                               IsReadOnly="True" />
-                    <materialDesign:MaterialDataGridTextColumn Width="100"
-                                                               Header="Directory"
-                                                               IsReadOnly="True"
-                                                               SortMemberPath="DirectoryName">
-                        <DataGridTextColumn.Binding>
-                            <MultiBinding Converter="{x:Static ui:RelativePathConverter.Instance}">
-                                <Binding Path="DirectoryName" />
-                                <Binding ElementName="BaseDirectory"
-                                         Path="Text" />
-                            </MultiBinding>
-                        </DataGridTextColumn.Binding>
-                    </materialDesign:MaterialDataGridTextColumn>
-                    <materialDesign:MaterialDataGridTextColumn Width="150"
-                                                               Binding="{Binding LastWriteTime,
-                                                                                 StringFormat=s}"
-                                                               Header="Date"
-                                                               IsReadOnly="True" />
-                </DataGrid.Columns>
-            </DataGrid>
+            <dragablz:TabablzControl Grid.Row="2"
+                                     AddLocationHint="Last"
+                                     HeaderMemberPath="Header.Value"
+                                     IsEnabled="{Binding IsSearchEnabled.Value}"
+                                     ItemsSource="{Binding Searches}"
+                                     NewItemFactory="{Binding CreateSearchTab}"
+                                     SelectedItem="{Binding ActiveSearchTab.Value}"
+                                     ShowDefaultAddButton="True">
+                <TabControl.ContentTemplate>
+                    <DataTemplate DataType="{x:Type viewModels:SearchViewModel}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0"
+                                         Height="25"
+                                         Margin="5"
+                                         materialDesign:HintAssist.Hint="Search"
+                                         Text="{Binding SearchString.Value,
+                                                        UpdateSourceTrigger=PropertyChanged}"
+                                         TextWrapping="NoWrap" />
+                                <CheckBox Grid.Column="1"
+                                          Margin="0 0 5 0"
+                                          Content="From root"
+                                          IsChecked="{Binding SearchFromBaseDirectory.Value}" />
+                            </Grid>
+                            <DataGrid x:Name="Files"
+                                      Grid.Row="1"
+                                      Margin="5"
+                                      AutoGenerateColumns="False"
+                                      ItemsSource="{Binding Files}"
+                                      SelectedItem="{Binding SelectedFile.Value}"
+                                      SelectionMode="Single">
+                                <DataGrid.Columns>
+                                    <materialDesign:MaterialDataGridTextColumn Width="450"
+                                                                               Binding="{Binding Name}"
+                                                                               Header="Name"
+                                                                               IsReadOnly="True" />
+                                    <materialDesign:MaterialDataGridTextColumn Width="100"
+                                                                               Header="Directory"
+                                                                               IsReadOnly="True"
+                                                                               SortMemberPath="DirectoryName">
+                                        <DataGridTextColumn.Binding>
+                                            <MultiBinding Converter="{x:Static ui:RelativePathConverter.Instance}">
+                                                <Binding Path="DirectoryName" />
+                                                <Binding ElementName="BaseDirectory"
+                                                         Path="Text" />
+                                            </MultiBinding>
+                                        </DataGridTextColumn.Binding>
+                                    </materialDesign:MaterialDataGridTextColumn>
+                                    <materialDesign:MaterialDataGridTextColumn Width="150"
+                                                                               Binding="{Binding LastWriteTime,
+                                                                                                 StringFormat=s}"
+                                                                               Header="Date"
+                                                                               IsReadOnly="True" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
+            </dragablz:TabablzControl>
         </Grid>
 
         <GridSplitter Grid.Column="1"
@@ -185,40 +203,39 @@
                             Width="100"
                             Height="30"
                             Command="{Binding OpenCommand}"
-                            CommandParameter="{Binding ElementName=Files,
-                                                       Path=SelectedItem}"
+                            CommandParameter="{Binding SelectedFile.Value}"
                             Content="Open" />
 
                     <WrapPanel Grid.Row="1"
                                Grid.Column="0"
-                               Margin="0,5"
+                               Margin="0 5"
                                Orientation="Horizontal">
                         <CheckBox Height="23"
-                                  Margin="0,0,20,0"
+                                  Margin="0 0 20 0"
                                   VerticalAlignment="Center"
                                   Content="Treat parenthesized part as names"
                                   IsChecked="{Binding TreatParenthesizedPartAsNames.Value}" />
 
                         <CheckBox Height="23"
-                                  Margin="0,0,20,0"
+                                  Margin="0 0 20 0"
                                   VerticalAlignment="Center"
                                   Content="Fix up names in main part"
                                   IsChecked="{Binding FixupNamesInMainPart.Value}" />
 
                         <CheckBox Height="23"
-                                  Margin="0,0,20,0"
+                                  Margin="0 0 20 0"
                                   VerticalAlignment="Center"
                                   Content="Replace underscores"
                                   IsChecked="{Binding ReplaceUnderscores.Value}" />
 
                         <CheckBox Height="23"
-                                  Margin="0,0,20,0"
+                                  Margin="0 0 20 0"
                                   VerticalAlignment="Center"
                                   Content="Detect names in main and names parts"
                                   IsChecked="{Binding DetectNamesInMainAndNamesParts.Value}" />
 
                         <CheckBox Height="23"
-                                  Margin="0,0,20,0"
+                                  Margin="0 0 20 0"
                                   VerticalAlignment="Center"
                                   Content="Recapitalize names"
                                   IsChecked="{Binding RecapitalizeNames.Value}" />
@@ -228,10 +245,9 @@
                             Grid.Column="1"
                             Width="100"
                             Height="30"
-                            Margin="0,5"
+                            Margin="0 5"
                             Command="{Binding OpenExplorerCommand}"
-                            CommandParameter="{Binding ElementName=Files,
-                                                       Path=SelectedItem}"
+                            CommandParameter="{Binding SelectedFile.Value}"
                             Content="Explorer" />
 
                     <TextBox x:Name="NewName"
@@ -282,7 +298,7 @@
                                            Text="Names" />
                                 <Button Grid.Column="1"
                                         Height="16"
-                                        Padding="0,-10"
+                                        Padding="0 -10"
                                         Command="{Binding ElementName=MainWindowView,
                                                           Path=DataContext.ResetNameSelectionCommand}"
                                         ToolTip="Reset selection">
@@ -313,8 +329,8 @@
                             <Button Grid.Column="1"
                                     Width="15"
                                     Height="15"
-                                    Margin="5,0"
-                                    Padding="0,-1,-1,0"
+                                    Margin="5 0"
+                                    Padding="0 -1 -1 0"
                                     Command="{Binding AddNameCommand}"
                                     CommandParameter="{Binding ElementName=NewNameToAdd,
                                                                Path=Text}"
@@ -326,7 +342,7 @@
                                       ItemsSource="{Binding Names}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="viewModels:NameViewModel">
-                                    <CheckBox Margin="0,3"
+                                    <CheckBox Margin="0 3"
                                               Foreground="{StaticResource MaterialDesignBody}"
                                               IsChecked="{Binding IsSelected}">
                                         <CheckBox.Style>
@@ -340,13 +356,13 @@
                                             </Style>
                                         </CheckBox.Style>
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Margin="5,0,15,0"
+                                            <TextBlock Margin="5 0 15 0"
                                                        HorizontalAlignment="Stretch"
                                                        Text="{Binding Name.Value}" />
                                             <Button Width="12"
                                                     Height="12"
-                                                    Margin="0,0,5,0"
-                                                    Padding="0,-5,0,-4"
+                                                    Margin="0 0 5 0"
+                                                    Padding="0 -5 0 -4"
                                                     Command="{Binding ClearNewFlagCommand}"
                                                     Content="+"
                                                     Visibility="{Binding IsNew.Value,
@@ -424,8 +440,8 @@
                             <Button Grid.Column="3"
                                     Width="15"
                                     Height="15"
-                                    Margin="5,0"
-                                    Padding="0,-1,-1,0"
+                                    Margin="5 0"
+                                    Padding="0 -1 -1 0"
                                     Command="{Binding AddFeatureCommand}"
                                     Content="+"
                                     Foreground="{DynamicResource SecondaryAccentForegroundBrush}" />
@@ -457,7 +473,7 @@
                                     <HierarchicalDataTemplate x:Key="FeatureInstanceDataTemplate"
                                                               DataType="viewModels:FeatureInstanceViewModel"
                                                               ItemsSource="{Binding Instances}">
-                                        <CheckBox Margin="0,3"
+                                        <CheckBox Margin="0 3"
                                                   IsChecked="{Binding IsSelected}">
                                             <TextBlock Foreground="{StaticResource MaterialDesignBody}">
                                                 <TextBlock.Text>

@@ -52,6 +52,11 @@ module Utility =
     let xwhen (observable2 : IObservable<_>) (observable1 : IObservable<_>) =
         observable1 |> withLatestFrom observable2 |> Observable.filter snd
 
+    let contains part (s : string) = s.Contains part
+
+    let toReadOnlyReactiveProperty (observable : IObservable<_>) =
+        observable.ToReadOnlyReactiveProperty()
+
 [<AllowNullLiteral>]
 type FeatureViewModel(feature : Feature) as this =
     inherit ReactiveObject()
@@ -114,6 +119,81 @@ type NameViewModel(name : string, isSelected : bool, isNew : bool) =
 
     member __.ClearNewFlagCommand = ReactiveCommand.Create(fun () -> __.IsNew.Value <- false)
 
+type SearchViewModelCommand =
+    | SelectedDirectory of (DirectoryInfo * string)
+    | ResetSearch
+
+type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
+
+    let mutable baseDirectory = ""
+    let mutable selectedDirectory = Unchecked.defaultof<DirectoryInfo>
+
+    let searchString = new ReactiveProperty<_>("", ReactivePropertyMode.None)
+    let searchFromBaseDirectory = new ReactiveProperty<_>(false)
+    let isActive = new ReactiveProperty<_>(false)
+    let files = ObservableCollection()
+    let mutable header = Unchecked.defaultof<ReadOnlyReactiveProperty<string>>
+    let selectedFile = new ReactiveProperty<FileInfo>()
+
+    let getFiles searchString fromBaseDirectory =
+        if not <| isNull selectedDirectory && selectedDirectory.Exists
+        then
+            files.Clear()
+
+            let filter searchString =
+                if String.IsNullOrWhiteSpace searchString
+                then (fun _ -> true)
+                else
+                    (fun (fi : FileInfo) ->
+                        fi.Name
+                        |> Path.GetFileNameWithoutExtension
+                        |> toUpper
+                        |> contains (toUpper searchString))
+
+            let directory = if fromBaseDirectory then baseDirectory else selectedDirectory.FullName
+
+            if not <| String.IsNullOrWhiteSpace searchString || not fromBaseDirectory
+            then
+                Directory.GetFiles(directory, "*", SearchOption.AllDirectories)
+                |> Seq.map FileInfo
+                |> Seq.filter (filter searchString)
+                |> Seq.iter files.Add
+
+    do
+        header <-
+            searchString
+            |> Observable.map (function
+                | "" -> selectedDirectory.Name
+                | search -> search)
+            |> Observable.startWith [ "Search" ]
+            |> toReadOnlyReactiveProperty
+
+        commands
+        |> Observable.subscribe (fun command ->
+            if isActive.Value
+            then
+                match command with
+                | SelectedDirectory (selected, ``base``) ->
+                    selectedDirectory <- selected
+                    baseDirectory <- ``base``
+                | ResetSearch -> ()
+
+                searchString.Value <- "")
+        |> ignore
+
+        searchString
+        |> Observable.combineLatest searchFromBaseDirectory
+        |> Observable.subscribe (fun (fromBaseDirectory, searchString) ->
+            getFiles searchString fromBaseDirectory)
+        |> ignore
+
+    member __.SearchString = searchString
+    member __.SearchFromBaseDirectory = searchFromBaseDirectory
+    member __.IsActive = isActive
+    member __.Files = files
+    member __.Header = header
+    member __.SelectedFile = selectedFile
+
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
@@ -122,12 +202,15 @@ type MainWindowViewModel() as this =
     let selectedDirectory = new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
     let directories = ObservableCollection()
 
-    let searchString = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let isSearchEnabled =
         new ReactiveProperty<bool>(selectedDirectory |> Observable.map (isNull >> not))
-    let searchFromBaseDirectory = new ReactiveProperty<_>(false, ReactivePropertyMode.None)
-    let selectedFile = new ReactiveProperty<_>(Unchecked.defaultof<FileInfo>, ReactivePropertyMode.None)
-    let files = ObservableCollection()
+
+    let searchCommands = new Subject<SearchViewModelCommand>()
+    let searches = ObservableCollection<SearchViewModel>()
+    let activeSearchTab = new ReactiveProperty<SearchViewModel>()
+    let selectedFilesSubject = new Subject<IObservable<FileInfo>>()
+
+    let mutable selectedFile = Unchecked.defaultof<ReadOnlyReactiveProperty<FileInfo>>
 
     let originalFileName = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let newFileName = new ReactiveProperty<_>("", ReactivePropertyMode.None)
@@ -161,13 +244,6 @@ type MainWindowViewModel() as this =
 
     let resultingFilePath = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let mutable applyCommand = Unchecked.defaultof<ReactiveCommand>
-
-    let getFiles directory part =
-        Directory.GetFiles(directory, sprintf "*%s*" part, SearchOption.AllDirectories)
-        |> Seq.map FileInfo
-        |> Seq.filter (fun fi -> (fi.Name |> Path.GetFileNameWithoutExtension |> toUpper).Contains(toUpper part))
-        |> Seq.sortBy (fun fi -> fi.Name)
-        |> Observable.ofSeq
 
     let updateDestinationDirectories (currentFilePath : string) =
         let startsWith part (s : string) = s.StartsWith part
@@ -269,8 +345,21 @@ type MainWindowViewModel() as this =
         |> Seq.collect (fun vm -> vm.Instances)
         |> featureInstances.AddRange
 
+    let createSearchTab () =
+        let search = SearchViewModel(searchCommands.AsObservable())
+        search.IsActive.Value <- true
+
+        selectedFilesSubject.OnNext search.SelectedFile
+        this.ActiveSearchTab.Value <- search
+        search
+
     do
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
+
+        selectedFile <-
+            selectedFilesSubject
+            |> Observable.flatmap id
+            |> toReadOnlyReactiveProperty
 
         openCommand <-
             ReactiveCommand.Create(
@@ -328,6 +417,17 @@ type MainWindowViewModel() as this =
                 (fun () -> File.Move(this.SelectedFile.Value.FullName, this.ResultingFilePath.Value)),
                 this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists))
 
+        this.SelectedDirectory
+        |> Observable.map (fun dir -> SelectedDirectory (dir, this.BaseDirectory.Value))
+        |> Observable.subscribeObserver searchCommands
+        |> ignore
+
+        this.ActiveSearchTab
+        |> Observable.subscribe (fun tab ->
+            searches
+            |> Seq.iter (fun vm -> vm.IsActive.Value <- (tab = vm)))
+        |> ignore
+
         this.FeatureInstances.ItemChanged
         |> Observable.filter (fun change -> change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
         |> Observable.subscribe (fun _ -> this.RaisePropertyChanged(nameof <@ this.SelectedFeatureInstances @>))
@@ -353,47 +453,16 @@ type MainWindowViewModel() as this =
                 loadSettings dir)
         |> ignore
 
-        this.SelectedDirectory
-        |> Observable.subscribe (fun dir ->
-            files.Clear()
-
-            if not <| isNull dir
-            then
-                // TODO Deduplicate with getFiles
-                Directory.GetFiles(dir.FullName, "*", SearchOption.AllDirectories)
-                |> Seq.map FileInfo
-                |> Seq.sortBy (fun fi -> fi.Name)
-                |> Seq.iter files.Add)
-        |> ignore
-
-        this.SearchFromBaseDirectory
-        |> Observable.startWith [ false ]
-        |> Observable.combineLatest this.SearchString
-        |> Observable.throttle (TimeSpan.FromMilliseconds 200.)
-        |> Observable.observeOn RxApp.MainThreadScheduler
-        |> Observable.map (fun (searchString, flag) -> searchString, flag)
-        |> Observable.distinctUntilChanged
-        |> Observable.iter (fun _ ->  files.Clear())
-        |> Observable.observeOn Scheduler.Default
-        |> Observable.map (fun (searchString, flag) ->
-            getFiles (if flag then this.BaseDirectory.Value else this.SelectedDirectory.Value.FullName) searchString)
-        |> Observable.switch
-        |> Observable.observeOn RxApp.MainThreadScheduler
-        |> Observable.subscribe files.Add
-        |> ignore
+        createSearchTab () |> searches.Add
 
         this.SelectedFile
         |> Observable.subscribe (fun fi ->
             if not <| isNull fi
             then
-                let newNamesToRemove =
-                    this.Names
-                    |> Seq.filter (fun vm -> vm.IsNew.Value)
-                    |> Seq.toList
-
-                let successes =
-                    newNamesToRemove
-                    |> List.map (fun vm -> vm.Name, this.Names.Remove vm)
+                this.Names
+                |> Seq.filter (fun vm -> vm.IsNew.Value)
+                |> Seq.toList
+                |> List.iter (this.Names.Remove >> ignore)
 
                 updateDestinationDirectories fi.FullName
 
@@ -496,15 +565,15 @@ type MainWindowViewModel() as this =
 
     member __.Directories = directories
 
-    member __.SearchString = searchString
+    member __.Searches = searches
+
+    member __.CreateSearchTab = Func<_> createSearchTab
+
+    member __.ActiveSearchTab : ReactiveProperty<SearchViewModel> = activeSearchTab
+
+    member __.SelectedFile : ReadOnlyReactiveProperty<FileInfo> = selectedFile
 
     member __.IsSearchEnabled = isSearchEnabled
-
-    member __.SearchFromBaseDirectory = searchFromBaseDirectory
-
-    member __.SelectedFile : ReactiveProperty<FileInfo> = selectedFile
-
-    member __.Files = files
 
     member __.OriginalFileName : ReactiveProperty<string> = originalFileName
 

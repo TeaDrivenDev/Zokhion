@@ -181,7 +181,7 @@
                   Margin="10"
                   materialDesign:ShadowAssist.ShadowDepth="Depth3"
                   BorderThickness="0"
-                  Header="GroupBox">
+                  Header="Manage Metadata">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -291,8 +291,26 @@
                     </GroupBox>
                     <GroupBox Grid.Row="1"
                               Margin="4"
-                              Header="Destination Directory"
                               Style="{DynamicResource MaterialDesignCardGroupBox}">
+                        <GroupBox.HeaderTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="Destination Directory" />
+                                    <TextBox x:Name="DestinationDirectoryPrefixes"
+                                             Grid.Column="1"
+                                             Margin="0 -5"
+                                             materialDesign:HintAssist.Hint="Prefixes"
+                                             Text="{Binding ElementName=MainWindowView,
+                                                            Path=DataContext.DestinationDirectoryPrefixes.Value,
+                                                            UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+                            </DataTemplate>
+                        </GroupBox.HeaderTemplate>
                         <ListBox DisplayMemberPath="Name"
                                  ItemsSource="{Binding DestinationDirectories}"
                                  SelectedItem="{Binding SelectedDestinationDirectory.Value}" />
@@ -530,9 +548,9 @@
 
                     <TextBlock x:Name="ResultingFilePath"
                                Grid.Column="0"
-                               Height="25"
+                               Height="Auto"
                                Text="{Binding ResultingFilePath.Value}"
-                               TextWrapping="NoWrap" />
+                               TextWrapping="Wrap" />
                     <Button Grid.Column="1"
                             Width="100"
                             Height="30"

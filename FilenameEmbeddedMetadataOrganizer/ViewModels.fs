@@ -57,6 +57,8 @@ module Utility =
     let toReadOnlyReactiveProperty (observable : IObservable<_>) =
         observable.ToReadOnlyReactiveProperty()
 
+    let detuple fn (a, b) = fn a b
+
 [<AllowNullLiteral>]
 type FeatureViewModel(feature : Feature) as this =
     inherit ReactiveObject()
@@ -231,6 +233,7 @@ type MainWindowViewModel() as this =
 
     let selectedDestinationDirectory =
         new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
+    let destinationDirectoryPrefixes = new ReactiveProperty<_>("")
     let destinationDirectories = ObservableCollection()
 
     let newNameToAdd = new ReactiveProperty<_>("")
@@ -250,16 +253,22 @@ type MainWindowViewModel() as this =
     let resultingFilePath = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let mutable applyCommand = Unchecked.defaultof<ReactiveCommand>
 
-    let updateDestinationDirectories (currentFilePath : string) =
-        let startsWith part (s : string) = s.StartsWith part
+    let updateDestinationDirectories (prefixes : string) (currentFilePath : string) =
+        let startsWithAny parts (s : string) =
+            parts |> Seq.toList |> List.exists (string >> s.StartsWith)
 
         let currentFileDirectory = Path.GetDirectoryName currentFilePath
 
         destinationDirectories.Clear()
 
+        let filter =
+            if String.IsNullOrWhiteSpace prefixes
+            then fun _ -> true
+            else startsWithAny prefixes
+
         currentFileDirectory ::
         (Directory.GetDirectories this.BaseDirectory.Value
-        |> Array.filter (Path.GetFileName >> startsWith "_")
+        |> Array.filter (Path.GetFileName >> filter)
         |> Array.sort
         |> Array.toList)
         |> List.distinct
@@ -298,10 +307,8 @@ type MainWindowViewModel() as this =
             features
             |> Seq.iter (fun (vm : FeatureViewModel) ->
                 if anyFeaturesSelected
-                then
-                    vm.ResetExpanded()
-                else
-                    vm.IsExpanded.Value <- true)
+                then vm.ResetExpanded()
+                else vm.IsExpanded.Value <- true)
 
     let getAllNames () =
         this.Names
@@ -459,6 +466,17 @@ type MainWindowViewModel() as this =
 
         createSearchTab () |> searches.Add
 
+        let existingSelectedFile = this.SelectedFile |> Observable.filter (isNull >> not)
+
+        existingSelectedFile
+        |> Observable.map (fun fi -> fi.FullName)
+        |> Observable.combineLatest
+            (this.DestinationDirectoryPrefixes
+             |> Observable.throttle (TimeSpan.FromMilliseconds 500.)
+             |> Observable.observeOn RxApp.MainThreadScheduler)
+        |> Observable.subscribe (detuple updateDestinationDirectories)
+        |> ignore
+
         this.SelectedFile
         |> Observable.subscribe (fun fi ->
             if not <| isNull fi
@@ -467,8 +485,6 @@ type MainWindowViewModel() as this =
                 |> Seq.filter (fun vm -> vm.IsNew.Value)
                 |> Seq.toList
                 |> List.iter (this.Names.Remove >> ignore)
-
-                updateDestinationDirectories fi.FullName
 
                 this.OriginalFileName.Value <-
                     string fi.Name |> Path.GetFileNameWithoutExtension)
@@ -597,7 +613,7 @@ type MainWindowViewModel() as this =
     member __.OpenExplorerCommand = openExplorerCommand :> ICommand
 
     member __.SelectedDestinationDirectory : ReactiveProperty<DirectoryInfo> = selectedDestinationDirectory
-
+    member __.DestinationDirectoryPrefixes = destinationDirectoryPrefixes
     member __.DestinationDirectories = destinationDirectories
 
     member __.NewNameToAdd : ReactiveProperty<string> = newNameToAdd

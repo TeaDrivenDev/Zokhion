@@ -23,9 +23,6 @@
     <Window.DataContext>
         <viewModels:MainWindowViewModel />
     </Window.DataContext>
-    <Window.Resources>
-        <ui:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -59,7 +56,7 @@
                          TextWrapping="NoWrap"
                          Visibility="{Binding ElementName=ShowSourceDirectoryPrefixes,
                                               Path=IsChecked,
-                                              Converter={StaticResource BooleanToVisibilityConverter},
+                                              Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance},
                                               ConverterParameter=True}" />
                 <TextBox Grid.Column="0"
                          Height="25"
@@ -70,7 +67,7 @@
                          TextWrapping="NoWrap"
                          Visibility="{Binding ElementName=ShowSourceDirectoryPrefixes,
                                               Path=IsChecked,
-                                              Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                              Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
                 <ToggleButton x:Name="ShowSourceDirectoryPrefixes"
                               Grid.Column="1" />
                 <Button Grid.Column="2"
@@ -158,6 +155,12 @@
                                                                                Binding="{Binding LastWriteTime,
                                                                                                  StringFormat=s}"
                                                                                Header="Date"
+                                                                               IsReadOnly="True" />
+                                    <materialDesign:MaterialDataGridTextColumn Width="75"
+                                                                               Binding="{Binding Length,
+                                                                                                 Converter={x:Static ui:BytesToMegabytesConverter.Instance},
+                                                                                                 StringFormat={}{0:###0.0} MB}"
+                                                                               Header="Size"
                                                                                IsReadOnly="True" />
                                 </DataGrid.Columns>
                             </DataGrid>
@@ -401,7 +404,7 @@
                                                     Command="{Binding ClearNewFlagCommand}"
                                                     Content="+"
                                                     Visibility="{Binding IsNew.Value,
-                                                                         Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                                         Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
                                         </StackPanel>
                                     </CheckBox>
                                 </DataTemplate>

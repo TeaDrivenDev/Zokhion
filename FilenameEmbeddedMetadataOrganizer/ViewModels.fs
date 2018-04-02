@@ -203,6 +203,7 @@ type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
     let baseDirectory = new ReactiveProperty<_>("", ReactivePropertyMode.None)
+    let filterBySourceDirectoryPrefixes = new ReactiveProperty<_>(true)
     let sourceDirectoryPrefixes = new ReactiveProperty<_>("", ReactivePropertyMode.RaiseLatestValueOnSubscribe)
     let selectedDirectory = new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
     let directories = ObservableCollection()
@@ -470,18 +471,20 @@ type MainWindowViewModel() as this =
         |> ignore
 
         this.SourceDirectoryPrefixes
+        |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
+        |> Observable.combineLatest this.FilterBySourceDirectoryPrefixes
         |> Observable.combineLatest
             (this.BaseDirectory
+             |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
              |> Observable.filter Directory.Exists)
-        |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromSeconds 1.)
-        |> Observable.subscribe (fun (dir, prefixes) ->
+        |> Observable.subscribe (fun (dir, (filterByPrefixes, prefixes)) ->
             directories.Clear()
 
             Directory.GetDirectories dir
             |> Seq.map DirectoryInfo
             |> Seq.filter (fun di ->
-                match prefixes with
-                | "" -> true
+                match filterByPrefixes, prefixes with
+                | false, _ | _, "" -> true
                 | _ -> prefixes |> Seq.exists (string >> di.Name.StartsWith))
             |> Seq.sortBy (fun di -> di.Name)
             |> Seq.iter directories.Add)
@@ -580,7 +583,7 @@ type MainWindowViewModel() as this =
     member __.Shutdown () = saveSettings __.BaseDirectory.Value
 
     member __.BaseDirectory : ReactiveProperty<string> = baseDirectory
-
+    member __.FilterBySourceDirectoryPrefixes = filterBySourceDirectoryPrefixes
     member __.SourceDirectoryPrefixes : ReactiveProperty<_> = sourceDirectoryPrefixes
 
     member __.SelectedDirectory : ReactiveProperty<DirectoryInfo> = selectedDirectory

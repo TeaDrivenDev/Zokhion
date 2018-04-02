@@ -44,6 +44,7 @@
                     <ColumnDefinition />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <TextBox x:Name="BaseDirectory"
@@ -53,24 +54,17 @@
                          materialDesign:HintAssist.Hint="Base Directory"
                          Text="{Binding BaseDirectory.Value,
                                         UpdateSourceTrigger=PropertyChanged}"
-                         TextWrapping="NoWrap"
-                         Visibility="{Binding ElementName=ShowSourceDirectoryPrefixes,
-                                              Path=IsChecked,
-                                              Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance},
-                                              ConverterParameter=True}" />
-                <TextBox Grid.Column="0"
+                         TextWrapping="NoWrap" />
+                <ToggleButton Grid.Column="1"
+                              IsChecked="{Binding FilterBySourceDirectoryPrefixes.Value}" />
+                <TextBox Grid.Column="2"
                          Height="25"
                          Margin="5"
-                         materialDesign:HintAssist.Hint="Source Directory Prefixes"
+                         materialDesign:HintAssist.Hint="Prefixes"
                          Text="{Binding SourceDirectoryPrefixes.Value,
                                         UpdateSourceTrigger=PropertyChanged}"
-                         TextWrapping="NoWrap"
-                         Visibility="{Binding ElementName=ShowSourceDirectoryPrefixes,
-                                              Path=IsChecked,
-                                              Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
-                <ToggleButton x:Name="ShowSourceDirectoryPrefixes"
-                              Grid.Column="1" />
-                <Button Grid.Column="2"
+                         TextWrapping="NoWrap" />
+                <Button Grid.Column="3"
                         Width="30"
                         Margin="5"
                         Padding="0"

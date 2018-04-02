@@ -231,6 +231,7 @@ type MainWindowViewModel() as this =
     let mutable openCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable openFromSearchCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable openExplorerCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable showFilePropertiesCommand = Unchecked.defaultof<ReactiveCommand>
 
     let selectedDestinationDirectory =
         new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
@@ -415,6 +416,10 @@ type MainWindowViewModel() as this =
                     |> Some
                 else None
                 |> Option.iter (asSnd "explorer.exe" >> Process.Start >> ignore))
+
+        showFilePropertiesCommand <-
+            ReactiveCommand.Create(fun (fi : FileInfo) ->
+                Interop.showFileProperties fi.FullName |> ignore)
 
         addNameCommand <-
             ReactiveCommand.Create(fun name ->
@@ -624,6 +629,7 @@ type MainWindowViewModel() as this =
     member __.OpenCommand = openCommand :> ICommand
     member __.OpenFromSearchCommand = openFromSearchCommand :> ICommand
     member __.OpenExplorerCommand = openExplorerCommand :> ICommand
+    member __.ShowFilePropertiesCommand = showFilePropertiesCommand
 
     member __.SelectedDestinationDirectory : ReactiveProperty<DirectoryInfo> = selectedDestinationDirectory
     member __.DestinationDirectoryPrefixes : ReactiveProperty<_> = destinationDirectoryPrefixes

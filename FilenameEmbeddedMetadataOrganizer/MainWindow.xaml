@@ -181,7 +181,10 @@
                                                     <Button Width="18"
                                                             Height="18"
                                                             Margin="3 -3"
-                                                            Padding="0 -1 -1 0">
+                                                            Padding="0 -1 -1 0"
+                                                            Command="{Binding ElementName=MainWindowView,
+                                                                              Path=DataContext.ShowFilePropertiesCommand}"
+                                                            CommandParameter="{Binding .}">
                                                         <materialDesign:PackIcon Kind="FileDocumentBox" />
                                                     </Button>
                                                 </StackPanel>

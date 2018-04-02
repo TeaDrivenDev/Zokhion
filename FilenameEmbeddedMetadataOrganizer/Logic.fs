@@ -20,6 +20,8 @@ module Prelude =
 
     let swap (a, b) = b, a
 
+    let uncurry fn (a, b) = fn a b
+
     let leftJoin innerKeySelector outerKeySelector (inner : seq<'TInner>) (outer : seq<'TOuter>) =
         query {
             for o in outer do
@@ -49,14 +51,73 @@ module Prelude =
             | None, None -> failwith "This can never happen.")
 
 [<AutoOpen>]
-module Persistence =
+module Settings =
+    open System
     open System.IO
     open System.Text.RegularExpressions
 
-    type Feature = { Name : string; Code : string;Instances : FeatureInstance list }
+    type Feature = { Name : string; Code : string; Instances : FeatureInstance list }
     and FeatureInstance = { Name : string; Code : string }
 
+    type Settings =
+        {
+            SourceDirectoryPrefixes : string
+            DestinationDirectoryPrefixes : string
+            Names : string list
+            Features : Feature list
+        }
+
+    let prefixesFilePath directory = Path.Combine(directory, ".prefixes")
+    let namesFilePath directory = Path.Combine(directory, ".names")
     let featuresFilePath directory = Path.Combine(directory, ".features")
+
+    let writePrefixes directory (sourcePrefixes, destinationPrefixes) =
+        let prefixesFilePath = prefixesFilePath directory
+
+        let prefixesLines =
+            [
+                "Source", sourcePrefixes
+                "Destination", destinationPrefixes
+            ]
+            |> List.filter (snd >> String.IsNullOrWhiteSpace >> not)
+            |> List.map (uncurry (sprintf "%s=%s"))
+
+        if not <| List.isEmpty prefixesLines || File.Exists prefixesFilePath
+        then File.WriteAllLines(prefixesFilePath, prefixesLines)
+
+    let readPrefixes directory =
+        let prefixesFilePath = prefixesFilePath directory
+
+        if File.Exists prefixesFilePath
+        then
+            let prefixes =
+                File.ReadAllLines prefixesFilePath
+                |> Array.map (fun s ->
+                    let [| name; prefixes |] = s.Split [| '=' |]
+                    name, prefixes)
+                |> Map.ofArray
+
+            let sourcePrefixes =
+                prefixes |> Map.tryFind "Source" |> Option.defaultValue ""
+
+            let destinationPrefixes =
+                prefixes |> Map.tryFind "Destination" |> Option.defaultValue ""
+
+            sourcePrefixes, destinationPrefixes
+        else "", ""
+
+    let writeNames directory (names : _ list) =
+        let namesFilePath = namesFilePath directory
+
+        if not <| List.isEmpty names || File.Exists namesFilePath
+        then File.WriteAllLines(namesFilePath, names)
+
+    let readNames directory =
+        let namesFilePath = namesFilePath directory
+
+        if File.Exists namesFilePath
+        then File.ReadAllLines namesFilePath |> Array.toList
+        else []
 
     let serializeFeatures features =
         let serializeInstance featureCode instance =
@@ -72,11 +133,15 @@ module Persistence =
         features |> List.collect serializeFeature
 
     let writeFeatures directory (features : Feature list) =
-        features
-        |> List.sortBy (fun f -> f.Code)
-        |> serializeFeatures
-        |> asSnd (featuresFilePath directory)
-        |> File.WriteAllLines
+        let featuresFilePath = featuresFilePath directory
+
+        if not <| List.isEmpty features || File.Exists featuresFilePath
+        then
+            features
+            |> List.sortBy (fun f -> f.Code)
+            |> serializeFeatures
+            |> asSnd featuresFilePath
+            |> File.WriteAllLines
 
     let instanceRegex = Regex "^\t(?<code>.+)\\|(?<name>.+)$"
     let featureRegex = Regex "^(?<code>.+)\\|(?<name>.+)$"
@@ -130,6 +195,23 @@ module Persistence =
             |> Array.toList
             |> deserializeFeatures
         else []
+
+    let saveSettings baseDirectory settings =
+        writePrefixes
+            baseDirectory
+            (settings.SourceDirectoryPrefixes, settings.DestinationDirectoryPrefixes)
+        writeNames baseDirectory settings.Names
+        writeFeatures baseDirectory settings.Features
+
+    let loadSettings baseDirectory =
+        let sourcePrefixes, destinationPrefixes = readPrefixes baseDirectory
+
+        {
+            SourceDirectoryPrefixes = sourcePrefixes
+            DestinationDirectoryPrefixes = destinationPrefixes
+            Names = readNames baseDirectory
+            Features = readFeatures baseDirectory
+        }
 
 [<AutoOpen>]
 module Logic =

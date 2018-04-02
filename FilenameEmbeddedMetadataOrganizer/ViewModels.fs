@@ -57,8 +57,6 @@ module Utility =
     let toReadOnlyReactiveProperty (observable : IObservable<_>) =
         observable.ToReadOnlyReactiveProperty()
 
-    let detuple fn (a, b) = fn a b
-
 [<AllowNullLiteral>]
 type FeatureViewModel(feature : Feature) as this =
     inherit ReactiveObject()
@@ -336,26 +334,46 @@ type MainWindowViewModel() as this =
                     Path.Combine(this.SelectedDestinationDirectory.Value.FullName,
                                  this.NewFileName.Value + Path.GetExtension(selectedFile.Name)))
 
-    let loadSettings baseDirectory =
-        let namesFilePath = Path.Combine(baseDirectory, ".names")
-
-        if File.Exists namesFilePath
+    let saveSettings baseDirectory =
+        if Directory.Exists baseDirectory
         then
-            names.Clear()
-            let names = File.ReadAllLines namesFilePath
+            {
+                SourceDirectoryPrefixes = this.SourceDirectoryPrefixes.Value
+                DestinationDirectoryPrefixes = this.DestinationDirectoryPrefixes.Value
+                Names =
+                    this.Names
+                    |> Seq.filter (fun vm -> not vm.IsNew.Value)
+                    |> Seq.map (fun vm -> vm.Name.Value)
+                    |> Seq.distinct
+                    |> Seq.sort
+                    |> Seq.toList
+                Features =
+                    this.Features
+                    |> Seq.map (fun vm -> vm.Feature)
+                    |> Seq.toList
+            }
+            |> Settings.saveSettings baseDirectory
 
-            names
-            |> Seq.iter (fun name -> NameViewModel(name, false, false) |> this.Names.Add)
+    let loadSettings baseDirectory =
+        let settings = Settings.loadSettings baseDirectory
+
+        this.SourceDirectoryPrefixes.Value <- settings.SourceDirectoryPrefixes
+        this.DestinationDirectoryPrefixes.Value <- settings.DestinationDirectoryPrefixes
+
+        names.Clear()
+
+        settings.Names
+        |> Seq.iter (fun name -> NameViewModel(name, false, false) |> this.Names.Add)
 
         features.Clear()
         featureInstances.Clear()
 
-        readFeatures baseDirectory
-        |> List.iter (FeatureViewModel >> features.Add)
+        settings.Features
+        |> List.iter (FeatureViewModel >> this.Features.Add)
 
-        features
+        this.Features
         |> Seq.collect (fun vm -> vm.Instances)
-        |> featureInstances.AddRange
+        |> this.FeatureInstances.AddRange
 
     let createSearchTab () =
         let search = SearchViewModel(searchCommands.AsObservable())
@@ -444,24 +462,29 @@ type MainWindowViewModel() as this =
         |> Observable.subscribe (fun _ -> this.RaisePropertyChanged(nameof <@ this.SelectedFeatureInstances @>))
         |> ignore
 
+        this.BaseDirectory
+        |> Observable.throttle (TimeSpan.FromMilliseconds 500.)
+        |> Observable.filter Directory.Exists
+        |> Observable.observeOn RxApp.MainThreadScheduler
+        |> Observable.subscribe loadSettings
+        |> ignore
+
         this.SourceDirectoryPrefixes
-        |> Observable.combineLatest this.BaseDirectory
+        |> Observable.combineLatest
+            (this.BaseDirectory
+             |> Observable.filter Directory.Exists)
         |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromSeconds 1.)
         |> Observable.subscribe (fun (dir, prefixes) ->
-            if Directory.Exists dir
-            then
-                directories.Clear()
+            directories.Clear()
 
-                Directory.GetDirectories dir
-                |> Seq.map DirectoryInfo
-                |> Seq.filter (fun di ->
-                    match prefixes with
-                    | "" -> true
-                    | _ -> prefixes |> Seq.exists (string >> di.Name.StartsWith))
-                |> Seq.sortBy (fun di -> di.Name)
-                |> Seq.iter directories.Add
-
-                loadSettings dir)
+            Directory.GetDirectories dir
+            |> Seq.map DirectoryInfo
+            |> Seq.filter (fun di ->
+                match prefixes with
+                | "" -> true
+                | _ -> prefixes |> Seq.exists (string >> di.Name.StartsWith))
+            |> Seq.sortBy (fun di -> di.Name)
+            |> Seq.iter directories.Add)
         |> ignore
 
         createSearchTab () |> searches.Add
@@ -474,7 +497,7 @@ type MainWindowViewModel() as this =
             (this.DestinationDirectoryPrefixes
              |> Observable.throttle (TimeSpan.FromMilliseconds 500.)
              |> Observable.observeOn RxApp.MainThreadScheduler)
-        |> Observable.subscribe (detuple updateDestinationDirectories)
+        |> Observable.subscribe (uncurry updateDestinationDirectories)
         |> ignore
 
         this.SelectedFile
@@ -554,32 +577,11 @@ type MainWindowViewModel() as this =
         |> Observable.subscribe (fun _ -> updateResultingFilePath ())
         |> ignore
 
-    member __.Shutdown () =
-        if Directory.Exists this.BaseDirectory.Value
-        then
-            let names =
-                this.Names
-                |> Seq.filter (fun vm -> not vm.IsNew.Value)
-                |> Seq.map (fun vm -> vm.Name.Value)
-                |> Seq.distinct
-                |> Seq.sort
-
-            if not <| Seq.isEmpty names
-            then
-                let namesFilePath = Path.Combine(this.BaseDirectory.Value, ".names")
-
-                File.WriteAllLines(namesFilePath, names)
-
-            if not <| Seq.isEmpty this.Features
-            then
-                this.Features
-                |> Seq.map (fun vm -> vm.Feature)
-                |> Seq.toList
-                |> writeFeatures this.BaseDirectory.Value
+    member __.Shutdown () = saveSettings __.BaseDirectory.Value
 
     member __.BaseDirectory : ReactiveProperty<string> = baseDirectory
 
-    member __.SourceDirectoryPrefixes = sourceDirectoryPrefixes
+    member __.SourceDirectoryPrefixes : ReactiveProperty<_> = sourceDirectoryPrefixes
 
     member __.SelectedDirectory : ReactiveProperty<DirectoryInfo> = selectedDirectory
 
@@ -613,7 +615,7 @@ type MainWindowViewModel() as this =
     member __.OpenExplorerCommand = openExplorerCommand :> ICommand
 
     member __.SelectedDestinationDirectory : ReactiveProperty<DirectoryInfo> = selectedDestinationDirectory
-    member __.DestinationDirectoryPrefixes = destinationDirectoryPrefixes
+    member __.DestinationDirectoryPrefixes : ReactiveProperty<_> = destinationDirectoryPrefixes
     member __.DestinationDirectories = destinationDirectories
 
     member __.NewNameToAdd : ReactiveProperty<string> = newNameToAdd

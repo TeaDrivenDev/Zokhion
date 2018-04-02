@@ -229,6 +229,7 @@ type MainWindowViewModel() as this =
     let recapitalizeNames = new ReactiveProperty<_>(false)
 
     let mutable openCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable openFromSearchCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable openExplorerCommand = Unchecked.defaultof<ReactiveCommand>
 
     let selectedDestinationDirectory =
@@ -396,6 +397,9 @@ type MainWindowViewModel() as this =
             ReactiveCommand.Create(
                 (fun (fi : FileInfo) -> Process.Start fi.FullName |> ignore),
                 this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists))
+
+        openFromSearchCommand <-
+            ReactiveCommand.Create(fun (fi : FileInfo) -> Process.Start fi.FullName |> ignore)
 
         openExplorerCommand <-
             ReactiveCommand.Create(fun (fi: FileInfo) ->
@@ -618,6 +622,7 @@ type MainWindowViewModel() as this =
     member __.RecapitalizeNames : ReactiveProperty<bool> = recapitalizeNames
 
     member __.OpenCommand = openCommand :> ICommand
+    member __.OpenFromSearchCommand = openFromSearchCommand :> ICommand
     member __.OpenExplorerCommand = openExplorerCommand :> ICommand
 
     member __.SelectedDestinationDirectory : ReactiveProperty<DirectoryInfo> = selectedDestinationDirectory

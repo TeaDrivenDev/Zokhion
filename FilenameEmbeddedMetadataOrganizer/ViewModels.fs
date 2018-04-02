@@ -121,7 +121,7 @@ type NameViewModel(name : string, isSelected : bool, isNew : bool) =
 
 type SearchViewModelCommand =
     | SelectedDirectory of (DirectoryInfo * string)
-    | ResetSearch
+    | Refresh
 
 type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
@@ -173,6 +173,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
             |> toReadOnlyReactiveProperty
 
         searchString
+        |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
         |> Observable.combineLatest searchFromBaseDirectory
         |> Observable.subscribe (fun (fromBaseDirectory, searchString) ->
             getFiles searchString fromBaseDirectory)
@@ -187,9 +188,9 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                     selectedDirectory <- selected
                     baseDirectory <- ``base``
                     searchFromBaseDirectory.Value <- false
-                | ResetSearch -> ()
 
-                searchString.Value <- "")
+                    searchString.Value <- ""
+                | Refresh -> searchString.ForceNotify())
         |> ignore
 
     member __.SearchString = searchString
@@ -444,7 +445,9 @@ type MainWindowViewModel() as this =
 
         applyCommand <-
             ReactiveCommand.Create(
-                (fun () -> File.Move(this.SelectedFile.Value.FullName, this.ResultingFilePath.Value)),
+                (fun () ->
+                    File.Move(this.SelectedFile.Value.FullName, this.ResultingFilePath.Value)
+                    searchCommands.OnNext Refresh),
                 this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists))
 
         this.SelectedDirectory

@@ -140,15 +140,19 @@ module Settings =
     type Feature = { Name : string; Code : string; Instances : FeatureInstance list }
     and FeatureInstance = { Name : string; Code : string }
 
+    type Replacement = { ToReplace : string; ReplaceWith : string }
+
     type Settings =
         {
             SourceDirectoryPrefixes : string
             DestinationDirectoryPrefixes : string
+            Replacements : Replacement list
             Names : string list
             Features : Feature list
         }
 
     let prefixesFilePath directory = Path.Combine(directory, ".prefixes")
+    let replacementsFilePath directory = Path.Combine(directory, ".replacements")
     let namesFilePath directory = Path.Combine(directory, ".names")
     let featuresFilePath directory = Path.Combine(directory, ".features")
 
@@ -186,6 +190,30 @@ module Settings =
 
             sourcePrefixes, destinationPrefixes
         else "", ""
+
+    let writeReplacements directory replacements =
+        let replacementsFilePath = replacementsFilePath directory
+
+        let lines =
+            replacements
+            |> List.map (fun replacement ->
+                sprintf "%s|%s" replacement.ToReplace replacement.ReplaceWith)
+
+        if not <| List.isEmpty lines || File.Exists replacementsFilePath
+        then File.WriteAllLines(replacementsFilePath, lines)
+
+    let readReplacements directory =
+        let replacementsFilePath = replacementsFilePath directory
+
+        if File.Exists replacementsFilePath
+        then
+            File.ReadAllLines replacementsFilePath
+            |> Array.map (fun s ->
+                let [| toReplace; replaceWith |] = s.Split '|'
+
+                { ToReplace = toReplace; ReplaceWith = replaceWith })
+            |> Array.toList
+        else []
 
     let writeNames directory (names : _ list) =
         let namesFilePath = namesFilePath directory
@@ -281,6 +309,7 @@ module Settings =
         writePrefixes
             baseDirectory
             (settings.SourceDirectoryPrefixes, settings.DestinationDirectoryPrefixes)
+        writeReplacements baseDirectory settings.Replacements
         writeNames baseDirectory settings.Names
         writeFeatures baseDirectory settings.Features
 
@@ -290,6 +319,7 @@ module Settings =
         {
             SourceDirectoryPrefixes = sourcePrefixes
             DestinationDirectoryPrefixes = destinationPrefixes
+            Replacements = readReplacements baseDirectory
             Names = readNames baseDirectory
             Features = readFeatures baseDirectory
         }
@@ -328,8 +358,16 @@ module Logic =
         | SelectedFeatures of string list option
         | ResetSelections
 
-    let updateParameters getAllNames parameters change =
-        let parameters = { parameters with AllNames = getAllNames () }
+    let updateParameters replacements getAllNames parameters change =
+        let parameters =
+            {
+                parameters with
+                    AllNames = getAllNames ()
+                    Replacements =
+                        replacements
+                        |> Seq.map (fun replace -> replace.ToReplace, replace.ReplaceWith)
+                        |> Seq.toList
+            }
 
         match change with
         | TreatParenthesizedPartAsNames value ->

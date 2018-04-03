@@ -250,6 +250,11 @@ type MainWindowViewModel() as this =
     let destinationDirectoryPrefixes = new ReactiveProperty<_>("")
     let destinationDirectories = ObservableCollection()
 
+    let toReplaceToAdd = new ReactiveProperty<_>("")
+    let replaceWithToAdd = new ReactiveProperty<_>("")
+    let mutable addReplacementCommand = Unchecked.defaultof<ReactiveCommand>
+    let replacements = ObservableCollection()
+
     let newNameToAdd = new ReactiveProperty<_>("")
     let mutable addNameCommand = Unchecked.defaultof<ReactiveCommand>
     let names =
@@ -357,6 +362,7 @@ type MainWindowViewModel() as this =
             {
                 SourceDirectoryPrefixes = this.SourceDirectoryPrefixes.Value
                 DestinationDirectoryPrefixes = this.DestinationDirectoryPrefixes.Value
+                Replacements = this.Replacements |> Seq.toList
                 Names =
                     this.Names
                     |> Seq.filter (fun vm -> not vm.IsNew.Value)
@@ -377,10 +383,15 @@ type MainWindowViewModel() as this =
         this.SourceDirectoryPrefixes.Value <- settings.SourceDirectoryPrefixes
         this.DestinationDirectoryPrefixes.Value <- settings.DestinationDirectoryPrefixes
 
+        this.Replacements.Clear()
+
+        settings.Replacements
+        |> List.iter this.Replacements.Add
+
         names.Clear()
 
         settings.Names
-        |> Seq.iter (fun name -> NameViewModel(name, false, false) |> this.Names.Add)
+        |> List.iter (fun name -> NameViewModel(name, false, false) |> this.Names.Add)
 
         features.Clear()
         featureInstances.Clear()
@@ -433,6 +444,16 @@ type MainWindowViewModel() as this =
         showFilePropertiesCommand <-
             ReactiveCommand.Create(fun (fi : FileInfo) ->
                 Interop.showFileProperties fi.FullName |> ignore)
+
+        addReplacementCommand <-
+            ReactiveCommand.Create(
+                (fun () ->
+                    { ToReplace = this.ToReplaceToAdd.Value; ReplaceWith = this.ReplaceWithToAdd.Value }
+                    |> this.Replacements.Add
+
+                    this.ToReplaceToAdd.Value <- ""
+                    this.ReplaceWithToAdd.Value <- ""),
+                this.ToReplaceToAdd |> Observable.map (String.IsNullOrWhiteSpace >> not))
 
         addNameCommand <-
             ReactiveCommand.Create(fun name ->
@@ -593,7 +614,7 @@ type MainWindowViewModel() as this =
                 Replacements = []
                 AllNames = getAllNames ()
             }
-            (updateParameters getAllNames)
+            (updateParameters this.Replacements getAllNames)
         |> Observable.subscribe (fun parameters ->
             gate.OnNext false
             updateNewName this.OriginalFileName.Value parameters
@@ -647,6 +668,11 @@ type MainWindowViewModel() as this =
     member __.SelectedDestinationDirectory : ReactiveProperty<_> = selectedDestinationDirectory
     member __.DestinationDirectoryPrefixes : ReactiveProperty<_> = destinationDirectoryPrefixes
     member __.DestinationDirectories = destinationDirectories
+
+    member __.ToReplaceToAdd : ReactiveProperty<_> = toReplaceToAdd
+    member __.ReplaceWithToAdd : ReactiveProperty<_> = replaceWithToAdd
+    member __.AddReplacementCommand = addReplacementCommand
+    member __.Replacements : ObservableCollection<_> = replacements
 
     member __.NewNameToAdd : ReactiveProperty<string> = newNameToAdd
 

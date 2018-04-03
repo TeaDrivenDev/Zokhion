@@ -328,7 +328,71 @@
                               Margin="4"
                               Header="Replace"
                               Style="{DynamicResource MaterialDesignCardGroupBox}">
-                        <ListBox />
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox Grid.Column="0"
+                                         Margin="2"
+                                         materialDesign:HintAssist.Hint="To Replace"
+                                         Text="{Binding ToReplaceToAdd.Value,
+                                                        UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Grid.Column="1"
+                                         Margin="2"
+                                         materialDesign:HintAssist.Hint="Replace With"
+                                         Text="{Binding ReplaceWithToAdd.Value,
+                                                        UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Button Grid.Column="2"
+                                        Width="15"
+                                        Height="15"
+                                        Margin="5 0"
+                                        Padding="0 -1 -1 0"
+                                        Command="{Binding AddReplacementCommand}"
+                                        Content="+" />
+                            </Grid>
+
+                            <ItemsControl Grid.Row="1"
+                                          ItemsSource="{Binding Replacements}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0 3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding ToReplace}" />
+                                            <TextBlock Grid.Column="1">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="{Binding ReplaceWith}" />
+
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding ReplaceWith}"
+                                                                         Value="">
+                                                                <Setter Property="Text" Value="(remove)" />
+                                                                <Setter Property="Opacity" Value="0.5" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
                     </GroupBox>
                     <GroupBox Grid.Row="1"
                               Margin="4"

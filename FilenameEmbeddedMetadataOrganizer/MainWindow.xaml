@@ -56,14 +56,16 @@
                                         UpdateSourceTrigger=PropertyChanged}"
                          TextWrapping="NoWrap" />
                 <ToggleButton Grid.Column="1"
-                              IsChecked="{Binding FilterBySourceDirectoryPrefixes.Value}" />
+                              IsChecked="{Binding FilterBySourceDirectoryPrefixes.Value}"
+                              ToolTip="Toggle filtering source folders by prefixes" />
                 <TextBox Grid.Column="2"
                          Height="25"
                          Margin="5"
                          materialDesign:HintAssist.Hint="Prefixes"
                          Text="{Binding SourceDirectoryPrefixes.Value,
                                         UpdateSourceTrigger=PropertyChanged}"
-                         TextWrapping="NoWrap" />
+                         TextWrapping="NoWrap"
+                         ToolTip="Source folder prefixes" />
                 <Button Grid.Column="3"
                         Width="30"
                         Margin="5"
@@ -71,7 +73,8 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Top"
                         Click="SelectFolder_Click"
-                        Content="…" />
+                        Content="…"
+                        ToolTip="Select base folder" />
             </Grid>
 
             <ListBox Grid.Row="1"
@@ -118,14 +121,16 @@
                                          TextWrapping="NoWrap" />
                                 <CheckBox Grid.Column="1"
                                           Margin="0 0 5 0"
-                                          Content="From root"
-                                          IsChecked="{Binding SearchFromBaseDirectory.Value}" />
+                                          Content="From base"
+                                          IsChecked="{Binding SearchFromBaseDirectory.Value}"
+                                          ToolTip="Search from base folder" />
                                 <Button Grid.Column="2"
                                         Width="20"
                                         Height="20"
                                         Margin="5 3"
                                         Padding="0 -10"
-                                        Command="{Binding RefreshCommand}">
+                                        Command="{Binding RefreshCommand}"
+                                        ToolTip="Refresh view">
                                     <materialDesign:PackIcon Kind="Reload" />
                                 </Button>
                             </Grid>
@@ -175,7 +180,8 @@
                                                             Padding="0 -1 -1 0"
                                                             Command="{Binding ElementName=MainWindowView,
                                                                               Path=DataContext.OpenFromSearchCommand}"
-                                                            CommandParameter="{Binding .}">
+                                                            CommandParameter="{Binding .}"
+                                                            ToolTip="Open file">
                                                         <materialDesign:PackIcon Kind="OpenInNew" />
                                                     </Button>
                                                     <Button Width="18"
@@ -184,7 +190,8 @@
                                                             Padding="0 -1 -1 0"
                                                             Command="{Binding ElementName=MainWindowView,
                                                                               Path=DataContext.OpenExplorerCommand}"
-                                                            CommandParameter="{Binding .}">
+                                                            CommandParameter="{Binding .}"
+                                                            ToolTip="Show in Explorer">
                                                         <materialDesign:PackIcon Kind="FolderOutline" />
                                                     </Button>
                                                     <Button Width="18"
@@ -193,7 +200,8 @@
                                                             Padding="0 -1 -1 0"
                                                             Command="{Binding ElementName=MainWindowView,
                                                                               Path=DataContext.ShowFilePropertiesCommand}"
-                                                            CommandParameter="{Binding .}">
+                                                            CommandParameter="{Binding .}"
+                                                            ToolTip="Show file properties">
                                                         <materialDesign:PackIcon Kind="FileDocumentBox" />
                                                     </Button>
                                                 </StackPanel>
@@ -326,7 +334,7 @@
 
                     <GroupBox Grid.Row="0"
                               Margin="4"
-                              Header="Replace"
+                              Header="Replacements"
                               Style="{DynamicResource MaterialDesignCardGroupBox}">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -412,7 +420,8 @@
                                              materialDesign:HintAssist.Hint="Prefixes"
                                              Text="{Binding ElementName=MainWindowView,
                                                             Path=DataContext.DestinationDirectoryPrefixes.Value,
-                                                            UpdateSourceTrigger=PropertyChanged}" />
+                                                            UpdateSourceTrigger=PropertyChanged}"
+                                             ToolTip="Destination folder prefixes" />
                                 </Grid>
                             </DataTemplate>
                         </GroupBox.HeaderTemplate>
@@ -441,8 +450,8 @@
                                         Padding="0 -10"
                                         Command="{Binding ElementName=MainWindowView,
                                                           Path=DataContext.ResetNameSelectionCommand}"
-                                        ToolTip="Reset selection">
-                                    <materialDesign:PackIcon Kind="Reload" />
+                                        ToolTip="Reset name selection">
+                                    <materialDesign:PackIcon Kind="Undo" />
                                 </Button>
                             </Grid>
                         </DataTemplate>
@@ -544,7 +553,8 @@
                             <ToggleButton x:Name="AddFeatureRoot"
                                           Grid.Column="0"
                                           VerticalAlignment="Center"
-                                          IsChecked="{Binding AddFeatureRoot.Value}" />
+                                          IsChecked="{Binding AddFeatureRoot.Value}"
+                                          ToolTip="Toggle adding feature/instance" />
 
                             <TextBox Grid.Column="1"
                                      Margin="2"

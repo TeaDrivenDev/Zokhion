@@ -134,6 +134,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     let files = ObservableCollection()
     let mutable header = Unchecked.defaultof<ReadOnlyReactiveProperty<string>>
     let selectedFile = new ReactiveProperty<FileInfo>()
+    let mutable refreshCommand = Unchecked.defaultof<ReactiveCommand>
 
     let getFiles searchString fromBaseDirectory =
         if not <| isNull selectedDirectory && selectedDirectory.Exists
@@ -172,6 +173,8 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
             |> Observable.startWith [ "Search" ]
             |> toReadOnlyReactiveProperty
 
+        refreshCommand <- ReactiveCommand.Create(fun () -> ignore ())
+
         searchString
         |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
         |> Observable.combineLatest searchFromBaseDirectory
@@ -179,18 +182,24 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
             getFiles searchString fromBaseDirectory)
         |> ignore
 
-        commands
-        |> Observable.subscribe (fun command ->
-            if isActive.Value
-            then
-                match command with
-                | SelectedDirectory (selected, ``base``) ->
-                    selectedDirectory <- selected
-                    baseDirectory <- ``base``
-                    searchFromBaseDirectory.Value <- false
+        [
+            refreshCommand.IsExecuting
+            |> Observable.distinctUntilChanged
+            |> Observable.filter id
+            |> Observable.map (fun _ -> Refresh)
 
-                    searchString.Value <- ""
-                | Refresh -> searchString.ForceNotify())
+            commands
+            |> Observable.filter (fun _ -> isActive.Value)
+        ]
+        |> Observable.mergeSeq
+        |> Observable.subscribe (function
+            | SelectedDirectory (selected, ``base``) ->
+                selectedDirectory <- selected
+                baseDirectory <- ``base``
+                searchFromBaseDirectory.Value <- false
+
+                searchString.Value <- ""
+            | Refresh -> searchString.ForceNotify())
         |> ignore
 
     member __.SearchString = searchString
@@ -199,14 +208,17 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     member __.Files = files
     member __.Header = header
     member __.SelectedFile = selectedFile
+    member __.RefreshCommand = refreshCommand
 
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
     let baseDirectory = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let filterBySourceDirectoryPrefixes = new ReactiveProperty<_>(true)
-    let sourceDirectoryPrefixes = new ReactiveProperty<_>("", ReactivePropertyMode.RaiseLatestValueOnSubscribe)
-    let selectedDirectory = new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
+    let sourceDirectoryPrefixes =
+        new ReactiveProperty<_>("", ReactivePropertyMode.RaiseLatestValueOnSubscribe)
+    let selectedDirectory =
+        new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
     let directories = ObservableCollection()
 
     let isSearchEnabled =
@@ -240,7 +252,8 @@ type MainWindowViewModel() as this =
 
     let newNameToAdd = new ReactiveProperty<_>("")
     let mutable addNameCommand = Unchecked.defaultof<ReactiveCommand>
-    let names = ReactiveList([], 0.5, DispatcherScheduler(Application.Current.Dispatcher), ChangeTrackingEnabled = true)
+    let names =
+        ReactiveList([], 0.5, DispatcherScheduler(Application.Current.Dispatcher), ChangeTrackingEnabled = true)
     let mutable resetNameSelectionCommand = Unchecked.defaultof<ReactiveCommand>
 
     let addFeatureRoot = new ReactiveProperty<_>(false)
@@ -622,7 +635,7 @@ type MainWindowViewModel() as this =
 
     member __.ReplaceUnderscores : ReactiveProperty<bool> = replaceUnderscores
 
-    member __.DetectNamesInMainAndNamesParts : ReactiveProperty<bool> = detectNamesInMainAndNamesParts
+    member __.DetectNamesInMainAndNamesParts : ReactiveProperty<_> = detectNamesInMainAndNamesParts
 
     member __.RecapitalizeNames : ReactiveProperty<bool> = recapitalizeNames
 
@@ -631,7 +644,7 @@ type MainWindowViewModel() as this =
     member __.OpenExplorerCommand = openExplorerCommand :> ICommand
     member __.ShowFilePropertiesCommand = showFilePropertiesCommand
 
-    member __.SelectedDestinationDirectory : ReactiveProperty<DirectoryInfo> = selectedDestinationDirectory
+    member __.SelectedDestinationDirectory : ReactiveProperty<_> = selectedDestinationDirectory
     member __.DestinationDirectoryPrefixes : ReactiveProperty<_> = destinationDirectoryPrefixes
     member __.DestinationDirectories = destinationDirectories
 

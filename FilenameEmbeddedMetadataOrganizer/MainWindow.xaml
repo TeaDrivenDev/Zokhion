@@ -419,6 +419,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="viewModels:NameViewModel">
                                     <CheckBox Margin="0 3"
+                                              HorizontalContentAlignment="Stretch"
                                               Foreground="{StaticResource MaterialDesignBody}"
                                               IsChecked="{Binding IsSelected}">
                                         <CheckBox.Style>
@@ -431,11 +432,18 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </CheckBox.Style>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Margin="5 0 15 0"
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0"
+                                                       Margin="5 0 15 0"
                                                        HorizontalAlignment="Stretch"
                                                        Text="{Binding Name.Value}" />
-                                            <Button Width="12"
+                                            <Button Grid.Column="1"
+                                                    Width="12"
                                                     Height="12"
                                                     Margin="0 0 5 0"
                                                     Padding="0 -5 0 -4"
@@ -443,7 +451,7 @@
                                                     Content="+"
                                                     Visibility="{Binding IsNew.Value,
                                                                          Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
-                                        </StackPanel>
+                                        </Grid>
                                     </CheckBox>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>

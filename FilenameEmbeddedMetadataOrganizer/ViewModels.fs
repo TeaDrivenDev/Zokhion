@@ -80,7 +80,7 @@ type FeatureViewModel(feature : Feature) as this =
     member __.Feature =
         { feature with Instances = instances |> Seq.map (fun vm -> vm.Instance) |> Seq.toList }
 
-    member val IsExpanded = new ReactiveProperty<_>(false)
+    member val IsExpanded = new ReactiveProperty<_>(true)
 
     member __.ResetExpanded () =
         __.IsExpanded.Value <- __.Instances |> Seq.exists (fun vm -> vm.IsSelected)

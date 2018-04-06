@@ -169,13 +169,14 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     let mutable baseDirectory = ""
     let mutable selectedDirectory = Unchecked.defaultof<DirectoryInfo>
 
-    let searchString = new ReactiveProperty<_>("", ReactivePropertyMode.None)
+    let searchText = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let searchFromBaseDirectory = new ReactiveProperty<_>(false)
     let isActive = new ReactiveProperty<_>(true)
     let files = ObservableCollection()
     let mutable header = Unchecked.defaultof<ReadOnlyReactiveProperty<string>>
     let selectedFile = new ReactiveProperty<FileInfo>()
     let mutable refreshCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable clearSearchTextCommand = Unchecked.defaultof<ReactiveCommand>
 
     let getFiles searchString fromBaseDirectory =
         if not <| isNull selectedDirectory && selectedDirectory.Exists
@@ -204,7 +205,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
     do
         header <-
-            searchString
+            searchText
             |> Observable.map (function
                 | "" ->
                     if isNull selectedDirectory
@@ -214,9 +215,12 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
             |> Observable.startWith [ "Search" ]
             |> toReadOnlyReactiveProperty
 
+        clearSearchTextCommand <-
+            ReactiveCommand.Create(fun () -> searchText.Value <- "")
+
         refreshCommand <- ReactiveCommand.Create(fun () -> ignore ())
 
-        searchString
+        searchText
         |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
         |> Observable.combineLatest searchFromBaseDirectory
         |> Observable.subscribe (fun (fromBaseDirectory, searchString) ->
@@ -239,17 +243,18 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                 baseDirectory <- ``base``
                 searchFromBaseDirectory.Value <- false
 
-                searchString.Value <- ""
-            | Refresh -> searchString.ForceNotify())
+                searchText.Value <- ""
+            | Refresh -> searchText.ForceNotify())
         |> ignore
 
-    member __.SearchString = searchString
+    member __.SearchText = searchText
     member __.SearchFromBaseDirectory = searchFromBaseDirectory
     member __.IsActive = isActive
     member __.Files = files
     member __.Header = header
     member __.SelectedFile = selectedFile
     member __.RefreshCommand = refreshCommand
+    member __.ClearSearchTextCommand = clearSearchTextCommand
 
 type MainWindowViewModel() as this =
     inherit ReactiveObject()

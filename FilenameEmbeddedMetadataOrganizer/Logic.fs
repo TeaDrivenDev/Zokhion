@@ -50,6 +50,8 @@ module Prelude =
             | None, Some rightItem -> RightOnly rightItem
             | None, None -> failwith "This can never happen.")
 
+    let (|OfNull|) value = if isNull value then None else Some value
+
 module Interop =
     open System
     open System.Runtime.InteropServices

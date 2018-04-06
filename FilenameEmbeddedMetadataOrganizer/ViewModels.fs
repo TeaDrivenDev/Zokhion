@@ -103,6 +103,42 @@ and [<AllowNullLiteral>]
 
     member __.Instance = instance
 
+//type FeatureInstanceIncomingUpdate = X
+
+//type FeatureInstanceOutgoingUpdate =
+//    | Change of NewFeatureInstanceViewModel * FeatureInstance
+
+//and NewFeatureInstanceViewModel(instanceName : string,
+//                                instanceCode : string,
+//                                incomingUpdates : IObservable<FeatureInstanceIncomingUpdate>) as this =
+
+//    let instanceName = new ReactiveProperty<_>(instanceName)
+//    let instanceCode = new ReactiveProperty<_>(instanceCode)
+
+//    let mutable outgoingUpdates = Unchecked.defaultof<IObservable<FeatureInstanceOutgoingUpdate>>
+
+//    do
+//        outgoingUpdates <-
+//            Observable.combineLatest instanceName instanceCode
+//            |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
+//            |> Observable.map (fun (name, code) ->
+//                Change (this, { Name = name; Code = code }))
+
+//    member __.InstanceName = instanceName
+//    member __.InstanceCode = instanceCode
+
+//    member __.Updates = outgoingUpdates
+
+//    new (incomingUpdates : IObservable<FeatureInstanceIncomingUpdate>) =
+//        NewFeatureInstanceViewModel("", "", incomingUpdates)
+
+type NewFeatureInstanceViewModel() =
+    let instanceName = new ReactiveProperty<_>("")
+    let instanceCode = new ReactiveProperty<_>("")
+
+    member __.InstanceName = instanceName
+    member __.InstanceCode = instanceCode
+
 [<AllowNullLiteral>]
 type NameViewModel(name : string, isSelected : bool, isNew : bool) =
     inherit ReactiveObject()
@@ -261,7 +297,8 @@ type MainWindowViewModel() as this =
         ReactiveList([], 0.5, DispatcherScheduler(Application.Current.Dispatcher), ChangeTrackingEnabled = true)
     let mutable resetNameSelectionCommand = Unchecked.defaultof<ReactiveCommand>
 
-    let addFeatureRoot = new ReactiveProperty<_>(false)
+    let mutable showAddFeatureControls = new ReactiveProperty<_>(false)
+    let editingFeatureInstances = ObservableCollection()
     let featureToAdd = new ReactiveProperty<_>()
     let featureCodeToAdd = new ReactiveProperty<_>()
     let mutable addFeatureCommand = Unchecked.defaultof<ReactiveCommand>
@@ -269,6 +306,8 @@ type MainWindowViewModel() as this =
         new ReactiveProperty<_>(Unchecked.defaultof<FeatureViewModel>, ReactivePropertyMode.None)
     let features = ReactiveList()
     let featureInstances = ReactiveList(ChangeTrackingEnabled = true)
+    let mutable removeFeatureInstanceCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable addFeatureInstanceRowCommand = Unchecked.defaultof<ReactiveCommand>
 
     let resultingFilePath = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let mutable applyCommand = Unchecked.defaultof<ReactiveCommand>
@@ -468,23 +507,35 @@ type MainWindowViewModel() as this =
                 if not <| String.IsNullOrWhiteSpace this.FeatureToAdd.Value
                     && not <| String.IsNullOrWhiteSpace this.FeatureCodeToAdd.Value
                 then
-                    if this.AddFeatureRoot.Value
-                    then
+                    let feature =
                         FeatureViewModel({ Name = this.FeatureToAdd.Value; Code = this.FeatureCodeToAdd.Value; Instances = [] })
-                        |> features.Add
-                    else
-                        match this.SelectedFeature.Value with
-                        | :? FeatureInstanceViewModel -> ()
-                        | :? FeatureViewModel as feature ->
-                            let instance =
-                                FeatureInstanceViewModel(feature.Feature, { Name = this.FeatureToAdd.Value; Code = this.FeatureCodeToAdd.Value })
 
-                            feature.Instances.Add instance
-                            featureInstances.Add instance
-                        | _ -> ()
+                    features.Add feature
+
+                    this.EditingFeatureInstances
+                    |> Seq.filter (fun vm ->
+                        not <| String.IsNullOrWhiteSpace vm.InstanceName.Value
+                        && not <| String.IsNullOrWhiteSpace vm.InstanceCode.Value)
+                    |> Seq.iter (fun vm ->
+                        let instance =
+                            FeatureInstanceViewModel(feature.Feature, { Name = vm.InstanceName.Value; Code = vm.InstanceCode.Value })
+
+                        feature.Instances.Add instance
+                        featureInstances.Add instance)
 
                     this.FeatureToAdd.Value <- ""
-                    this.FeatureCodeToAdd.Value <- "")
+                    this.FeatureCodeToAdd.Value <- ""
+
+                    this.EditingFeatureInstances.Clear()
+                    NewFeatureInstanceViewModel() |> this.EditingFeatureInstances.Add)
+
+        removeFeatureInstanceCommand <-
+            ReactiveCommand.Create(fun (vm : NewFeatureInstanceViewModel) ->
+                this.EditingFeatureInstances.Remove vm |> ignore)
+
+        addFeatureInstanceRowCommand <-
+            ReactiveCommand.Create(fun () ->
+                NewFeatureInstanceViewModel() |> this.EditingFeatureInstances.Add)
 
         applyCommand <-
             ReactiveCommand.Create(
@@ -561,6 +612,9 @@ type MainWindowViewModel() as this =
                 this.OriginalFileName.Value <-
                     string fi.Name |> Path.GetFileNameWithoutExtension)
         |> ignore
+
+        NewFeatureInstanceViewModel()
+        |> this.EditingFeatureInstances.Add
 
         let gate = new BehaviorSubject<bool>(true)
 
@@ -682,7 +736,10 @@ type MainWindowViewModel() as this =
 
     member __.ResetNameSelectionCommand : ReactiveCommand = resetNameSelectionCommand
 
-    member __.AddFeatureRoot : ReactiveProperty<bool> = addFeatureRoot
+    member __.ShowAddFeatureControls = showAddFeatureControls
+    member __.EditingFeatureInstances : ObservableCollection<NewFeatureInstanceViewModel> = editingFeatureInstances
+    member __.RemoveFeatureInstanceCommand = removeFeatureInstanceCommand
+    member __.AddFeatureInstanceRowCommand = addFeatureInstanceRowCommand
 
     member __.FeatureToAdd : ReactiveProperty<string> = featureToAdd
 

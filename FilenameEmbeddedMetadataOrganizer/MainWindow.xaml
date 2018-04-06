@@ -672,7 +672,7 @@
                                                 Width="15"
                                                 Height="15"
                                                 Margin="5 0"
-                                                Padding="0 -1 -1 0"
+                                                Padding="-2 -1 -1 0"
                                                 Command="{Binding ConfirmEditingFeatureCommand}"
                                                 Content="&#x2714;"
                                                 FontSize="10"
@@ -708,7 +708,7 @@
                                                                  Margin="2"
                                                                  materialDesign:HintAssist.Hint="Name"
                                                                  Text="{Binding InstanceName.Value,
-                                                                                UpdateSourceTrigger=PropertyChanged}" />
+                                                                                UpdateSourceTrigger=LostFocus}" />
                                                         <TextBox Grid.Column="1"
                                                                  Margin="2"
                                                                  materialDesign:HintAssist.Hint="Code"

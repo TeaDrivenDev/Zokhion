@@ -57,6 +57,8 @@ module Utility =
     let toReadOnlyReactiveProperty (observable : IObservable<_>) =
         observable.ToReadOnlyReactiveProperty()
 
+    let maxString maxLength (s : string) = s.Substring(0, Math.Min(s.Length, maxLength))
+
 [<AllowNullLiteral>]
 type FeatureViewModel(feature : Feature) as this =
     inherit ReactiveObject()
@@ -135,6 +137,13 @@ and [<AllowNullLiteral>]
 type NewFeatureInstanceViewModel(instanceName : string, instanceCode : string) =
     let instanceName = new ReactiveProperty<_>(instanceName)
     let instanceCode = new ReactiveProperty<_>(instanceCode)
+
+    do
+        Observable.combineLatest instanceName instanceCode
+        |> Observable.filter (snd >> String.IsNullOrWhiteSpace)
+        |> Observable.map fst
+        |> Observable.subscribe (fun name -> instanceCode.Value <- maxString 2 name)
+        |> ignore
 
     member __.InstanceName = instanceName
     member __.InstanceCode = instanceCode

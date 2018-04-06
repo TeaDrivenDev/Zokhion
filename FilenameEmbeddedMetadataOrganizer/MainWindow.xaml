@@ -118,6 +118,7 @@
                                          Height="25"
                                          Margin="5"
                                          materialDesign:HintAssist.Hint="Search"
+                                         KeyUp="SearchText_KeyUp"
                                          Text="{Binding SearchText.Value,
                                                         UpdateSourceTrigger=PropertyChanged}"
                                          TextWrapping="NoWrap" />

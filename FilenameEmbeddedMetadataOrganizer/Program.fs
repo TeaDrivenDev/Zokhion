@@ -3,7 +3,7 @@
 open System
 open System.ComponentModel
 open System.Windows
-open System.Windows.Forms
+open System.Windows.Controls
 
 open FsXaml
 
@@ -26,7 +26,7 @@ type MainWindow() as this =
     member this.ViewModel : MainWindowViewModel = this.DataContext :?> MainWindowViewModel
 
     override this.SelectFolder_Click (_ : obj, e : RoutedEventArgs) =
-        use folderBrowserDialog = new FolderBrowserDialog()
+        use folderBrowserDialog = new Forms.FolderBrowserDialog()
         folderBrowserDialog.ShowNewFolderButton <- false
 
         if not <| String.IsNullOrWhiteSpace this.ViewModel.BaseDirectory.Value
@@ -37,7 +37,7 @@ type MainWindow() as this =
         let win = Win32Window(System.Windows.Interop.WindowInteropHelper(this).Handle)
         let result = folderBrowserDialog.ShowDialog win
 
-        if result = DialogResult.OK
+        if result = Forms.DialogResult.OK
         then
             this.ViewModel.BaseDirectory.Value <- folderBrowserDialog.SelectedPath
 
@@ -45,6 +45,10 @@ type MainWindow() as this =
         match e.NewValue with
         | :? FeatureViewModel as item -> this.ViewModel.SelectedFeature.Value <- item
         | _ -> ()
+
+    override __.SearchText_KeyUp(sender : obj, e : Input.KeyEventArgs) =
+        if e.Key = Input.Key.Escape
+        then (sender :?> TextBox).Text <- ""
 
 type AppBase = XAML<"App.xaml">
 

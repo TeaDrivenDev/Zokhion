@@ -67,3 +67,25 @@ type BytesToMegabytesConverter() =
 
         member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
             raise (System.NotImplementedException())
+
+// see https://stackoverflow.com/a/7290188/236507
+type IndexOfConverter() =
+    static member Instance = IndexOfConverter() :> IMultiValueConverter
+
+    interface IMultiValueConverter with
+        member this.Convert(values: obj [], targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
+            let itemsControl = values.[0] :?> ItemsControl
+            let item = values.[1]
+            let itemContainer = itemsControl.ItemContainerGenerator.ContainerFromItem item
+
+            let oneBasedIndex = System.Convert.ToBoolean parameter
+
+            if isNull itemContainer
+            then Binding.DoNothing
+            else
+                if oneBasedIndex then 1 else 0
+                + itemsControl.ItemContainerGenerator.IndexFromContainer itemContainer
+                |> string :> obj
+
+        member this.ConvertBack(value: obj, targetTypes: Type [], parameter: obj, culture: Globalization.CultureInfo): obj [] =
+            targetTypes |> Array.map (fun _ -> Binding.DoNothing)

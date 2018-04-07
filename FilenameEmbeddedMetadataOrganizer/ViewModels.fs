@@ -46,8 +46,8 @@ module Utility =
         let lambda = toLambda exp
         Expression.Lambda<Func<'a, 'b>>(lambda.Body, lambda.Parameters)
 
-    let withLatestFrom (observable1 : IObservable<_>) (observable2 : IObservable<_>) =
-        observable2.WithLatestFrom(observable1, fun a b -> a, b)
+    let withLatestFrom (observable2 : IObservable<'T2>) (observable1 : IObservable<'T1>) =
+        observable1.WithLatestFrom(observable2, fun v1 v2 -> v1, v2)
 
     let xwhen (observable2 : IObservable<_>) (observable1 : IObservable<_>) =
         observable1 |> withLatestFrom observable2 |> Observable.filter snd
@@ -139,7 +139,8 @@ type NewFeatureInstanceViewModel(instanceName : string, instanceCode : string) =
     let instanceCode = new ReactiveProperty<_>(instanceCode)
 
     do
-        Observable.combineLatest instanceName instanceCode
+        instanceName
+        |> withLatestFrom instanceCode
         |> Observable.filter (snd >> String.IsNullOrWhiteSpace)
         |> Observable.map fst
         |> Observable.subscribe (fun name -> instanceCode.Value <- maxString 2 name)
@@ -801,6 +802,8 @@ type MainWindowViewModel() as this =
     member __.RemoveFeatureInstanceRowCommand = removeFeatureInstanceRowCommand
     member __.AddFeatureInstanceRowCommand = addFeatureInstanceRowCommand
     member __.ClearSelectedFeatureCommand = clearSelectedFeatureCommand
+    member __.AddFeatureInstanceRow() =
+        NewFeatureInstanceViewModel() |> this.EditingFeatureInstances.Add
 
     member __.FeatureToAdd : ReactiveProperty<string> = featureToAdd
 

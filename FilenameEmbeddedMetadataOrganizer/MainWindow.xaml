@@ -694,27 +694,49 @@
                                     <ScrollViewer Grid.Row="1"
                                                   VerticalScrollBarVisibility="Auto">
                                         <ItemsControl VerticalAlignment="Stretch"
+                                                      Grid.IsSharedSizeScope="True"
                                                       ItemsSource="{Binding EditingFeatureInstances}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"
+                                                                              SharedSizeGroup="InstanceNumber" />
                                                             <ColumnDefinition />
                                                             <ColumnDefinition />
                                                             <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
 
-                                                        <TextBox Grid.Column="0"
+                                                        <TextBlock Grid.Column="0"
+                                                                   Margin="0 0 5 0"
+                                                                   HorizontalAlignment="Right"
+                                                                   VerticalAlignment="Center"
+                                                                   Opacity="0.5">
+                                                            <TextBlock.Text>
+                                                                <MultiBinding Converter="{x:Static ui:IndexOfConverter.Instance}"
+                                                                              ConverterParameter="True">
+                                                                    <Binding RelativeSource="{RelativeSource FindAncestor,
+                                                                                                             AncestorType={x:Type ItemsControl}}" />
+                                                                    <Binding Path="." />
+                                                                </MultiBinding>
+                                                            </TextBlock.Text>
+                                                        </TextBlock>
+
+                                                        <TextBox x:Name="InstanceName"
+                                                                 Grid.Column="1"
                                                                  Margin="2"
                                                                  materialDesign:HintAssist.Hint="Name"
+                                                                 KeyUp="InstanceName_KeyUp"
                                                                  Text="{Binding InstanceName.Value,
                                                                                 UpdateSourceTrigger=LostFocus}" />
-                                                        <TextBox Grid.Column="1"
+                                                        <TextBox x:Name="InstanceCode"
+                                                                 Grid.Column="2"
                                                                  Margin="2"
                                                                  materialDesign:HintAssist.Hint="Code"
+                                                                 KeyUp="InstanceCode_KeyUp"
                                                                  Text="{Binding InstanceCode.Value,
                                                                                 UpdateSourceTrigger=PropertyChanged}" />
-                                                        <Button Grid.Column="2"
+                                                        <Button Grid.Column="3"
                                                                 Width="15"
                                                                 Height="15"
                                                                 Margin="5 0"

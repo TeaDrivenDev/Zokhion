@@ -89,3 +89,20 @@ type IndexOfConverter() =
 
         member this.ConvertBack(value: obj, targetTypes: Type [], parameter: obj, culture: Globalization.CultureInfo): obj [] =
             targetTypes |> Array.map (fun _ -> Binding.DoNothing)
+
+type AllItemsEqualConverter() =
+    static member Instance = AllItemsEqualConverter() :> IMultiValueConverter
+
+    interface IMultiValueConverter with
+        member this.Convert(values: obj [], targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
+            values
+            |> Array.filter ((<>) DependencyProperty.UnsetValue)
+            |> Array.toList
+            |> function
+                | head :: tail ->
+                    tail |> List.exists ((<>) head) |> not
+                | [] -> false
+            :> obj
+
+        member this.ConvertBack(value: obj, targetTypes: Type [], parameter: obj, culture: Globalization.CultureInfo): obj [] =
+            raise (System.NotImplementedException())

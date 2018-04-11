@@ -278,6 +278,11 @@
                       Grid.Column="0"
                       Grid.ColumnSpan="3"
                       Margin="5">
+                    <Grid.Resources>
+                        <SolidColorBrush x:Key="ChangedColor"
+                                         Opacity="0.4"
+                                         Color="DarkRed" />
+                    </Grid.Resources>
                     <Grid.RowDefinitions>
                         <RowDefinition />
                         <RowDefinition />
@@ -292,6 +297,7 @@
                              Grid.Row="0"
                              Grid.Column="0"
                              Height="25"
+                             Padding="3 0"
                              IsReadOnly="True"
                              SelectionChanged="OriginalFileName_SelectionChanged"
                              Text="{Binding OriginalFileName.Value}"
@@ -354,8 +360,27 @@
                              Grid.Column="0"
                              Grid.ColumnSpan="2"
                              Height="25"
+                             Padding="3 0"
                              Text="{Binding NewFileName.Value}"
-                             TextWrapping="NoWrap" />
+                             TextWrapping="NoWrap">
+                        <TextBox.Style>
+                            <Style BasedOn="{StaticResource MaterialDesignTextBox}"
+                                   TargetType="TextBox">
+                                <Style.Triggers>
+                                    <DataTrigger Value="False">
+                                        <DataTrigger.Binding>
+                                            <MultiBinding Converter="{x:Static ui:AllItemsEqualConverter.Instance}">
+                                                <Binding Path="NewFileName.Value" />
+                                                <Binding Path="OriginalFileName.Value" />
+                                            </MultiBinding>
+                                        </DataTrigger.Binding>
+
+                                        <Setter Property="Background" Value="{StaticResource ChangedColor}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
                 </Grid>
 
                 <Grid Grid.Row="1"

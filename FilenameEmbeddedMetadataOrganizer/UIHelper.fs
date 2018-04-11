@@ -99,8 +99,7 @@ type AllItemsEqualConverter() =
             |> Array.filter ((<>) DependencyProperty.UnsetValue)
             |> Array.toList
             |> function
-                | head :: tail ->
-                    tail |> List.exists ((<>) head) |> not
+                | head :: tail -> tail |> List.forall ((=) head)
                 | [] -> false
             :> obj
 

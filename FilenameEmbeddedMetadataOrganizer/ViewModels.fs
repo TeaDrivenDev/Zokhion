@@ -52,7 +52,10 @@ module Utility =
     let xwhen (observable2 : IObservable<_>) (observable1 : IObservable<_>) =
         observable1 |> withLatestFrom observable2 |> Observable.filter snd
 
-    let contains part (s : string) = s.Contains part
+    let containsAll parts (s : string) = parts |> List.forall s.Contains
+
+    let split (separators : string []) (s : string) =
+        s.Split(separators, StringSplitOptions.RemoveEmptyEntries)
 
     let toReadOnlyReactiveProperty (observable : IObservable<_>) =
         observable.ToReadOnlyReactiveProperty()
@@ -201,7 +204,11 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                         fi.Name
                         |> Path.GetFileNameWithoutExtension
                         |> toUpper
-                        |> contains (toUpper searchString))
+                        |> containsAll
+                            (toUpper searchString
+                             |> split [| "&&" |]
+                             |> Array.map trim
+                             |> Array.toList))
 
             let directory =
                 if fromBaseDirectory && not <| String.IsNullOrWhiteSpace searchString

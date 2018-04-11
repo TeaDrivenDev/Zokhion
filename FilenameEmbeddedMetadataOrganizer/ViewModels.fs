@@ -288,6 +288,7 @@ type MainWindowViewModel() as this =
     let mutable selectedFile = Unchecked.defaultof<ReadOnlyReactiveProperty<FileInfo>>
 
     let originalFileName = new ReactiveProperty<_>("", ReactivePropertyMode.None)
+    let originalFileNameSelectedText = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let newFileName = new ReactiveProperty<_>("", ReactivePropertyMode.None)
 
     let treatParenthesizedPartAsNames = new ReactiveProperty<_>(true)
@@ -518,7 +519,8 @@ type MainWindowViewModel() as this =
             ReactiveCommand.Create(fun name ->
                 if not <| String.IsNullOrWhiteSpace name
                 then
-                    NameViewModel(name, false, false) |> this.Names.Add)
+                    NameViewModel(trim name, false, false) |> this.Names.Add
+                    this.NewNameToAdd.Value <- "")
 
         resetNameSelectionCommand <- ReactiveCommand.Create(fun () -> ignore ())
 
@@ -635,17 +637,20 @@ type MainWindowViewModel() as this =
         |> Observable.subscribe (uncurry updateDestinationDirectories)
         |> ignore
 
-        this.SelectedFile
+        existingSelectedFile
         |> Observable.subscribe (fun fi ->
-            if not <| isNull fi
-            then
-                this.Names
-                |> Seq.filter (fun vm -> vm.IsNew.Value)
-                |> Seq.toList
-                |> List.iter (this.Names.Remove >> ignore)
+            this.Names
+            |> Seq.filter (fun vm -> vm.IsNew.Value)
+            |> Seq.toList
+            |> List.iter (this.Names.Remove >> ignore)
 
-                this.OriginalFileName.Value <-
-                    string fi.Name |> Path.GetFileNameWithoutExtension)
+            this.OriginalFileName.Value <-
+                string fi.Name |> Path.GetFileNameWithoutExtension)
+        |> ignore
+
+        this.OriginalFileNameSelectedText
+        |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
+        |> Observable.subscribe (fun text -> this.NewNameToAdd.Value <- text)
         |> ignore
 
         NewFeatureInstanceViewModel()
@@ -763,7 +768,7 @@ type MainWindowViewModel() as this =
     member __.IsSearchEnabled = isSearchEnabled
 
     member __.OriginalFileName : ReactiveProperty<string> = originalFileName
-
+    member __.OriginalFileNameSelectedText : ReactiveProperty<_> = originalFileNameSelectedText
     member __.NewFileName : ReactiveProperty<string> = newFileName
 
     member __.TreatParenthesizedPartAsNames : ReactiveProperty<bool> = treatParenthesizedPartAsNames

@@ -288,12 +288,14 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock x:Name="OriginalName"
-                               Grid.Row="0"
-                               Grid.Column="0"
-                               Height="25"
-                               Text="{Binding OriginalFileName.Value}"
-                               TextWrapping="NoWrap" />
+                    <TextBox x:Name="OriginalName"
+                             Grid.Row="0"
+                             Grid.Column="0"
+                             Height="25"
+                             IsReadOnly="True"
+                             SelectionChanged="OriginalFileName_SelectionChanged"
+                             Text="{Binding OriginalFileName.Value}"
+                             TextWrapping="NoWrap" />
 
                     <Button Grid.Row="0"
                             Grid.Column="1"

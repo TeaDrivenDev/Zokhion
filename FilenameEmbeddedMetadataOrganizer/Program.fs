@@ -25,23 +25,23 @@ type MainWindow() as this =
     do
         this.Closing.Add onClosing
 
-    member this.ViewModel : MainWindowViewModel = this.DataContext :?> MainWindowViewModel
+    member __.ViewModel : MainWindowViewModel = __.DataContext :?> MainWindowViewModel
 
-    override this.SelectFolder_Click (_ : obj, e : RoutedEventArgs) =
+    override __.SelectFolder_Click (_ : obj, e : RoutedEventArgs) =
         use folderBrowserDialog = new Forms.FolderBrowserDialog()
         folderBrowserDialog.ShowNewFolderButton <- false
 
-        if not <| String.IsNullOrWhiteSpace this.ViewModel.BaseDirectory.Value
-            && System.IO.Directory.Exists this.ViewModel.BaseDirectory.Value
+        if not <| String.IsNullOrWhiteSpace __.ViewModel.BaseDirectory.Value
+            && System.IO.Directory.Exists __.ViewModel.BaseDirectory.Value
         then
-            folderBrowserDialog.SelectedPath <- this.ViewModel.BaseDirectory.Value
+            folderBrowserDialog.SelectedPath <- __.ViewModel.BaseDirectory.Value
 
-        let win = Win32Window(System.Windows.Interop.WindowInteropHelper(this).Handle)
+        let win = Win32Window(System.Windows.Interop.WindowInteropHelper(__).Handle)
         let result = folderBrowserDialog.ShowDialog win
 
         if result = Forms.DialogResult.OK
         then
-            this.ViewModel.BaseDirectory.Value <- folderBrowserDialog.SelectedPath
+            __.ViewModel.BaseDirectory.Value <- folderBrowserDialog.SelectedPath
 
     member this.Features_SelectedItemChanged (_ : obj, e : RoutedPropertyChangedEventArgs<obj>) =
         match e.NewValue with
@@ -51,6 +51,9 @@ type MainWindow() as this =
     override __.SearchText_KeyUp(sender : obj, e : Input.KeyEventArgs) =
         if e.Key = Input.Key.Escape
         then (sender :?> TextBox).Text <- ""
+
+    override __.OriginalFileName_SelectionChanged(sender : obj, e : RoutedEventArgs) =
+        __.ViewModel.OriginalFileNameSelectedText.Value <- (sender :?> TextBox).SelectedText
 
     // see https://stackoverflow.com/a/29028817/236507
     override __.InstanceName_KeyUp(sender : obj, e : Input.KeyEventArgs) =

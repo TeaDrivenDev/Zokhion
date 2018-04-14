@@ -361,6 +361,7 @@
                              Grid.ColumnSpan="2"
                              Height="25"
                              Padding="3 0"
+                             SelectionChanged="NewFileName_SelectionChanged"
                              Text="{Binding NewFileName.Value}"
                              TextWrapping="NoWrap">
                         <TextBox.Style>

@@ -297,6 +297,7 @@ type MainWindowViewModel() as this =
     let originalFileName = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let originalFileNameSelectedText = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let newFileName = new ReactiveProperty<_>("", ReactivePropertyMode.None)
+    let newFileNameSelectedText = new ReactiveProperty<_>("", ReactivePropertyMode.None)
 
     let treatParenthesizedPartAsNames = new ReactiveProperty<_>(true)
     let fixupNamesInMainPart = new ReactiveProperty<_>(false)
@@ -655,9 +656,17 @@ type MainWindowViewModel() as this =
                 string fi.Name |> Path.GetFileNameWithoutExtension)
         |> ignore
 
-        this.OriginalFileNameSelectedText
+        [
+            this.OriginalFileNameSelectedText :> IObservable<_>
+            this.NewFileNameSelectedText :> IObservable<_>
+        ]
+        |> Observable.mergeSeq
         |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
-        |> Observable.subscribe (fun text -> this.NewNameToAdd.Value <- text)
+        |> Observable.subscribe (fun text ->
+            this.NewNameToAdd.Value <-
+                if this.RecapitalizeNames.Value
+                then toTitleCase text
+                else text)
         |> ignore
 
         NewFeatureInstanceViewModel()
@@ -777,6 +786,7 @@ type MainWindowViewModel() as this =
     member __.OriginalFileName : ReactiveProperty<string> = originalFileName
     member __.OriginalFileNameSelectedText : ReactiveProperty<_> = originalFileNameSelectedText
     member __.NewFileName : ReactiveProperty<string> = newFileName
+    member __.NewFileNameSelectedText : ReactiveProperty<_> = newFileNameSelectedText
 
     member __.TreatParenthesizedPartAsNames : ReactiveProperty<bool> = treatParenthesizedPartAsNames
 

@@ -55,6 +55,9 @@ type MainWindow() as this =
     override __.OriginalFileName_SelectionChanged(sender : obj, e : RoutedEventArgs) =
         __.ViewModel.OriginalFileNameSelectedText.Value <- (sender :?> TextBox).SelectedText
 
+    override __.NewFileName_SelectionChanged(sender : obj, e : RoutedEventArgs) =
+        __.ViewModel.NewFileNameSelectedText.Value <- (sender :?> TextBox).SelectedText
+
     // see https://stackoverflow.com/a/29028817/236507
     override __.InstanceName_KeyUp(sender : obj, e : Input.KeyEventArgs) =
         let sender = sender :?> TextBox

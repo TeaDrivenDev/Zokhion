@@ -202,11 +202,13 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                     fi.Name
                     |> Path.GetFileNameWithoutExtension
                     |> toUpper
-                    |> containsAll
-                        (toUpper searchString
-                            |> split [| "&&" |]
-                            |> Array.map trim
-                            |> Array.toList))
+                    |> (fun s -> [ s;  s.Replace("_", " ") ])
+                    |> Seq.exists
+                        (containsAll
+                            (toUpper searchString
+                             |> split [| "&&" |]
+                             |> Array.map trim
+                             |> Array.toList)))
 
         let directory =
             if fromBaseDirectory && not <| String.IsNullOrWhiteSpace searchString

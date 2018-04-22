@@ -17,6 +17,7 @@ open ReactiveUI
 open Reactive.Bindings
 
 open FilenameEmbeddedMetadataOrganizer
+open Reactive.Bindings.Notifiers
 
 type ReactiveCommand = ReactiveUI.ReactiveCommand
 
@@ -190,35 +191,31 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     let selectedFile = new ReactiveProperty<FileInfo>()
     let mutable refreshCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable clearSearchTextCommand = Unchecked.defaultof<ReactiveCommand>
+    let isUpdating = BooleanNotifier(false)
 
     let getFiles searchString fromBaseDirectory =
-        if not <| isNull selectedDirectory && selectedDirectory.Exists
-        then
-            files.Clear()
+        let filter searchString =
+            if String.IsNullOrWhiteSpace searchString
+            then (fun _ -> true)
+            else
+                (fun (fi : FileInfo) ->
+                    fi.Name
+                    |> Path.GetFileNameWithoutExtension
+                    |> toUpper
+                    |> containsAll
+                        (toUpper searchString
+                            |> split [| "&&" |]
+                            |> Array.map trim
+                            |> Array.toList))
 
-            let filter searchString =
-                if String.IsNullOrWhiteSpace searchString
-                then (fun _ -> true)
-                else
-                    (fun (fi : FileInfo) ->
-                        fi.Name
-                        |> Path.GetFileNameWithoutExtension
-                        |> toUpper
-                        |> containsAll
-                            (toUpper searchString
-                             |> split [| "&&" |]
-                             |> Array.map trim
-                             |> Array.toList))
+        let directory =
+            if fromBaseDirectory && not <| String.IsNullOrWhiteSpace searchString
+            then baseDirectory
+            else selectedDirectory.FullName
 
-            let directory =
-                if fromBaseDirectory && not <| String.IsNullOrWhiteSpace searchString
-                then baseDirectory
-                else selectedDirectory.FullName
-
-            Directory.GetFiles(directory, "*", SearchOption.AllDirectories)
-            |> Seq.map FileInfo
-            |> Seq.filter (filter searchString)
-            |> Seq.iter files.Add
+        Directory.GetFiles(directory, "*", SearchOption.AllDirectories)
+        |> Seq.map FileInfo
+        |> Seq.filter (filter searchString)
 
     do
         header <-
@@ -240,8 +237,18 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
         searchText
         |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
         |> Observable.combineLatest searchFromBaseDirectory
-        |> Observable.subscribe (fun (fromBaseDirectory, searchString) ->
+        |> Observable.iter (fun _ -> isUpdating.TurnOn())
+        |> Observable.observeOn ThreadPoolScheduler.Instance
+        |> Observable.filter (fun _ -> not <| isNull selectedDirectory && selectedDirectory.Exists)
+        |> Observable.map (fun (fromBaseDirectory, searchString) ->
             getFiles searchString fromBaseDirectory)
+        |> Observable.observeOn RxApp.MainThreadScheduler
+        |> Observable.subscribe (fun newFiles ->
+            files.Clear()
+
+            newFiles |> Seq.iter files.Add
+
+            isUpdating.TurnOff())
         |> ignore
 
         [
@@ -272,6 +279,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     member __.SelectedFile = selectedFile
     member __.RefreshCommand = refreshCommand
     member __.ClearSearchTextCommand = clearSearchTextCommand
+    member __.IsUpdating = isUpdating
 
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
@@ -672,7 +680,7 @@ type MainWindowViewModel() as this =
         NewFeatureInstanceViewModel()
         |> this.EditingFeatureInstances.Add
 
-        let gate = new BehaviorSubject<bool>(true)
+        let gate = new BooleanNotifier(true)
 
         [
             this.TreatParenthesizedPartAsNames |> Observable.map TreatParenthesizedPartAsNames
@@ -726,9 +734,9 @@ type MainWindowViewModel() as this =
             }
             (updateParameters this.Replacements getAllNames)
         |> Observable.subscribe (fun parameters ->
-            gate.OnNext false
+            gate.TurnOff()
             updateNewName this.OriginalFileName.Value parameters
-            gate.OnNext true)
+            gate.TurnOn())
         |> ignore
 
         this.NewFileName

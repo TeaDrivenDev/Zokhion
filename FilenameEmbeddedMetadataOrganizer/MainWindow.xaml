@@ -242,6 +242,12 @@
                                 </DataGrid.Columns>
                             </DataGrid>
 
+                            <Border Grid.Row="1"
+                                    Background="White"
+                                    Opacity="0.3"
+                                    Visibility="{Binding IsUpdating.Value,
+                                                         Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
+
                             <TextBlock Grid.Row="2"
                                        Margin="5 3 5 5"
                                        Text="{Binding Files.Count,

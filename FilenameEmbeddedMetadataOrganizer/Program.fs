@@ -20,6 +20,9 @@ type MainWindowBase = XAML<"MainWindow.xaml">
 type MainWindow() as this =
     inherit MainWindowBase()
 
+    let mutable dragStart = Unchecked.defaultof<Point>
+    let draggedItems = ResizeArray<_>()
+
     let onClosing (_ : CancelEventArgs) = this.ViewModel.Shutdown()
 
     do
@@ -90,6 +93,42 @@ type MainWindow() as this =
 
     override __.InstanceCode_KeyUp(sender : obj, e : Input.KeyEventArgs) =
         __.InstanceName_KeyUp(sender, e)
+
+    // Drag and drop implementation from http://codebrewery.blogspot.de/2010/06/drag-and-drop-files-from-wpf-listviews.html
+    // see also https://stackoverflow.com/a/25123410/236507
+    member __.FilesGrid_PreviewMouseLeftButtonDown(sender : obj, e: MouseButtonEventArgs) =
+        let filesGrid = sender :?> DataGrid
+
+        dragStart <- e.GetPosition null
+        draggedItems.Clear()
+        draggedItems.AddRange(filesGrid.SelectedItems |> Seq.cast<obj>)
+
+    member __.FilesGrid_MouseMove(sender : obj, e: MouseEventArgs) =
+        let position = e.GetPosition null
+        let dragDifference = dragStart - position
+        let filesGrid = sender :?> DataGrid
+
+        if e.LeftButton = MouseButtonState.Pressed
+            && Math.Abs dragDifference.X > SystemParameters.MinimumHorizontalDragDistance
+            && Math.Abs dragDifference.Y > SystemParameters.MinimumVerticalDragDistance
+            && filesGrid.SelectedItems.Count > 0
+        then
+            draggedItems
+            |> Seq.filter (filesGrid.SelectedItems.Contains >> not)
+            |> Seq.iter (filesGrid.SelectedItems.Add >> ignore)
+
+            let files =
+                draggedItems
+                |> Seq.cast<System.IO.FileInfo>
+                |> Seq.map (fun fileInfo -> fileInfo.FullName)
+                |> Seq.toArray
+
+            let dataObject = DataObject(DataFormats.FileDrop, files)
+            
+            DragDrop.DoDragDrop(filesGrid, dataObject, DragDropEffects.Copy)
+            |> ignore
+
+            e.Handled <- true
 
 type AppBase = XAML<"App.xaml">
 

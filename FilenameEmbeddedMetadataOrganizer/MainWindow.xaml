@@ -166,13 +166,15 @@
                                 </Button>
                             </Grid>
 
-                            <DataGrid x:Name="Files"
+                            <DataGrid x:Name="FilesGrid"
                                       Grid.Row="1"
                                       Margin="5"
                                       AutoGenerateColumns="False"
                                       ItemsSource="{Binding Files}"
+                                      MouseMove="FilesGrid_MouseMove"
+                                      PreviewMouseLeftButtonDown="FilesGrid_PreviewMouseLeftButtonDown"
                                       SelectedItem="{Binding SelectedFile.Value}"
-                                      SelectionMode="Single">
+                                      SelectionMode="Extended">
                                 <DataGrid.Columns>
                                     <materialDesign:MaterialDataGridTextColumn Width="450"
                                                                                Binding="{Binding Name}"

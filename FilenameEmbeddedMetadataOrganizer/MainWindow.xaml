@@ -289,7 +289,7 @@
                     <Grid.Resources>
                         <SolidColorBrush x:Key="ChangedColor"
                                          Opacity="0.4"
-                                         Color="DarkRed" />
+                                         Color="SeaGreen" />
                     </Grid.Resources>
                     <Grid.RowDefinitions>
                         <RowDefinition />
@@ -306,6 +306,7 @@
                              Grid.Column="0"
                              Height="25"
                              Margin="0 0 5 0"
+                             Padding="3 0"
                              IsReadOnly="True"
                              SelectionChanged="OriginalFileName_SelectionChanged"
                              Text="{Binding OriginalFileName.Value}"

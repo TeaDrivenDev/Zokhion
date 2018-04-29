@@ -4,3 +4,4 @@ group Test
     xunit
     xunit.runner.visualstudio
     Unquote
+    xunit.runner.console

@@ -7,6 +7,7 @@ open System.IO
 
 open Fake
 open Fake.Git
+open Fake.Testing
 
 let solutionFile  = "FilenameEmbeddedMetadataOrganizer.sln"
 
@@ -24,6 +25,14 @@ Target "Build" (fun _ ->
     |> MSBuildRelease "" "Rebuild"
     |> ignore)
 
-"Build"
+Target "RunTests" (fun _ ->
+    !! "**/bin/Release/**/*.Tests.dll"
+    |> xUnit2 id)
 
-RunTargetOrDefault "Build"
+Target "All" DoNothing
+
+"Build"
+==> "RunTests"
+==> "All"
+
+RunTargetOrDefault "All"

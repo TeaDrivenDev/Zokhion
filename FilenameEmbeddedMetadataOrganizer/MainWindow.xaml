@@ -266,7 +266,7 @@
                       ResizeBehavior="PreviousAndNext" />
 
         <GroupBox Grid.Column="2"
-                  Margin="10"
+                  Margin="5"
                   materialDesign:ShadowAssist.ShadowDepth="Depth3"
                   BorderThickness="0"
                   Header="Manage Metadata">
@@ -285,7 +285,7 @@
                 <Grid Grid.Row="0"
                       Grid.Column="0"
                       Grid.ColumnSpan="3"
-                      Margin="5">
+                      Margin="0 0 0 5">
                     <Grid.Resources>
                         <SolidColorBrush x:Key="ChangedColor"
                                          Opacity="0.4"
@@ -305,7 +305,7 @@
                              Grid.Row="0"
                              Grid.Column="0"
                              Height="25"
-                             Padding="3 0"
+                             Margin="0 0 5 0"
                              IsReadOnly="True"
                              SelectionChanged="OriginalFileName_SelectionChanged"
                              Text="{Binding OriginalFileName.Value}"
@@ -313,15 +313,18 @@
 
                     <Button Grid.Row="0"
                             Grid.Column="1"
-                            Width="100"
+                            Width="30"
                             Height="30"
+                            Padding="0"
                             Command="{Binding OpenCommand}"
                             CommandParameter="{Binding SelectedFile.Value}"
-                            Content="Open" />
+                            ToolTip="Open file">
+                        <materialDesign:PackIcon Kind="OpenInNew" />
+                    </Button>
 
                     <WrapPanel Grid.Row="1"
                                Grid.Column="0"
-                               Margin="0 5"
+                               Margin="0 5 5 5"
                                Orientation="Horizontal">
                         <CheckBox Height="23"
                                   Margin="0 0 20 0"
@@ -356,12 +359,15 @@
 
                     <Button Grid.Row="1"
                             Grid.Column="1"
-                            Width="100"
+                            Width="30"
                             Height="30"
                             Margin="0 5"
+                            Padding="0"
                             Command="{Binding OpenExplorerCommand}"
                             CommandParameter="{Binding SelectedFile.Value}"
-                            Content="Explorer" />
+                            ToolTip="Show in Explorer">
+                        <materialDesign:PackIcon Kind="FolderOutline" />
+                    </Button>
 
                     <TextBox x:Name="NewName"
                              Grid.Row="2"
@@ -400,7 +406,7 @@
                     </Grid.RowDefinitions>
 
                     <GroupBox Grid.Row="0"
-                              Margin="4"
+                              Margin="0 0 2 2"
                               Header="Replacements"
                               Style="{DynamicResource MaterialDesignCardGroupBox}">
                         <Grid>
@@ -470,7 +476,7 @@
                         </Grid>
                     </GroupBox>
                     <GroupBox Grid.Row="1"
-                              Margin="4"
+                              Margin="0 2 2 0"
                               Style="{DynamicResource MaterialDesignCardGroupBox}">
                         <GroupBox.HeaderTemplate>
                             <DataTemplate>
@@ -500,7 +506,7 @@
 
                 <GroupBox Grid.Row="1"
                           Grid.Column="1"
-                          Margin="4"
+                          Margin="2 0 2 0"
                           Header="Names"
                           Style="{DynamicResource MaterialDesignCardGroupBox}">
                     <GroupBox.HeaderTemplate>
@@ -631,7 +637,7 @@
                 <!--  Features  -->
                 <GroupBox Grid.Row="1"
                           Grid.Column="2"
-                          Margin="4"
+                          Margin="2 0 0 0"
                           Header="Features"
                           Style="{DynamicResource MaterialDesignCardGroupBox}">
 
@@ -818,9 +824,13 @@
                                     </ScrollViewer>
 
                                     <Button Grid.Row="2"
+                                            Width="15"
+                                            Height="15"
+                                            Padding="1 -1 0 0"
                                             HorizontalAlignment="Left"
                                             Command="{Binding AddFeatureInstanceRowCommand}"
                                             Content="+"
+                                            FontWeight="Black"
                                             IsTabStop="False" />
                                 </Grid>
                             </materialDesign:Card>
@@ -830,7 +840,8 @@
 
                 <Grid Grid.Row="2"
                       Grid.Column="0"
-                      Grid.ColumnSpan="3">
+                      Grid.ColumnSpan="3"
+                      Margin="0 4 0 0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />
                         <ColumnDefinition Width="Auto" />
@@ -839,13 +850,18 @@
                     <TextBlock x:Name="ResultingFilePath"
                                Grid.Column="0"
                                Height="Auto"
+                               Margin="0 0 5 0"
+                               VerticalAlignment="Center"
                                Text="{Binding ResultingFilePath.Value}"
                                TextWrapping="Wrap" />
                     <Button Grid.Column="1"
-                            Width="100"
+                            Width="30"
                             Height="30"
+                            Padding="0"
                             Command="{Binding ApplyCommand}"
-                            Content="Apply" />
+                            ToolTip="Apply">
+                        <materialDesign:PackIcon Kind="Check" />
+                    </Button>
                 </Grid>
             </Grid>
         </GroupBox>

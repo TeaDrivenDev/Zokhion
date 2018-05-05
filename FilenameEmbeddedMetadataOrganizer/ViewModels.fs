@@ -595,8 +595,16 @@ type MainWindowViewModel() as this =
         applyCommand <-
             ReactiveCommand.Create(
                 (fun () ->
-                    File.Move(this.SelectedFile.Value.FullName, this.ResultingFilePath.Value)
-                    searchCommands.OnNext Refresh),
+                    try
+                        File.Move(this.SelectedFile.Value.FullName, this.ResultingFilePath.Value)
+                        searchCommands.OnNext Refresh
+                    with
+                    | _ -> 
+                        MessageBox.Show("Renaming failed. Please make sure the file is not in use by another application.",
+                                        "Renaming failed",
+                                        MessageBoxButton.OK,
+                                        MessageBoxImage.Warning)
+                        |> ignore),
                 this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists))
 
         this.SelectedDirectory

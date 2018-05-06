@@ -377,7 +377,8 @@
                              Height="25"
                              Padding="3 0"
                              SelectionChanged="NewFileName_SelectionChanged"
-                             Text="{Binding NewFileName.Value}"
+                             Text="{Binding NewFileName.Value,
+                                            UpdateSourceTrigger=PropertyChanged}"
                              TextWrapping="NoWrap">
                         <TextBox.Style>
                             <Style BasedOn="{StaticResource MaterialDesignTextBox}"

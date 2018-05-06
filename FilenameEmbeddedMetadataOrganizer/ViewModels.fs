@@ -617,7 +617,12 @@ type MainWindowViewModel() as this =
                                         MessageBoxButton.OK,
                                         MessageBoxImage.Warning)
                         |> ignore),
-                this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists))
+                [
+                    this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists)
+                    this.ResultingFilePath |> Observable.map (fun path -> not <| isNull path && not <| File.Exists path)
+                ]
+                |> Observable.combineLatestSeq
+                |> Observable.map (Seq.toList >> List.forall id))
 
         this.SelectedDirectory
         |> Observable.map (fun dir -> SelectedDirectory (dir, this.BaseDirectory.Value))

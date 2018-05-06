@@ -61,6 +61,14 @@ type MainWindow() as this =
     override __.NewFileName_SelectionChanged(sender : obj, e : RoutedEventArgs) =
         __.ViewModel.NewFileNameSelectedText.Value <- (sender :?> TextBox).SelectedText
 
+    override __.NewNameToAdd_KeyUp(sender : obj, e : Input.KeyEventArgs) =
+        let sender = sender :?> TextBox
+
+        match e.Key with
+        | Input.Key.Enter -> __.ViewModel.AddName sender.Text
+        | Input.Key.Escape -> sender.Text <- ""
+        | _ -> ()
+
     // see https://stackoverflow.com/a/29028817/236507
     override __.InstanceName_KeyUp(sender : obj, e : Input.KeyEventArgs) =
         let sender = sender :?> TextBox

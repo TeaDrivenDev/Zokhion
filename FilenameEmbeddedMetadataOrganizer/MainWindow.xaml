@@ -546,6 +546,7 @@
                                      Grid.Column="0"
                                      Margin="2"
                                      materialDesign:HintAssist.Hint="Add Name"
+                                     KeyUp="NewNameToAdd_KeyUp"
                                      Text="{Binding NewNameToAdd.Value,
                                                     UpdateSourceTrigger=PropertyChanged}" />
 
@@ -560,78 +561,80 @@
                                     Content="+" />
                         </Grid>
 
-                        <ItemsControl Grid.Row="1"
-                                      Background="Transparent"
-                                      ItemsSource="{Binding Names}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="viewModels:NameViewModel">
-                                    <CheckBox Margin="0 3"
-                                              HorizontalContentAlignment="Stretch"
-                                              Foreground="{StaticResource MaterialDesignBody}"
-                                              IsChecked="{Binding IsSelected}">
-                                        <CheckBox.Style>
-                                            <Style TargetType="CheckBox">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsNew.Value}"
-                                                                 Value="True">
-                                                        <Setter Property="Background" Value="{StaticResource SecondaryAccentBrush}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </CheckBox.Style>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <Grid.Style>
-                                                <Style TargetType="Grid">
+                        <ScrollViewer Grid.Row="1"
+                                      VerticalScrollBarVisibility="Auto">
+                            <ItemsControl Background="Transparent"
+                                          ItemsSource="{Binding Names}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="viewModels:NameViewModel">
+                                        <CheckBox Margin="0 3"
+                                                  HorizontalContentAlignment="Stretch"
+                                                  Foreground="{StaticResource MaterialDesignBody}"
+                                                  IsChecked="{Binding IsSelected}">
+                                            <CheckBox.Style>
+                                                <Style TargetType="CheckBox">
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsSelected}"
+                                                        <DataTrigger Binding="{Binding IsNew.Value}"
                                                                      Value="True">
-                                                            <Setter Property="Background">
-                                                                <Setter.Value>
-                                                                    <SolidColorBrush Color="{StaticResource Accent700}" />
-                                                                </Setter.Value>
-                                                            </Setter>
+                                                            <Setter Property="Background" Value="{StaticResource SecondaryAccentBrush}" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
-                                            </Grid.Style>
-
-                                            <TextBlock Grid.Column="0"
-                                                       Margin="5 0 15 0"
-                                                       HorizontalAlignment="Stretch"
-                                                       Text="{Binding Name.Value}">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
+                                            </CheckBox.Style>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.Style>
+                                                    <Style TargetType="Grid">
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsSelected}"
                                                                          Value="True">
-                                                                <Setter Property="Foreground">
+                                                                <Setter Property="Background">
                                                                     <Setter.Value>
-                                                                        <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
+                                                                        <SolidColorBrush Color="{StaticResource Accent700}" />
                                                                     </Setter.Value>
                                                                 </Setter>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                            <Button Grid.Column="1"
-                                                    Width="12"
-                                                    Height="12"
-                                                    Margin="0 0 5 0"
-                                                    Padding="0 -5 0 -4"
-                                                    Command="{Binding ClearNewFlagCommand}"
-                                                    Content="+"
-                                                    Visibility="{Binding IsNew.Value,
-                                                                         Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
-                                        </Grid>
-                                    </CheckBox>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                                </Grid.Style>
+
+                                                <TextBlock Grid.Column="0"
+                                                           Margin="5 0 15 0"
+                                                           HorizontalAlignment="Stretch"
+                                                           Text="{Binding Name.Value}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsSelected}"
+                                                                             Value="True">
+                                                                    <Setter Property="Foreground">
+                                                                        <Setter.Value>
+                                                                            <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <Button Grid.Column="1"
+                                                        Width="12"
+                                                        Height="12"
+                                                        Margin="0 0 5 0"
+                                                        Padding="0 -5 0 -4"
+                                                        Command="{Binding ClearNewFlagCommand}"
+                                                        Content="+"
+                                                        Visibility="{Binding IsNew.Value,
+                                                                             Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
+                                            </Grid>
+                                        </CheckBox>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                     </Grid>
                 </GroupBox>
 

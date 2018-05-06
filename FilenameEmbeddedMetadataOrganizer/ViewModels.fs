@@ -377,6 +377,23 @@ type MainWindowViewModel() as this =
             destinationDirectories
             |> Seq.find (fun (d : DirectoryInfo) -> d.FullName = currentFileDirectory)
 
+    let addName name =
+        if not <| String.IsNullOrWhiteSpace name
+        then
+            let name = trim name
+
+            let viewModel =
+                this.Names
+                |> Seq.tryFind (fun vm -> vm.Name.Value = name)
+                |> Option.defaultWith (fun () -> 
+                    let vm = NameViewModel(trim name, false, false)
+                    this.Names.Add vm
+                    vm)
+            
+            viewModel.IsSelected <- true
+
+            this.NewNameToAdd.Value <- ""
+
     let updateNamesList detectedNames =
         (detectedNames, this.Names)
         ||> fullOuterJoin toUpper (fun vm -> vm.Name.Value |> toUpper)
@@ -533,12 +550,7 @@ type MainWindowViewModel() as this =
                     this.ReplaceWithToAdd.Value <- ""),
                 this.ToReplaceToAdd |> Observable.map (String.IsNullOrWhiteSpace >> not))
 
-        addNameCommand <-
-            ReactiveCommand.Create(fun name ->
-                if not <| String.IsNullOrWhiteSpace name
-                then
-                    NameViewModel(trim name, false, false) |> this.Names.Add
-                    this.NewNameToAdd.Value <- "")
+        addNameCommand <- ReactiveCommand.Create addName
 
         resetNameSelectionCommand <- ReactiveCommand.Create(fun () -> ignore ())
 
@@ -831,7 +843,7 @@ type MainWindowViewModel() as this =
     member __.Replacements : ObservableCollection<_> = replacements
 
     member __.NewNameToAdd : ReactiveProperty<string> = newNameToAdd
-
+    member __.AddName (name : string) = addName name
     member __.AddNameCommand = addNameCommand :> ICommand
 
     member __.Names : ReactiveList<NameViewModel> = names

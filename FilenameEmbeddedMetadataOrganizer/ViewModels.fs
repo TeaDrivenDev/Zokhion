@@ -768,6 +768,7 @@ type MainWindowViewModel() as this =
 
         this.NewFileName
         |> Observable.combineLatest this.SelectedDestinationDirectory
+        |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.subscribe (fun _ -> updateResultingFilePath ())
         |> ignore
 

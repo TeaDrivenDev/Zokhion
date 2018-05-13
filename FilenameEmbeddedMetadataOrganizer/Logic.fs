@@ -408,11 +408,20 @@ module Logic =
             DetectedNames : string list
         }
 
+    type NameSource = Selected | NamesPart | MainPart
+
+    type MatchedName =
+        {
+            Name : string
+            Normalized : string
+            Source : NameSource
+        }
+
     let splitFileName preserveSeparateNamesPart (fileName : string) =
         let regex =
             if preserveSeparateNamesPart
-            then @"^(?<main>.+?)\s*(?<names>\([^\)]+\))?\s*(?<features>\[.+\])?$"
-            else @"^(?<main>.+?)\s*(?<features>\[.+\])?$"
+            then @"^(?<main>.+?)\s*(?<names>\([^\)]+\))?\s*(?<features>\[\..+\.\])?$"
+            else @"^(?<main>.+?)\s*(?<features>\[\..+\.\])?$"
             |> Regex
 
         let m = regex.Match fileName
@@ -422,15 +431,26 @@ module Logic =
         else "", "", ""
 
     let evaluateNamesPart (names : string) =
+        let splitBy separator (``match`` : Match) =
+            ``match``.Groups.["names"].Value.Split separator
+            |> Array.map trim
+            |> Array.toList
+            |> List.map (fun name ->
+                {
+                    Name = name
+                    Normalized = toUpper name
+                    Source = NamesPart
+                })
+
         let m = Regex.Match(names, @"^\(\.(?<names>.+)\.\)$")
 
         if m.Success
-        then Some (m.Groups.["names"].Value.Split('.') |> Array.map trim |> Array.toList)
+        then Some (splitBy [| '.' |] m)
         else
             let m = Regex.Match(names, @"^\((?<names>.+)\)")
 
             if m.Success
-            then Some (m.Groups.["names"].Value.Split(',') |> Array.map trim |> Array.toList)
+            then Some (splitBy [| ',' |] m)
             else None
 
     let evaluateFeaturesPart (names : string) =
@@ -440,10 +460,18 @@ module Logic =
         then Some (m.Groups.["features"].Value.Split('.') |> Array.map trim |> Array.toList)
         else None
 
-    let detectListedNames (allNames : string list) (part : string) =
+    let detectListedNames (allNames : string list) source (part : string) =
         let part = part.ToUpper()
 
-        allNames |> List.filter (toUpper >> part.Contains)
+        allNames
+        |> List.map (fun name -> name, toUpper name)
+        |> List.filter (snd >> part.Contains)
+        |> List.map (fun (name, normalized) ->
+            {
+                Name = name
+                Normalized = normalized
+                Source = source
+            })
 
     let rename parameters (originalFileName : string) : RenameResult =
         let originalFileName = string originalFileName
@@ -467,34 +495,55 @@ module Logic =
             evaluateNamesPart namesPart
             |> Option.map (fun names ->
                 if parameters.DetectNamesInMainAndNamesParts
-                then names @ detectListedNames parameters.AllNames mainPart
+                then names @ detectListedNames parameters.AllNames MainPart mainPart
                 else names)
-            |> Option.defaultWith (fun () -> detectListedNames parameters.AllNames mainPart)
+            |> Option.defaultWith (fun () -> detectListedNames parameters.AllNames MainPart mainPart)
+            |> List.map JoinWrapper
             |> asFst parameters.AllNames
-            ||> fullOuterJoin toUpper toUpper
+            ||> fullOuterJoin (fun n -> n.Value.Normalized) toUpper
             |> Seq.choose (function
                 | LeftOnly _ -> None
-                | RightOnly detected ->
-                    detected |> (if parameters.RecapitalizeNames then toTitleCase else id) |> Some
-                | JoinMatch (listed, detected) -> Some listed)
+                | RightOnly (JoinWrapped detected) ->
+                    if parameters.RecapitalizeNames
+                    then { detected with Name = toTitleCase detected.Name }
+                    else detected
+                    |> Some
+                | JoinMatch (listed, JoinWrapped detected) -> Some { detected with Name = listed })
             |> Seq.distinct
             |> Seq.toList
             |> List.sort
 
-        let namesToUse =
+        let detectedAndSelectedNames =
             parameters.SelectedNames
             |> Option.map (fun selected ->
-                (parameters.AllNames, selected)
-                ||> leftJoin toUpper toUpper
+                selected
+                |> List.map (fun name ->
+                    { Name = name; Normalized = toUpper name; Source = Selected }
+                    |> JoinWrapper)
+                |> asSnd parameters.AllNames
+                ||> leftJoin toUpper (fun n -> n.Value.Normalized)
                 |> Seq.map (function
-                    | selected, Some inAll -> selected
-                    | selected, None ->
+                    | JoinWrapped selected, Some inAll -> selected
+                    | JoinWrapped selected, None ->
                         detectedNames
-                        |> List.tryFind (toUpper >> ((=) (toUpper selected)))
+                        |> List.tryFind (fun detected -> detected.Normalized = selected.Normalized)
+                        |> Option.map (fun detected -> { selected with Name = detected.Name })
                         |> Option.defaultValue selected)
                 |> Seq.toList)
             |> Option.defaultValue detectedNames
-            |> List.sortBy toUpper
+            |> List.groupBy (fun n -> n.Normalized)
+            |> List.map (fun (_, occurrences) ->
+                occurrences |> List.sortBy (fun n -> n.Source) |> List.head)
+            |> List.sortBy (fun n -> n.Normalized)
+
+        let namesToUse =
+            detectedAndSelectedNames
+            |> List.filter (fun name ->
+                name.Source <> MainPart
+                || detectedAndSelectedNames
+                   |> List.forall (fun n ->
+                        name = n || n.Normalized.Contains name.Normalized |> not))
+            |> List.map (fun n -> n.Name)
 
         let mainPart =
             if parameters.FixupNamesInMainPart

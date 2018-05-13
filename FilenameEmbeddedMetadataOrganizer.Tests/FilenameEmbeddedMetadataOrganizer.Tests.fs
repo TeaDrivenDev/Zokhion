@@ -13,6 +13,7 @@ module SplitFileNameTests =
     [<InlineData("Aerial view (from above) over Uluru at night (.Andes.Pacific Ocean.)", "Aerial view (from above) over Uluru at night", "(.Andes.Pacific Ocean.)", "")>]
     [<InlineData("Aerial view over Uluru at night (.Andes.Pacific Ocean.) [.Ax.Bd.]", "Aerial view over Uluru at night", "(.Andes.Pacific Ocean.)", "[.Ax.Bd.]")>]
     [<InlineData("Aerial view over Uluru at night [.Ax.Bd.]", "Aerial view over Uluru at night", "", "[.Ax.Bd.]")>]
+    [<InlineData("Aerial view over Uluru at night [NoFeature]", "Aerial view over Uluru at night [NoFeature]", "", "")>]
     let ``Filename parts are correctly detected`` (fileName, expectedMain, expectedNames, expectedFeatures) =
         // Arrange
         let fileName = fileName
@@ -33,6 +34,7 @@ module SplitFileNameTests =
     [<InlineData("Aerial view (from above) over Uluru at night (.Andes.Pacific Ocean.)", "Aerial view (from above) over Uluru at night (.Andes.Pacific Ocean.)", "", "")>]
     [<InlineData("Aerial view over Uluru at night (.Andes.Pacific Ocean.) [.Ax.Bd.]", "Aerial view over Uluru at night (.Andes.Pacific Ocean.)", "", "[.Ax.Bd.]")>]
     [<InlineData("Aerial view over Uluru at night [.Ax.Bd.]", "Aerial view over Uluru at night", "", "[.Ax.Bd.]")>]
+    [<InlineData("Aerial view over Uluru at night [NoFeature]", "Aerial view over Uluru at night [NoFeature]", "", "")>]
     let ``Filename parts are correctly detected omitting separate name part`` (fileName, expectedMain, expectedNames, expectedFeatures) =
         // Arrange
         let fileName = fileName
@@ -100,6 +102,50 @@ module RenameTests =
             {
                 NewFileName = "View from the Glasshouse Mountains to the Great Barrier Reef (.Glasshouse Mountains.Great Barrier Reef.)"
                 DetectedNames = [ "Glasshouse Mountains"; "Great Barrier Reef" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``A name that is part of another detected name is not returned`` () =
+        // Arrange
+        let originalName = "View from the Glasshouse Mountains to the Great Barrier Reef"
+
+        let parameters =
+            {
+                baseParameters with
+                    AllNames = "Arri" :: baseParameters.AllNames
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "View from the Glasshouse Mountains to the Great Barrier Reef (.Glasshouse Mountains.Great Barrier Reef.)"
+                DetectedNames = [ "Glasshouse Mountains"; "Great Barrier Reef" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``A selected name that is part of another returned name is returned`` () =
+        // Arrange
+        let originalName = "View over the Great Barrier Reef (.Arri.Great Barrier Reef.)"
+
+        let parameters = baseParameters
+
+        let expectedResult =
+            {
+                NewFileName = "View over the Great Barrier Reef (.Arri.Great Barrier Reef.)"
+                DetectedNames = [ "Arri"; "Great Barrier Reef" ]
                 DetectedFeatures = []
             }
 
@@ -525,6 +571,26 @@ module RenameTests =
         let expectedResult =
             {
                 NewFileName = "Aerial view over Uluru at night (.Uluru.)"
+                DetectedNames = [ "Uluru" ]
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Square brackets without feature pattern are left alone`` () =
+        // Arrange
+        let originalName = "Aerial view over Uluru at night [NoFeature]"
+
+        let parameters = baseParameters
+
+        let expectedResult =
+            {
+                NewFileName = "Aerial view over Uluru at night [NoFeature] (.Uluru.)"
                 DetectedNames = [ "Uluru" ]
                 DetectedFeatures = []
             }

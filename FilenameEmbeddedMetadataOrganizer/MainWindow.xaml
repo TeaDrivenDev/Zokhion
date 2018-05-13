@@ -551,6 +551,32 @@
                                      Text="{Binding NewNameToAdd.Value,
                                                     UpdateSourceTrigger=PropertyChanged}" />
 
+                            <Button Grid.Column="0"
+                                    Width="15"
+                                    Height="15"
+                                    Margin="5 0"
+                                    Padding="0 -1 -1 0"
+                                    HorizontalAlignment="Right"
+                                    Command="{Binding ClearNewNameToAddCommand}"
+                                    Content="&#x2716;"
+                                    FontSize="10"
+                                    Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
+                                    IsTabStop="False"
+                                    ToolTip="Clear name">
+                                <Button.Style>
+                                    <Style BasedOn="{StaticResource MaterialDesignRaisedButton}"
+                                           TargetType="Button">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ElementName=NewNameToAdd,
+                                                                           Path=Text}"
+                                                         Value="">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
                             <Button Grid.Column="1"
                                     Width="15"
                                     Height="15"

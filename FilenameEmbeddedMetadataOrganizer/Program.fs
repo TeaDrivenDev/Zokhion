@@ -66,7 +66,7 @@ type MainWindow() as this =
 
         match e.Key with
         | Input.Key.Enter -> __.ViewModel.AddName sender.Text
-        | Input.Key.Escape -> sender.Text <- ""
+        | Input.Key.Escape -> __.ViewModel.ClearNewNameToAdd()
         | _ -> ()
 
     // see https://stackoverflow.com/a/29028817/236507
@@ -132,7 +132,7 @@ type MainWindow() as this =
                 |> Seq.toArray
 
             let dataObject = DataObject(DataFormats.FileDrop, files)
-            
+
             DragDrop.DoDragDrop(filesGrid, dataObject, DragDropEffects.Copy)
             |> ignore
 

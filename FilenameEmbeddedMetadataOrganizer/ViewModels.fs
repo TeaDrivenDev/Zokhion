@@ -330,10 +330,12 @@ type MainWindowViewModel() as this =
     let mutable addReplacementCommand = Unchecked.defaultof<ReactiveCommand>
     let replacements = ObservableCollection()
 
-    let newNameToAdd = new ReactiveProperty<_>("")
+    let newNameToAdd = new ReactiveProperty<_>("", ReactivePropertyMode.RaiseLatestValueOnSubscribe)
+    let mutable clearNewNameToAddCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable addNameCommand = Unchecked.defaultof<ReactiveCommand>
-    let names =
-        ReactiveList([], 0.5, DispatcherScheduler(Application.Current.Dispatcher), ChangeTrackingEnabled = true)
+    let allNames =
+        ReactiveList<NameViewModel>([], 0.5, DispatcherScheduler(Application.Current.Dispatcher), ChangeTrackingEnabled = true)
+    let names = ObservableCollection()
     let mutable resetNameSelectionCommand = Unchecked.defaultof<ReactiveCommand>
 
     let editingFeatureInstances = ObservableCollection()
@@ -377,34 +379,47 @@ type MainWindowViewModel() as this =
             destinationDirectories
             |> Seq.find (fun (d : DirectoryInfo) -> d.FullName = currentFileDirectory)
 
+    let clearNewNameToAdd () = this.NewNameToAdd.Value <- ""
+
     let addName name =
         if not <| String.IsNullOrWhiteSpace name
         then
             let name = trim name
 
             let viewModel =
-                this.Names
+                allNames
                 |> Seq.tryFind (fun vm -> vm.Name.Value = name)
-                |> Option.defaultWith (fun () -> 
+                |> Option.defaultWith (fun () ->
                     let vm = NameViewModel(trim name, false, false)
-                    this.Names.Add vm
+                    allNames.Add vm
                     vm)
-            
+
             viewModel.IsSelected <- true
 
             this.NewNameToAdd.Value <- ""
 
     let updateNamesList detectedNames =
-        (detectedNames, this.Names)
+        (detectedNames, allNames)
         ||> fullOuterJoin toUpper (fun vm -> vm.Name.Value |> toUpper)
         |> Seq.iter (function
             | LeftOnly vm -> vm.IsSelected <- false
             | RightOnly name ->
                 NameViewModel(name, true, true)
-                |> names.Add
+                |> allNames.Add
             | JoinMatch (vm, name) ->
                 vm.Name.Value <- name
                 vm.IsSelected <- true)
+
+    let updateNamesSearchResult name =
+        this.Names.Clear()
+
+        match name with
+        | "" -> allNames :> _ seq
+        | _ ->
+            let up = toUpper name
+
+            allNames |> Seq.filter (fun n -> n.Name.Value.ToUpper().Contains up)
+        |> Seq.iter (this.Names.Add)
 
     let updateSelectedFeatures isInitial selectedFeatures =
         (selectedFeatures, featureInstances)
@@ -426,7 +441,7 @@ type MainWindowViewModel() as this =
                 else vm.IsExpanded.Value <- true)
 
     let getAllNames () =
-        this.Names
+        allNames
         |> Seq.filter (fun vm -> not vm.IsNew.Value)
         |> Seq.map (fun vm -> vm.Name.Value)
         |> Seq.toList
@@ -459,7 +474,7 @@ type MainWindowViewModel() as this =
                 DestinationDirectoryPrefixes = this.DestinationDirectoryPrefixes.Value
                 Replacements = this.Replacements |> Seq.toList
                 Names =
-                    this.Names
+                    allNames
                     |> Seq.filter (fun vm -> not vm.IsNew.Value)
                     |> Seq.map (fun vm -> vm.Name.Value)
                     |> Seq.distinct
@@ -483,10 +498,10 @@ type MainWindowViewModel() as this =
         settings.Replacements
         |> List.iter this.Replacements.Add
 
-        names.Clear()
+        allNames.Clear()
 
         settings.Names
-        |> List.iter (fun name -> NameViewModel(name, false, false) |> this.Names.Add)
+        |> List.iter (fun name -> NameViewModel(name, false, false) |> allNames.Add)
 
         features.Clear()
         featureInstances.Clear()
@@ -550,6 +565,8 @@ type MainWindowViewModel() as this =
                     this.ReplaceWithToAdd.Value <- ""),
                 this.ToReplaceToAdd |> Observable.map (String.IsNullOrWhiteSpace >> not))
 
+        clearNewNameToAddCommand <- ReactiveCommand.Create clearNewNameToAdd
+
         addNameCommand <- ReactiveCommand.Create addName
 
         resetNameSelectionCommand <- ReactiveCommand.Create(fun () -> ignore ())
@@ -611,7 +628,7 @@ type MainWindowViewModel() as this =
                         File.Move(this.SelectedFile.Value.FullName, this.ResultingFilePath.Value)
                         searchCommands.OnNext Refresh
                     with
-                    | _ -> 
+                    | _ ->
                         MessageBox.Show("Renaming failed. Please make sure the file is not in use by another application.",
                                         "Renaming failed",
                                         MessageBoxButton.OK,
@@ -682,13 +699,16 @@ type MainWindowViewModel() as this =
 
         existingSelectedFile
         |> Observable.subscribe (fun fi ->
-            this.Names
+            allNames
             |> Seq.filter (fun vm -> vm.IsNew.Value)
             |> Seq.toList
-            |> List.iter (this.Names.Remove >> ignore)
+            |> List.iter (allNames.Remove >> ignore)
 
             this.OriginalFileName.Value <-
                 string fi.Name |> Path.GetFileNameWithoutExtension)
+        |> ignore
+
+        existingSelectedFile |> Observable.subscribe (fun _ -> this.NewNameToAdd.Value <- "")
         |> ignore
 
         [
@@ -716,12 +736,12 @@ type MainWindowViewModel() as this =
             this.DetectNamesInMainAndNamesParts |> Observable.map DetectNamesInMainAndNamesParts
             this.RecapitalizeNames |> Observable.map RecapitalizeNames
 
-            this.Names.ItemChanged
+            allNames.ItemChanged
             |> Observable.filter (fun change ->
                 change.PropertyName = nameof <@ any<NameViewModel>.IsSelected @>)
             |> xwhen gate
             |> Observable.map (fun _ ->
-                this.Names
+                allNames
                 |> Seq.filter (fun n -> n.IsSelected)
                 |> Seq.map (fun n -> n.Name.Value)
                 |> Seq.toList
@@ -764,6 +784,12 @@ type MainWindowViewModel() as this =
             gate.TurnOff()
             updateNewName this.OriginalFileName.Value parameters
             gate.TurnOn())
+        |> ignore
+
+        this.NewNameToAdd
+        |> Observable.throttleOn ThreadPoolScheduler.Instance (TimeSpan.FromMilliseconds 500.)
+        |> Observable.observeOn RxApp.MainThreadScheduler
+        |> Observable.subscribe updateNamesSearchResult
         |> ignore
 
         this.NewFileName
@@ -849,10 +875,12 @@ type MainWindowViewModel() as this =
     member __.Replacements : ObservableCollection<_> = replacements
 
     member __.NewNameToAdd : ReactiveProperty<string> = newNameToAdd
-    member __.AddName (name : string) = addName name
+    member __.ClearNewNameToAdd() = clearNewNameToAdd ()
+    member __.ClearNewNameToAddCommand = clearNewNameToAddCommand
+    member __.AddName(name : string) = addName name
     member __.AddNameCommand = addNameCommand :> ICommand
 
-    member __.Names : ReactiveList<NameViewModel> = names
+    member __.Names : ObservableCollection<NameViewModel> = names
 
     member __.ResetNameSelectionCommand : ReactiveCommand = resetNameSelectionCommand
 

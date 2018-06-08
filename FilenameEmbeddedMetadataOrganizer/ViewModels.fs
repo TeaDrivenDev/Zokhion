@@ -534,7 +534,8 @@ type MainWindowViewModel() as this =
                 this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists))
 
         openFromSearchCommand <-
-            ReactiveCommand.Create(fun (fi : FileInfo) -> Process.Start fi.FullName |> ignore)
+            ReactiveCommand.Create(fun (fi : FileInfo) ->
+                if fi.Exists then Process.Start fi.FullName |> ignore)
 
         openExplorerCommand <-
             ReactiveCommand.Create(fun (fi: FileInfo) ->
@@ -553,7 +554,7 @@ type MainWindowViewModel() as this =
 
         showFilePropertiesCommand <-
             ReactiveCommand.Create(fun (fi : FileInfo) ->
-                Interop.showFileProperties fi.FullName |> ignore)
+                if fi.Exists then Interop.showFileProperties fi.FullName |> ignore)
 
         addReplacementCommand <-
             ReactiveCommand.Create(

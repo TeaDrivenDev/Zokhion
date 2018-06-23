@@ -62,7 +62,7 @@ type BytesToMegabytesConverter() =
         member this.Convert(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
             if value = DependencyProperty.UnsetValue
             then 0.
-            else (System.Convert.ToDouble value) / 1_000_000.
+            else (System.Convert.ToDouble value) / (1024. * 1024.)
             :> obj
 
         member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =

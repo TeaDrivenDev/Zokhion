@@ -169,6 +169,8 @@
                             <DataGrid x:Name="FilesGrid"
                                       Grid.Row="1"
                                       Margin="5"
+                                      materialDesign:DataGridAssist.CellPadding="4 2 2 2"
+                                      materialDesign:DataGridAssist.ColumnHeaderPadding="4 2 2 2"
                                       AutoGenerateColumns="False"
                                       ItemsSource="{Binding Files}"
                                       MouseMove="FilesGrid_MouseMove"

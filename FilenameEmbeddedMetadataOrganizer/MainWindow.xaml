@@ -241,6 +241,15 @@
                                                             ToolTip="Show file properties">
                                                         <materialDesign:PackIcon Kind="FileDocumentBox" />
                                                     </Button>
+                                                    <Button Width="18"
+                                                            Height="18"
+                                                            Margin="3 -3"
+                                                            Padding="0"
+                                                            Command="{Binding ElementName=MainWindowView,
+                                                                              Path=DataContext.DeleteFileCommand}"
+                                                            CommandParameter="{Binding .}"
+                                                            Content="&#x2716;"
+                                                            ToolTip="Delete file" />
                                                 </StackPanel>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>

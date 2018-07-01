@@ -321,6 +321,7 @@ type MainWindowViewModel() as this =
     let mutable openFromSearchCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable openExplorerCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable showFilePropertiesCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable deleteFileCommand = Unchecked.defaultof<ReactiveCommand>
 
     let selectedDestinationDirectory =
         new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
@@ -557,6 +558,28 @@ type MainWindowViewModel() as this =
         showFilePropertiesCommand <-
             ReactiveCommand.Create(fun (fi : FileInfo) ->
                 if fi.Exists then Interop.showFileProperties fi.FullName |> ignore)
+
+        deleteFileCommand <-
+            ReactiveCommand.Create(fun (fi : FileInfo) ->
+                if fi.Exists
+                then
+                    MessageBox.Show(sprintf "Delete file %s?" fi.FullName,
+                                        "Delete File",
+                                        MessageBoxButton.YesNo,
+                                        MessageBoxImage.Information)
+                    |> function
+                        | MessageBoxResult.Yes ->
+                            try
+                                fi.Delete()
+                            with _ ->
+                                MessageBox.Show(sprintf "Could not delete file %s." fi.FullName,
+                                                "Delete Failed",
+                                                MessageBoxButton.OK,
+                                                MessageBoxImage.Error)
+                                |> ignore
+                            
+                            searchCommands.OnNext Refresh
+                        | _ -> ())
 
         addReplacementCommand <-
             ReactiveCommand.Create(
@@ -866,10 +889,11 @@ type MainWindowViewModel() as this =
 
     member __.RecapitalizeNames : ReactiveProperty<bool> = recapitalizeNames
 
-    member __.OpenCommand = openCommand :> ICommand
-    member __.OpenFromSearchCommand = openFromSearchCommand :> ICommand
-    member __.OpenExplorerCommand = openExplorerCommand :> ICommand
+    member __.OpenCommand = openCommand
+    member __.OpenFromSearchCommand = openFromSearchCommand
+    member __.OpenExplorerCommand = openExplorerCommand
     member __.ShowFilePropertiesCommand = showFilePropertiesCommand
+    member __.DeleteFileCommand = deleteFileCommand
 
     member __.SelectedDestinationDirectory : ReactiveProperty<_> = selectedDestinationDirectory
     member __.DestinationDirectoryPrefixes : ReactiveProperty<_> = destinationDirectoryPrefixes
@@ -884,7 +908,7 @@ type MainWindowViewModel() as this =
     member __.ClearNewNameToAdd() = clearNewNameToAdd ()
     member __.ClearNewNameToAddCommand = clearNewNameToAddCommand
     member __.AddName(name : string) = addName name
-    member __.AddNameCommand = addNameCommand :> ICommand
+    member __.AddNameCommand = addNameCommand
 
     member __.Names : ObservableCollection<NameViewModel> = names
 

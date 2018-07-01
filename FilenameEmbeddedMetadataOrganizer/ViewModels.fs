@@ -10,6 +10,8 @@ open System.Reactive.Subjects
 open System.Windows
 open System.Windows.Input
 
+open Dragablz
+
 open FSharp.Control.Reactive
 
 open ReactiveUI
@@ -837,14 +839,17 @@ type MainWindowViewModel() as this =
     member __.Directories = directories
 
     member __.Searches = searches
-
     member __.CreateSearchTab = Func<_> createSearchTab
-
     member __.ActiveSearchTab : ReactiveProperty<SearchViewModel> = activeSearchTab
+    member __.IsSearchEnabled = isSearchEnabled
+    member __.CloseSearchTabCallback =
+        ItemActionCallback(fun (args : ItemActionCallbackArgs<TabablzControl>) ->
+            let viewModel = args.DragablzItem.DataContext
+
+            if viewModel = args.Owner.Items.[0]
+            then args.Cancel())
 
     member __.SelectedFile : ReadOnlyReactiveProperty<FileInfo> = selectedFile
-
-    member __.IsSearchEnabled = isSearchEnabled
 
     member __.OriginalFileName : ReactiveProperty<string> = originalFileName
     member __.OriginalFileNameSelectedText : ReactiveProperty<_> = originalFileNameSelectedText

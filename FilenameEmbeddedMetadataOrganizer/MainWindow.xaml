@@ -92,12 +92,14 @@
             <!--  Search  -->
             <dragablz:TabablzControl Grid.Row="3"
                                      AddLocationHint="Last"
+                                     ClosingItemCallback="{Binding Path=CloseSearchTabCallback}"
                                      HeaderMemberPath="Header.Value"
                                      IsEnabled="{Binding IsSearchEnabled.Value}"
                                      ItemsSource="{Binding Searches}"
                                      NewItemFactory="{Binding CreateSearchTab}"
                                      SelectedItem="{Binding ActiveSearchTab.Value}"
-                                     ShowDefaultAddButton="True">
+                                     ShowDefaultAddButton="True"
+                                     ShowDefaultCloseButton="True">
                 <TabControl.ContentTemplate>
                     <DataTemplate DataType="{x:Type viewModels:SearchViewModel}">
                         <Grid>

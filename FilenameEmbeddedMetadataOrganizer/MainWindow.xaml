@@ -180,10 +180,18 @@
                                       SelectedItem="{Binding SelectedFile.Value}"
                                       SelectionMode="Extended">
                                 <DataGrid.Columns>
-                                    <materialDesign:MaterialDataGridTextColumn Width="450"
-                                                                               Binding="{Binding Name}"
-                                                                               Header="Name"
-                                                                               IsReadOnly="True" />
+                                    <DataGridTemplateColumn Width="450"
+                                                            Header="Name"
+                                                            IsReadOnly="True">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Name}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           ToolTip="{Binding RelativeSource={RelativeSource Self},
+                                                                             Path=Text}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                     <materialDesign:MaterialDataGridTextColumn Width="100"
                                                                                Header="Directory"
                                                                                IsReadOnly="True"

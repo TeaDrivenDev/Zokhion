@@ -1,8 +1,9 @@
 System.ValueTuple
 FSharp.Core
-ReactiveUI
 FsXaml.Wpf
 MaterialDesignThemes
-FSharp.Control.Reactive
-ReactiveProperty
 Dragablz
+FSharp.Control.Reactive
+ReactiveUI
+ReactiveProperty
+System.Reactive.Compatibility

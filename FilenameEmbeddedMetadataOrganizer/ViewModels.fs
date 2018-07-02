@@ -302,7 +302,7 @@ type MainWindowViewModel() as this =
     let searchCommands = new ReplaySubject<SearchViewModelCommand>(1)
     let searches = ObservableCollection<SearchViewModel>()
     let activeSearchTab = new ReactiveProperty<SearchViewModel>()
-    let selectedFilesSubject = new Subject<IObservable<FileInfo>>()
+    let selectedFilesSubject = new System.Reactive.Subjects.Subject<IObservable<FileInfo>>()
 
     let mutable selectedFile = Unchecked.defaultof<ReadOnlyReactiveProperty<FileInfo>>
 

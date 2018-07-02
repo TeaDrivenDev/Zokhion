@@ -7,17 +7,20 @@ nuget FSharp.Core
 nuget FsXaml.Wpf
 nuget MaterialDesignThemes
 nuget ReactiveProperty
-nuget ReactiveUI prerelease
+nuget ReactiveUI
+nuget System.Reactive.Compatibility
 
-nuget System.ValueTuple 4.3.1
+nuget System.ValueTuple
 
 group Build
     source https://www.nuget.org/api/v2
+    framework: net461
 
     nuget FAKE
 
 group Test
     source https://www.nuget.org/api/v2
+    framework: net461
 
     nuget xunit
     nuget xunit.runner.console

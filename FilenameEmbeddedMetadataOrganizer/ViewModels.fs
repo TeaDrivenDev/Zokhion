@@ -8,7 +8,6 @@ open System.Reactive.Concurrency
 open System.Reactive.Linq
 open System.Reactive.Subjects
 open System.Windows
-open System.Windows.Input
 
 open Dragablz
 
@@ -17,9 +16,9 @@ open FSharp.Control.Reactive
 open ReactiveUI
 
 open Reactive.Bindings
+open Reactive.Bindings.Notifiers
 
 open FilenameEmbeddedMetadataOrganizer
-open Reactive.Bindings.Notifiers
 
 type ReactiveCommand = ReactiveUI.ReactiveCommand
 
@@ -621,18 +620,24 @@ type MainWindowViewModel() as this =
                     this.EditingFeatureInstances.Clear()
                     NewFeatureInstanceViewModel() |> this.EditingFeatureInstances.Add
 
-                    this.SelectedFeature.Value
-                    |> Option.ofObj
-                    |> Option.iter (fun feature ->
+                    let index =
+                        this.SelectedFeature.Value
+                        |> Option.ofObj
+                        |> Option.map (fun feature ->
+                            feature.Instances
+                            |> Seq.iter (this.FeatureInstances.Remove >> ignore)
 
-                        feature.Instances
-                        |> Seq.iter (this.FeatureInstances.Remove >> ignore)
+                            let index = this.Features.IndexOf feature
+                            this.Features.Remove feature |> ignore
 
-                        this.Features.Remove feature |> ignore
+                            this.SelectedFeature.Value <- Unchecked.defaultof<FeatureViewModel>
+                            
+                            index)
+                    
+                    match index |> Option.defaultValue -1 with
+                    | -1 -> features.Add feature
+                    | index -> features.Insert(index, feature)
 
-                        this.SelectedFeature.Value <- Unchecked.defaultof<FeatureViewModel>)
-
-                    features.Add feature
                     feature.Instances |> Seq.iter this.FeatureInstances.Add)
 
         removeFeatureInstanceRowCommand <-

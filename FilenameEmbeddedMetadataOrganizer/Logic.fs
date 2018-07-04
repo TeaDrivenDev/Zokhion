@@ -249,7 +249,6 @@ module Settings =
         if not <| List.isEmpty features || File.Exists featuresFilePath
         then
             features
-            |> List.sortBy (fun f -> f.Code)
             |> serializeFeatures
             |> asSnd featuresFilePath
             |> File.WriteAllLines

@@ -146,6 +146,17 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.6.1'">
       <ItemGroup>
+        <Reference Include="GongSolutions.Wpf.DragDrop">
+          <HintPath>..\packages\gong-wpf-dragdrop\lib\net46\GongSolutions.Wpf.DragDrop.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.6.1'">
+      <ItemGroup>
         <Reference Include="MaterialDesignColors">
           <HintPath>..\packages\MaterialDesignColors\lib\net45\MaterialDesignColors.dll</HintPath>
           <Private>True</Private>

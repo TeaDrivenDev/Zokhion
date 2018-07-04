@@ -5,6 +5,7 @@ nuget Dragablz
 nuget FSharp.Control.Reactive
 nuget FSharp.Core
 nuget FsXaml.Wpf
+nuget gong-wpf-dragdrop
 nuget MaterialDesignThemes
 nuget ReactiveProperty
 nuget ReactiveUI

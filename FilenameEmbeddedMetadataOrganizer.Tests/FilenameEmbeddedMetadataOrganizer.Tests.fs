@@ -502,9 +502,9 @@ module RenameTests =
 
         let expectedResult =
             {
-                NewFileName = "Aerial view over Uluru at night (.Uluru.) [.Ax.Bd.]"
+                NewFileName = "Aerial view over Uluru at night (.Uluru.) [.Bd.Ax.]"
                 DetectedNames = [ "Uluru" ]
-                DetectedFeatures = [ "Ax"; "Bd" ]
+                DetectedFeatures = [ "Bd"; "Ax" ]
             }
 
         // Act
@@ -522,9 +522,9 @@ module RenameTests =
 
         let expectedResult =
             {
-                NewFileName = "Aerial view over Uluru at night (.Uluru.) [.Ax.Bd.Xx.]"
+                NewFileName = "Aerial view over Uluru at night (.Uluru.) [.Ax.Xx.Bd.]"
                 DetectedNames = [ "Uluru" ]
-                DetectedFeatures = [ "Ax"; "Bd"; "Xx" ]
+                DetectedFeatures = [ "Ax"; "Xx"; "Bd" ]
             }
 
         // Act
@@ -546,9 +546,9 @@ module RenameTests =
 
         let expectedResult =
             {
-                NewFileName = "Aerial view over Uluru at night (.Uluru.) [.Ax.Bd.Xx.]"
+                NewFileName = "Aerial view over Uluru at night (.Uluru.) [.Ax.Xx.Bd.]"
                 DetectedNames = [ "Uluru" ]
-                DetectedFeatures = [ "Ax"; "Bd"; "Xx" ]
+                DetectedFeatures = [ "Ax"; "Xx"; "Bd" ]
             }
 
         // Act

@@ -554,12 +554,10 @@ module Logic =
 
         let detectedFeatures =
             evaluateFeaturesPart featuresPart
-            |> Option.map List.sort
 
         let featuresToUse =
             parameters.SelectedFeatures
             |> Option.orElse detectedFeatures
-            |> Option.map List.sort
 
         let names =
             match namesToUse with

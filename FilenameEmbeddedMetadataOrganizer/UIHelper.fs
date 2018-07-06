@@ -1,6 +1,8 @@
 namespace FilenameEmbeddedMetadataOrganizer.UIHelper
 
 open System
+open System.IO
+open System.Text.RegularExpressions
 open System.Windows
 open System.Windows.Controls
 open System.Windows.Data
@@ -104,4 +106,22 @@ type AllItemsEqualConverter() =
             :> obj
 
         member this.ConvertBack(value: obj, targetTypes: Type [], parameter: obj, culture: Globalization.CultureInfo): obj [] =
+            raise (System.NotImplementedException())
+
+type NameHasFeaturesConverter() =
+    static member private FeatureRegex = Regex(@"\[\.(?<features>.+)\.\]$", RegexOptions.Compiled)
+
+    static member Instance = NameHasFeaturesConverter() :> IValueConverter
+
+    interface IValueConverter with
+        member this.Convert(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj = 
+            match value with
+            | :? string as name ->
+                name
+                |> Path.GetFileNameWithoutExtension
+                |> NameHasFeaturesConverter.FeatureRegex.IsMatch
+            | _ -> false
+            :> obj
+
+        member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj = 
             raise (System.NotImplementedException())

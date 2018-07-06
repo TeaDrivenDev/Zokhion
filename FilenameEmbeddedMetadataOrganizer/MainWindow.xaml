@@ -180,6 +180,23 @@
                                       PreviewMouseLeftButtonDown="FilesGrid_PreviewMouseLeftButtonDown"
                                       SelectedItem="{Binding SelectedFile.Value}"
                                       SelectionMode="Extended">
+                                <DataGrid.RowStyle>
+                                    <Style BasedOn="{StaticResource MaterialDesignDataGridRow}"
+                                           TargetType="DataGridRow">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Name,
+                                                                           Converter={x:Static ui:NameHasFeaturesConverter.Instance}}"
+                                                         Value="True">
+                                                <Setter Property="Background">
+                                                    <Setter.Value>
+                                                        <SolidColorBrush Opacity="0.3"
+                                                                         Color="Teal" />
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn Width="450"
                                                             Header="Name"

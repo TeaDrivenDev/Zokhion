@@ -67,6 +67,7 @@
     <Compile Include="ViewModels.fs" />
     <Compile Include="UIHelper.fs" />
     <Compile Include="Program.fs" />
+    <None Include="Script1.fsx" />
     <None Include="App.config" />
     <Resource Include="MainWindow.xaml" />
     <Resource Include="App.xaml" />

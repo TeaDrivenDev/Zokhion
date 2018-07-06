@@ -2,6 +2,7 @@
 
 [<AutoOpen>]
 module Prelude =
+    open System
     open System.Linq
 
     type FullJoinResult<'TLeft, 'TRight> =
@@ -21,6 +22,9 @@ module Prelude =
     let swap (a, b) = b, a
 
     let uncurry fn (a, b) = fn a b
+
+    let join innerKeySelector outerKeySelector (inner : seq<'TInner>) (outer : seq<'TOuter>) =
+        outer.Join(inner, Func<_, _> outerKeySelector, Func<_, _> innerKeySelector, fun outer inner -> outer, inner)
 
     let leftJoin innerKeySelector outerKeySelector (inner : seq<'TInner>) (outer : seq<'TOuter>) =
         query {

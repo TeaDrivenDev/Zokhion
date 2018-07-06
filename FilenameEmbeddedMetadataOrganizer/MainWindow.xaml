@@ -183,7 +183,8 @@
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn Width="450"
                                                             Header="Name"
-                                                            IsReadOnly="True">
+                                                            IsReadOnly="True"
+                                                            SortMemberPath="Name">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding Name}"
@@ -693,6 +694,40 @@
                           Margin="2 0 0 0"
                           Header="Features"
                           Style="{DynamicResource MaterialDesignCardGroupBox}">
+                    <GroupBox.HeaderTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="Names" />
+                                <Button Grid.Column="1"
+                                        Width="16"
+                                        Height="16"
+                                        Padding="0 -10"
+                                        Command="{Binding ElementName=MainWindowView,
+                                                          Path=DataContext.ExpandAllFeaturesCommand}"
+                                        Content="+"
+                                        FontSize="16"
+                                        FontWeight="Black"
+                                        ToolTip="Expand all" />
+                                <Button Grid.Column="2"
+                                        Width="16"
+                                        Height="16"
+                                        Margin="7 0 0 0"
+                                        Padding="0 -10"
+                                        Command="{Binding ElementName=MainWindowView,
+                                                          Path=DataContext.CollapseAllFeaturesCommand}"
+                                        Content="-"
+                                        FontSize="16"
+                                        FontWeight="Black"
+                                        ToolTip="Collapse all" />
+                            </Grid>
+                        </DataTemplate>
+                    </GroupBox.HeaderTemplate>
 
                     <Grid>
                         <Grid.RowDefinitions>

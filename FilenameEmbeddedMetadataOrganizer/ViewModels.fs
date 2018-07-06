@@ -351,6 +351,8 @@ type MainWindowViewModel() as this =
     let mutable removeFeatureInstanceRowCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable addFeatureInstanceRowCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable clearSelectedFeatureCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable expandAllFeaturesCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable collapseAllFeaturesCommand = Unchecked.defaultof<ReactiveCommand>
 
     let resultingFilePath = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let mutable applyCommand = Unchecked.defaultof<ReactiveCommand>
@@ -652,6 +654,14 @@ type MainWindowViewModel() as this =
             ReactiveCommand.Create(fun () ->
                 this.SelectedFeature.Value <- Unchecked.defaultof<FeatureViewModel>)
 
+        expandAllFeaturesCommand <-
+            ReactiveCommand.Create(fun () ->
+                this.Features |> Seq.iter (fun vm -> vm.IsExpanded.Value <- true))
+
+        collapseAllFeaturesCommand <-
+            ReactiveCommand.Create(fun () ->
+                this.Features |> Seq.iter (fun vm -> vm.IsExpanded.Value <- false))
+
         applyCommand <-
             ReactiveCommand.Create(
                 (fun () ->
@@ -925,6 +935,8 @@ type MainWindowViewModel() as this =
     member __.ClearSelectedFeatureCommand = clearSelectedFeatureCommand
     member __.AddFeatureInstanceRow() =
         NewFeatureInstanceViewModel() |> this.EditingFeatureInstances.Add
+    member __.ExpandAllFeaturesCommand = expandAllFeaturesCommand
+    member __.CollapseAllFeaturesCommand = collapseAllFeaturesCommand
 
     member __.FeatureToAdd : ReactiveProperty<string> = featureToAdd
 

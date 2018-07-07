@@ -92,6 +92,7 @@
             <GridSplitter Grid.Row="2"
                           Height="5"
                           HorizontalAlignment="Stretch"
+                          Cursor="SizeNS"
                           ResizeBehavior="PreviousAndNext"
                           ResizeDirection="Rows" />
 
@@ -303,6 +304,7 @@
         <GridSplitter Grid.Column="1"
                       Width="5"
                       VerticalAlignment="Stretch"
+                      Cursor="SizeWE"
                       ResizeBehavior="PreviousAndNext" />
 
         <GroupBox Grid.Column="2"

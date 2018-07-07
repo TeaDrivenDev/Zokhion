@@ -68,7 +68,9 @@ module Utility =
 type FeatureViewModel(feature : Feature) as this =
     inherit ReactiveObject()
 
-    let instances = ReactiveList<FeatureInstanceViewModel>()
+    let instances = ReactiveList<FeatureInstanceViewModel>(ChangeTrackingEnabled = true)
+
+    let mutable hasSelectedInstances = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     do
         match this with
@@ -78,11 +80,21 @@ type FeatureViewModel(feature : Feature) as this =
             |> List.map (fun instance -> FeatureInstanceViewModel(feature, instance))
             |> instances.AddRange
 
+        hasSelectedInstances <-
+            instances.ItemChanged
+            |> Observable.filter (fun change ->
+                change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
+            |> Observable.map (fun _ ->
+                instances |> Seq.exists (fun instance -> instance.IsSelected))
+            |> toReadOnlyReactiveProperty
+
     member __.FeatureName = feature.Name
 
     member __.FeatureCode = feature.Code
 
     member __.Instances = instances
+
+    member __.HasSelectedInstances = hasSelectedInstances
 
     member __.Feature =
         { feature with Instances = instances |> Seq.map (fun vm -> vm.Instance) |> Seq.toList }

@@ -24,6 +24,11 @@
     <Window.DataContext>
         <viewModels:MainWindowViewModel />
     </Window.DataContext>
+    <Window.Resources>
+        <SolidColorBrush x:Key="FeatureHighlightBrush"
+                         Opacity="0.3"
+                         Color="Teal" />
+    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -187,12 +192,7 @@
                                             <DataTrigger Binding="{Binding Name,
                                                                            Converter={x:Static ui:NameHasFeaturesConverter.Instance}}"
                                                          Value="True">
-                                                <Setter Property="Background">
-                                                    <Setter.Value>
-                                                        <SolidColorBrush Opacity="0.3"
-                                                                         Color="Teal" />
-                                                    </Setter.Value>
-                                                </Setter>
+                                                <Setter Property="Background" Value="{StaticResource FeatureHighlightBrush}" />
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -773,6 +773,7 @@
                                                               DataType="viewModels:FeatureViewModel"
                                                               ItemsSource="{Binding Instances}">
                                         <TextBlock Margin="0 0 0 4"
+                                                   Padding="4 2"
                                                    Foreground="{StaticResource MaterialDesignBody}">
                                             <TextBlock.Text>
                                                 <MultiBinding StringFormat="{}{0}: {1}">
@@ -780,6 +781,16 @@
                                                     <Binding Path="FeatureCode" />
                                                 </MultiBinding>
                                             </TextBlock.Text>
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasSelectedInstances.Value}"
+                                                                     Value="True">
+                                                            <Setter Property="Background" Value="{StaticResource FeatureHighlightBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
                                         </TextBlock>
                                     </HierarchicalDataTemplate>
                                     <HierarchicalDataTemplate x:Key="FeatureInstanceDataTemplate"

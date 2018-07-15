@@ -15,9 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution", "Solution", "{CC
 	ProjectSection(SolutionItems) = preProject
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
-		build.cmd = build.cmd
 		build.fsx = build.fsx
-		build.sh = build.sh
 	EndProjectSection
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FilenameEmbeddedMetadataOrganizer.Tests", "FilenameEmbeddedMetadataOrganizer.Tests\FilenameEmbeddedMetadataOrganizer.Tests.fsproj", "{11456D25-8E74-46F3-B053-DB8C2A39417F}"

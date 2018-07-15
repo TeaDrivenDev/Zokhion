@@ -185,5 +185,8 @@ docs/content/license.md
 docs/content/release-notes.md
 
 .fake/
+!.fake/build.fsx/intellisense.fsx
+
+build.fsx.lock
 
 keys.txt

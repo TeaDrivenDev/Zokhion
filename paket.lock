@@ -49,12 +49,6 @@ NUGET
       System.Reactive (>= 4.0)
     System.ValueTuple (4.5)
 
-GROUP Build
-RESTRICTION: == net461
-NUGET
-  remote: https://www.nuget.org/api/v2
-    FAKE (5.1)
-
 GROUP Test
 RESTRICTION: == net461
 NUGET

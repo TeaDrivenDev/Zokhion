@@ -13,12 +13,6 @@ nuget System.Reactive.Compatibility
 
 nuget System.ValueTuple
 
-group Build
-    source https://www.nuget.org/api/v2
-    framework: net461
-
-    nuget FAKE
-
 group Test
     source https://www.nuget.org/api/v2
     framework: net461

@@ -133,8 +133,10 @@ type MainWindow() as this =
 
             let dataObject = DataObject(DataFormats.FileDrop, files)
 
-            DragDrop.DoDragDrop(filesGrid, dataObject, DragDropEffects.Copy)
-            |> ignore
+            try
+                DragDrop.DoDragDrop(filesGrid, dataObject, DragDropEffects.Copy)
+                |> ignore
+            with _ -> ()
 
             e.Handled <- true
 

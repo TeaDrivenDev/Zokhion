@@ -63,6 +63,9 @@
   -->
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Prelude.fs" />
+    <Compile Include="Interop.fs" />
+    <Compile Include="Settings.fs" />
     <Compile Include="Logic.fs" />
     <Compile Include="ViewModels.fs" />
     <Compile Include="UIHelper.fs" />

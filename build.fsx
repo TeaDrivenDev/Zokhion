@@ -50,3 +50,5 @@ Target.create "All" ignore
 ==> "All"
 
 Target.runOrDefault "All"
+
+printfn "Finished %s" (System.DateTime.Now.ToString "HH:mm:ss")

@@ -28,7 +28,7 @@ module Utility =
     open FSharp.Quotations
 
     // see https://stackoverflow.com/a/48311816/236507
-    let nameof (q:Expr<_>) =
+    let nameof (q : Expr<_>) =
         match q with
         | Patterns.Let(_, _, DerivedPatterns.Lambdas(_, Patterns.Call(_, mi, _))) -> mi.Name
         | Patterns.PropertyGet(_, mi, _) -> mi.Name
@@ -316,6 +316,8 @@ type MainWindowViewModel() as this =
     let selectedFilesSubject = new System.Reactive.Subjects.Subject<IObservable<FileInfo>>()
 
     let mutable selectedFile = Unchecked.defaultof<ReadOnlyReactiveProperty<FileInfo>>
+
+    let mutable showSettings = new ReactiveProperty<_>(false)
 
     let originalFileName = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let originalFileNameSelectedText = new ReactiveProperty<_>("", ReactivePropertyMode.None)
@@ -901,6 +903,8 @@ type MainWindowViewModel() as this =
             then args.Cancel())
 
     member __.SelectedFile : ReadOnlyReactiveProperty<FileInfo> = selectedFile
+
+    member __.ShowSettings = showSettings
 
     member __.OriginalFileName : ReactiveProperty<string> = originalFileName
     member __.OriginalFileNameSelectedText : ReactiveProperty<_> = originalFileNameSelectedText

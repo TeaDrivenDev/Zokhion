@@ -312,21 +312,32 @@
                   materialDesign:ShadowAssist.ShadowDepth="Depth3"
                   BorderThickness="0"
                   Header="Manage Metadata">
+            <GroupBox.HeaderTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding}" />
+
+                        <ToggleButton Grid.Column="1"
+                                      IsChecked="{Binding ElementName=MainWindowView,
+                                                          Path=DataContext.ShowSettings.Value}"
+                                      ToolTip="Show settings" />
+                    </Grid>
+                </DataTemplate>
+            </GroupBox.HeaderTemplate>
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition />
-                    <ColumnDefinition />
-                </Grid.ColumnDefinitions>
 
                 <Grid Grid.Row="0"
-                      Grid.Column="0"
-                      Grid.ColumnSpan="3"
                       Margin="0 0 0 5">
                     <Grid.Resources>
                         <SolidColorBrush x:Key="ChangedColor"
@@ -442,499 +453,508 @@
                     </TextBox>
                 </Grid>
 
-                <GroupBox Grid.Row="1"
-                          Grid.Column="0"
-                          Margin="0 0 2 0"
-                          Header="Replacements"
-                          Style="{DynamicResource MaterialDesignCardGroupBox}">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition />
-                        </Grid.RowDefinitions>
+                <Grid Grid.Row="1"
+                      Visibility="{Binding Path=ShowSettings.Value,
+                                           Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance},
+                                           ConverterParameter=True}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
 
-                        <Grid Grid.Row="0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition />
-                                <ColumnDefinition />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
+                    <GroupBox Grid.Column="0"
+                              Margin="0 0 2 0"
+                              Header="Names"
+                              Style="{DynamicResource MaterialDesignCardGroupBox}">
+                        <GroupBox.HeaderTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="Names" />
+                                    <Button Grid.Column="1"
+                                            Height="16"
+                                            Padding="0 -10"
+                                            Command="{Binding ElementName=MainWindowView,
+                                                              Path=DataContext.ResetNameSelectionCommand}"
+                                            ToolTip="Reset name selection">
+                                        <materialDesign:PackIcon Kind="Undo" />
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </GroupBox.HeaderTemplate>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
 
-                            <TextBox Grid.Column="0"
-                                     Margin="2"
-                                     materialDesign:HintAssist.Hint="To Replace"
-                                     Text="{Binding ToReplaceToAdd.Value,
-                                                    UpdateSourceTrigger=PropertyChanged}" />
-                            <TextBox Grid.Column="1"
-                                     Margin="2"
-                                     materialDesign:HintAssist.Hint="Replace With"
-                                     Text="{Binding ReplaceWithToAdd.Value,
-                                                    UpdateSourceTrigger=PropertyChanged}" />
-
-                            <Button Grid.Column="2"
-                                    Width="15"
-                                    Height="15"
-                                    Margin="5 0"
-                                    Padding="0 -1 -1 0"
-                                    Command="{Binding AddReplacementCommand}"
-                                    Content="+" />
-                        </Grid>
-
-                        <ItemsControl Grid.Row="1"
-                                      ItemsSource="{Binding Replacements}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0 3">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition />
-                                            <ColumnDefinition />
-                                        </Grid.ColumnDefinitions>
-
-                                        <TextBlock Grid.Column="0"
-                                                   Text="{Binding ToReplace}" />
-                                        <TextBlock Grid.Column="1">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Text" Value="{Binding ReplaceWith}" />
-
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding ReplaceWith}"
-                                                                     Value="">
-                                                            <Setter Property="Opacity" Value="0.5" />
-                                                            <Setter Property="Text" Value="(remove)" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Grid>
-                </GroupBox>
-
-                <GroupBox Grid.Row="1"
-                          Grid.Column="1"
-                          Margin="2 0"
-                          Header="Names"
-                          Style="{DynamicResource MaterialDesignCardGroupBox}">
-                    <GroupBox.HeaderTemplate>
-                        <DataTemplate>
-                            <Grid>
+                            <Grid Grid.Row="0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0"
-                                           Text="Names" />
-                                <Button Grid.Column="1"
-                                        Height="16"
-                                        Padding="0 -10"
-                                        Command="{Binding ElementName=MainWindowView,
-                                                          Path=DataContext.ResetNameSelectionCommand}"
-                                        ToolTip="Reset name selection">
-                                    <materialDesign:PackIcon Kind="Undo" />
+
+                                <TextBox x:Name="NewNameToAdd"
+                                         Grid.Column="0"
+                                         Margin="2"
+                                         materialDesign:HintAssist.Hint="Add Name"
+                                         KeyUp="NewNameToAdd_KeyUp"
+                                         Text="{Binding NewNameToAdd.Value,
+                                                        UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Button Grid.Column="0"
+                                        Width="15"
+                                        Height="15"
+                                        Margin="5 0"
+                                        Padding="0 -1 -1 0"
+                                        HorizontalAlignment="Right"
+                                        Command="{Binding ClearNewNameToAddCommand}"
+                                        Content="&#x2716;"
+                                        FontSize="10"
+                                        Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
+                                        IsTabStop="False"
+                                        ToolTip="Clear name">
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource MaterialDesignRaisedButton}"
+                                               TargetType="Button">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ElementName=NewNameToAdd,
+                                                                               Path=Text}"
+                                                             Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
                                 </Button>
+
+                                <Button Grid.Column="1"
+                                        Width="15"
+                                        Height="15"
+                                        Margin="5 0"
+                                        Padding="0 -1 -1 0"
+                                        Command="{Binding AddNameCommand}"
+                                        CommandParameter="{Binding ElementName=NewNameToAdd,
+                                                                   Path=Text}"
+                                        Content="+" />
                             </Grid>
-                        </DataTemplate>
-                    </GroupBox.HeaderTemplate>
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition />
-                        </Grid.RowDefinitions>
 
-                        <Grid Grid.Row="0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <TextBox x:Name="NewNameToAdd"
-                                     Grid.Column="0"
-                                     Margin="2"
-                                     materialDesign:HintAssist.Hint="Add Name"
-                                     KeyUp="NewNameToAdd_KeyUp"
-                                     Text="{Binding NewNameToAdd.Value,
-                                                    UpdateSourceTrigger=PropertyChanged}" />
-
-                            <Button Grid.Column="0"
-                                    Width="15"
-                                    Height="15"
-                                    Margin="5 0"
-                                    Padding="0 -1 -1 0"
-                                    HorizontalAlignment="Right"
-                                    Command="{Binding ClearNewNameToAddCommand}"
-                                    Content="&#x2716;"
-                                    FontSize="10"
-                                    Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
-                                    IsTabStop="False"
-                                    ToolTip="Clear name">
-                                <Button.Style>
-                                    <Style BasedOn="{StaticResource MaterialDesignRaisedButton}"
-                                           TargetType="Button">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding ElementName=NewNameToAdd,
-                                                                           Path=Text}"
-                                                         Value="">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-
-                            <Button Grid.Column="1"
-                                    Width="15"
-                                    Height="15"
-                                    Margin="5 0"
-                                    Padding="0 -1 -1 0"
-                                    Command="{Binding AddNameCommand}"
-                                    CommandParameter="{Binding ElementName=NewNameToAdd,
-                                                               Path=Text}"
-                                    Content="+" />
-                        </Grid>
-
-                        <ScrollViewer Grid.Row="1"
-                                      VerticalScrollBarVisibility="Auto">
-                            <ItemsControl Background="Transparent"
-                                          ItemsSource="{Binding Names}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="viewModels:NameViewModel">
-                                        <CheckBox Margin="0 3"
-                                                  HorizontalContentAlignment="Stretch"
-                                                  Foreground="{StaticResource MaterialDesignBody}"
-                                                  IsChecked="{Binding IsSelected}">
-                                            <CheckBox.Style>
-                                                <Style TargetType="CheckBox">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsNew.Value}"
-                                                                     Value="True">
-                                                            <Setter Property="Background" Value="{StaticResource SecondaryAccentBrush}" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </CheckBox.Style>
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <Grid.Style>
-                                                    <Style TargetType="Grid">
+                            <ScrollViewer Grid.Row="1"
+                                          VerticalScrollBarVisibility="Auto">
+                                <ItemsControl Background="Transparent"
+                                              ItemsSource="{Binding Names}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="viewModels:NameViewModel">
+                                            <CheckBox Margin="0 3"
+                                                      HorizontalContentAlignment="Stretch"
+                                                      Foreground="{StaticResource MaterialDesignBody}"
+                                                      IsChecked="{Binding IsSelected}">
+                                                <CheckBox.Style>
+                                                    <Style TargetType="CheckBox">
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsSelected}"
+                                                            <DataTrigger Binding="{Binding IsNew.Value}"
                                                                          Value="True">
-                                                                <Setter Property="Background">
-                                                                    <Setter.Value>
-                                                                        <SolidColorBrush Color="{StaticResource Accent700}" />
-                                                                    </Setter.Value>
-                                                                </Setter>
+                                                                <Setter Property="Background" Value="{StaticResource SecondaryAccentBrush}" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
-                                                </Grid.Style>
-
-                                                <TextBlock Grid.Column="0"
-                                                           Margin="5 0 15 0"
-                                                           HorizontalAlignment="Stretch"
-                                                           Text="{Binding Name.Value}">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
+                                                </CheckBox.Style>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsSelected}"
                                                                              Value="True">
-                                                                    <Setter Property="Foreground">
+                                                                    <Setter Property="Background">
                                                                         <Setter.Value>
-                                                                            <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
+                                                                            <SolidColorBrush Color="{StaticResource Accent700}" />
                                                                         </Setter.Value>
                                                                     </Setter>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                                <Button Grid.Column="1"
-                                                        Width="12"
-                                                        Height="12"
-                                                        Margin="0 0 5 0"
-                                                        Padding="0 -5 0 -4"
-                                                        Command="{Binding ClearNewFlagCommand}"
-                                                        Content="+"
-                                                        Visibility="{Binding IsNew.Value,
-                                                                             Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
-                                            </Grid>
-                                        </CheckBox>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-                    </Grid>
-                </GroupBox>
+                                                    </Grid.Style>
 
-                <!--  Features  -->
-                <GroupBox Grid.Row="1"
-                          Grid.Column="2"
-                          Margin="2 0 0 0"
-                          Header="Features"
-                          Style="{DynamicResource MaterialDesignCardGroupBox}">
-                    <GroupBox.HeaderTemplate>
-                        <DataTemplate>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0"
-                                           Text="Features" />
-                                <StackPanel Grid.Column="1"
-                                            HorizontalAlignment="Right"
-                                            Orientation="Horizontal">
-                                    <ToggleButton x:Name="DragDropEnabled"
-                                                  Margin="0 0 5 0"
-                                                  IsChecked="{Binding ElementName=MainWindowView,
-                                                                      Path=DataContext.IsFeatureDragDropReorderingEnabled.Value}"
-                                                  ToolTip="Enable drag and drop reordering" />
-                                    <Button Width="16"
-                                            Height="16"
-                                            Padding="0 -10"
-                                            Command="{Binding ElementName=MainWindowView,
-                                                              Path=DataContext.ExpandAllFeaturesCommand}"
-                                            Content="+"
-                                            FontSize="16"
-                                            FontWeight="Black"
-                                            ToolTip="Expand all" />
-                                    <Button Width="16"
-                                            Height="16"
-                                            Margin="7 0 0 0"
-                                            Padding="0 -10"
-                                            Command="{Binding ElementName=MainWindowView,
-                                                              Path=DataContext.CollapseAllFeaturesCommand}"
-                                            Content="-"
-                                            FontSize="16"
-                                            FontWeight="Black"
-                                            ToolTip="Collapse all" />
-                                </StackPanel>
-                            </Grid>
-                        </DataTemplate>
-                    </GroupBox.HeaderTemplate>
+                                                    <TextBlock Grid.Column="0"
+                                                               Margin="5 0 15 0"
+                                                               HorizontalAlignment="Stretch"
+                                                               Text="{Binding Name.Value}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsSelected}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Foreground">
+                                                                            <Setter.Value>
+                                                                                <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                    <Button Grid.Column="1"
+                                                            Width="12"
+                                                            Height="12"
+                                                            Margin="0 0 5 0"
+                                                            Padding="0 -5 0 -4"
+                                                            Command="{Binding ClearNewFlagCommand}"
+                                                            Content="+"
+                                                            Visibility="{Binding IsNew.Value,
+                                                                                 Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
+                                                </Grid>
+                                            </CheckBox>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </GroupBox>
 
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="3*" />
+                    <!--  Features  -->
+                    <GroupBox Grid.Column="1"
+                              Margin="2 0 0 0"
+                              Header="Features"
+                              Style="{DynamicResource MaterialDesignCardGroupBox}">
+                        <GroupBox.HeaderTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="Features" />
+                                    <StackPanel Grid.Column="1"
+                                                HorizontalAlignment="Right"
+                                                Orientation="Horizontal">
+                                        <ToggleButton x:Name="DragDropEnabled"
+                                                      Margin="0 0 5 0"
+                                                      IsChecked="{Binding ElementName=MainWindowView,
+                                                                          Path=DataContext.IsFeatureDragDropReorderingEnabled.Value}"
+                                                      ToolTip="Enable drag and drop reordering" />
+                                        <Button Width="16"
+                                                Height="16"
+                                                Padding="0 -10"
+                                                Command="{Binding ElementName=MainWindowView,
+                                                                  Path=DataContext.ExpandAllFeaturesCommand}"
+                                                Content="+"
+                                                FontSize="16"
+                                                FontWeight="Black"
+                                                ToolTip="Expand all" />
+                                        <Button Width="16"
+                                                Height="16"
+                                                Margin="7 0 0 0"
+                                                Padding="0 -10"
+                                                Command="{Binding ElementName=MainWindowView,
+                                                                  Path=DataContext.CollapseAllFeaturesCommand}"
+                                                Content="-"
+                                                FontSize="16"
+                                                FontWeight="Black"
+                                                ToolTip="Collapse all" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </GroupBox.HeaderTemplate>
 
-                            <RowDefinition Height="5" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="3*" />
 
-                        <Grid Grid.Row="0">
-                            <!--<Grid.RowDefinitions>
+                                <RowDefinition Height="5" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0">
+                                <!--<Grid.RowDefinitions>
                                 <RowDefinition Height="4*" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>-->
-                            <TreeView x:Name="Features"
-                                      Grid.Row="0"
-                                      dd:DragDrop.IsDragSource="{Binding IsFeatureDragDropReorderingEnabled.Value}"
-                                      dd:DragDrop.IsDropTarget="{Binding IsFeatureDragDropReorderingEnabled.Value}"
-                                      dd:DragDrop.UseDefaultDragAdorner="True"
-                                      dd:DragDrop.UseDefaultEffectDataTemplate="True"
-                                      ItemsSource="{Binding Features}"
-                                      SelectedItemChanged="Features_SelectedItemChanged"
-                                      SelectedValuePath="">
-                                <TreeView.Resources>
-                                    <HierarchicalDataTemplate x:Key="FeatureRootDataTemplate"
-                                                              DataType="viewModels:FeatureViewModel"
-                                                              ItemsSource="{Binding Instances}">
-                                        <TextBlock Margin="0 0 0 4"
-                                                   Padding="4 2"
-                                                   Foreground="{StaticResource MaterialDesignBody}">
-                                            <TextBlock.Text>
-                                                <MultiBinding StringFormat="{}{0}: {1}">
-                                                    <Binding Path="FeatureName" />
-                                                    <Binding Path="FeatureCode" />
-                                                </MultiBinding>
-                                            </TextBlock.Text>
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding HasSelectedInstances.Value}"
-                                                                     Value="True">
-                                                            <Setter Property="Background" Value="{StaticResource FeatureHighlightBrush}" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </HierarchicalDataTemplate>
-                                    <HierarchicalDataTemplate x:Key="FeatureInstanceDataTemplate"
-                                                              DataType="viewModels:FeatureInstanceViewModel"
-                                                              ItemsSource="{Binding Instances}">
-                                        <CheckBox IsChecked="{Binding IsSelected}">
-                                            <TextBlock Foreground="{StaticResource MaterialDesignBody}">
+                                <TreeView x:Name="Features"
+                                          Grid.Row="0"
+                                          dd:DragDrop.IsDragSource="{Binding IsFeatureDragDropReorderingEnabled.Value}"
+                                          dd:DragDrop.IsDropTarget="{Binding IsFeatureDragDropReorderingEnabled.Value}"
+                                          dd:DragDrop.UseDefaultDragAdorner="True"
+                                          dd:DragDrop.UseDefaultEffectDataTemplate="True"
+                                          ItemsSource="{Binding Features}"
+                                          SelectedItemChanged="Features_SelectedItemChanged"
+                                          SelectedValuePath="">
+                                    <TreeView.Resources>
+                                        <HierarchicalDataTemplate x:Key="FeatureRootDataTemplate"
+                                                                  DataType="viewModels:FeatureViewModel"
+                                                                  ItemsSource="{Binding Instances}">
+                                            <TextBlock Margin="0 0 0 4"
+                                                       Padding="4 2"
+                                                       Foreground="{StaticResource MaterialDesignBody}">
                                                 <TextBlock.Text>
                                                     <MultiBinding StringFormat="{}{0}: {1}">
-                                                        <Binding Path="InstanceName" />
-                                                        <Binding Path="InstanceCode" />
+                                                        <Binding Path="FeatureName" />
+                                                        <Binding Path="FeatureCode" />
                                                     </MultiBinding>
                                                 </TextBlock.Text>
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasSelectedInstances.Value}"
+                                                                         Value="True">
+                                                                <Setter Property="Background" Value="{StaticResource FeatureHighlightBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
                                             </TextBlock>
-                                        </CheckBox>
-                                    </HierarchicalDataTemplate>
-                                </TreeView.Resources>
-                                <TreeView.ItemTemplateSelector>
-                                    <ui:FeaturesTreeViewItemTemplateSelector FeatureInstanceTemplate="{StaticResource FeatureInstanceDataTemplate}"
-                                                                             FeatureRootTemplate="{StaticResource FeatureRootDataTemplate}" />
-                                </TreeView.ItemTemplateSelector>
-                                <TreeView.ItemContainerStyle>
-                                    <Style TargetType="{x:Type TreeViewItem}">
-                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded.Value, Mode=TwoWay}" />
-                                        <Setter Property="Margin" Value="0 0 0 7" />
-                                    </Style>
-                                </TreeView.ItemContainerStyle>
-                            </TreeView>
+                                        </HierarchicalDataTemplate>
+                                        <HierarchicalDataTemplate x:Key="FeatureInstanceDataTemplate"
+                                                                  DataType="viewModels:FeatureInstanceViewModel"
+                                                                  ItemsSource="{Binding Instances}">
+                                            <CheckBox IsChecked="{Binding IsSelected}">
+                                                <TextBlock Foreground="{StaticResource MaterialDesignBody}">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding StringFormat="{}{0}: {1}">
+                                                            <Binding Path="InstanceName" />
+                                                            <Binding Path="InstanceCode" />
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </CheckBox>
+                                        </HierarchicalDataTemplate>
+                                    </TreeView.Resources>
+                                    <TreeView.ItemTemplateSelector>
+                                        <ui:FeaturesTreeViewItemTemplateSelector FeatureInstanceTemplate="{StaticResource FeatureInstanceDataTemplate}"
+                                                                                 FeatureRootTemplate="{StaticResource FeatureRootDataTemplate}" />
+                                    </TreeView.ItemTemplateSelector>
+                                    <TreeView.ItemContainerStyle>
+                                        <Style TargetType="{x:Type TreeViewItem}">
+                                            <Setter Property="IsExpanded" Value="{Binding IsExpanded.Value, Mode=TwoWay}" />
+                                            <Setter Property="Margin" Value="0 0 0 7" />
+                                        </Style>
+                                    </TreeView.ItemContainerStyle>
+                                </TreeView>
 
-                            <!--<ListBox Grid.Row="1"
+                                <!--<ListBox Grid.Row="1"
                                      ItemsSource="{Binding SelectedFeatureInstances}" />-->
-                        </Grid>
+                            </Grid>
 
-                        <GridSplitter Grid.Row="1"
-                                      Height="5"
-                                      HorizontalAlignment="Stretch"
-                                      ResizeBehavior="PreviousAndNext"
-                                      ResizeDirection="Rows" />
+                            <GridSplitter Grid.Row="1"
+                                          Height="5"
+                                          HorizontalAlignment="Stretch"
+                                          ResizeBehavior="PreviousAndNext"
+                                          ResizeDirection="Rows" />
 
-                        <Grid Grid.Row="2">
-                            <materialDesign:Card VerticalAlignment="Stretch"
-                                                 materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
+                            <Grid Grid.Row="2">
+                                <materialDesign:Card VerticalAlignment="Stretch"
+                                                     materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                                    <Grid Grid.Row="0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition />
-                                            <ColumnDefinition />
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
+                                        <Grid Grid.Row="0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition />
+                                                <ColumnDefinition />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
 
-                                        <TextBox Grid.Column="0"
-                                                 Margin="2"
-                                                 materialDesign:HintAssist.Hint="Feature Name"
-                                                 Text="{Binding FeatureToAdd.Value,
-                                                                UpdateSourceTrigger=PropertyChanged}" />
-                                        <TextBox Grid.Column="1"
-                                                 Margin="2"
-                                                 materialDesign:HintAssist.Hint="Feature Code"
-                                                 Text="{Binding FeatureCodeToAdd.Value,
-                                                                UpdateSourceTrigger=PropertyChanged}" />
+                                            <TextBox Grid.Column="0"
+                                                     Margin="2"
+                                                     materialDesign:HintAssist.Hint="Feature Name"
+                                                     Text="{Binding FeatureToAdd.Value,
+                                                                    UpdateSourceTrigger=PropertyChanged}" />
+                                            <TextBox Grid.Column="1"
+                                                     Margin="2"
+                                                     materialDesign:HintAssist.Hint="Feature Code"
+                                                     Text="{Binding FeatureCodeToAdd.Value,
+                                                                    UpdateSourceTrigger=PropertyChanged}" />
 
-                                        <Button Grid.Column="2"
+                                            <Button Grid.Column="2"
+                                                    Width="15"
+                                                    Height="15"
+                                                    Margin="5 0"
+                                                    Padding="-2 -1 -1 0"
+                                                    Command="{Binding ConfirmEditingFeatureCommand}"
+                                                    Content="&#x2714;"
+                                                    FontSize="10"
+                                                    Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
+                                                    IsTabStop="False" />
+
+                                            <Button Grid.Column="3"
+                                                    Width="15"
+                                                    Height="15"
+                                                    Margin="5 0"
+                                                    Padding="0 -1 -1 0"
+                                                    Command="{Binding ClearSelectedFeatureCommand}"
+                                                    Content="&#x2716;"
+                                                    FontSize="10"
+                                                    Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
+                                                    IsTabStop="False" />
+                                        </Grid>
+
+                                        <ScrollViewer Grid.Row="1"
+                                                      VerticalScrollBarVisibility="Auto">
+                                            <ItemsControl VerticalAlignment="Stretch"
+                                                          Grid.IsSharedSizeScope="True"
+                                                          ItemsSource="{Binding EditingFeatureInstances}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"
+                                                                                  SharedSizeGroup="InstanceNumber" />
+                                                                <ColumnDefinition />
+                                                                <ColumnDefinition />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <TextBlock Grid.Column="0"
+                                                                       Margin="0 0 5 0"
+                                                                       HorizontalAlignment="Right"
+                                                                       VerticalAlignment="Center"
+                                                                       Opacity="0.5">
+                                                                <TextBlock.Text>
+                                                                    <MultiBinding Converter="{x:Static ui:IndexOfConverter.Instance}"
+                                                                                  ConverterParameter="True">
+                                                                        <Binding RelativeSource="{RelativeSource FindAncestor,
+                                                                                                                 AncestorType={x:Type ItemsControl}}" />
+                                                                        <Binding Path="." />
+                                                                    </MultiBinding>
+                                                                </TextBlock.Text>
+                                                            </TextBlock>
+
+                                                            <TextBox x:Name="InstanceName"
+                                                                     Grid.Column="1"
+                                                                     Margin="2"
+                                                                     materialDesign:HintAssist.Hint="Name"
+                                                                     KeyUp="InstanceName_KeyUp"
+                                                                     Text="{Binding InstanceName.Value,
+                                                                                    UpdateSourceTrigger=LostFocus}" />
+                                                            <TextBox x:Name="InstanceCode"
+                                                                     Grid.Column="2"
+                                                                     Margin="2"
+                                                                     materialDesign:HintAssist.Hint="Code"
+                                                                     KeyUp="InstanceCode_KeyUp"
+                                                                     Text="{Binding InstanceCode.Value,
+                                                                                    UpdateSourceTrigger=PropertyChanged}" />
+                                                            <Button Grid.Column="3"
+                                                                    Width="15"
+                                                                    Height="15"
+                                                                    Margin="5 0"
+                                                                    Padding="0 -1 -1 0"
+                                                                    Command="{Binding ElementName=MainWindowView,
+                                                                                      Path=DataContext.RemoveFeatureInstanceRowCommand}"
+                                                                    CommandParameter="{Binding .}"
+                                                                    Content="-"
+                                                                    IsTabStop="False" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+
+                                        <Button Grid.Row="2"
                                                 Width="15"
                                                 Height="15"
-                                                Margin="5 0"
-                                                Padding="-2 -1 -1 0"
-                                                Command="{Binding ConfirmEditingFeatureCommand}"
-                                                Content="&#x2714;"
-                                                FontSize="10"
-                                                Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
-                                                IsTabStop="False" />
-
-                                        <Button Grid.Column="3"
-                                                Width="15"
-                                                Height="15"
-                                                Margin="5 0"
-                                                Padding="0 -1 -1 0"
-                                                Command="{Binding ClearSelectedFeatureCommand}"
-                                                Content="&#x2716;"
-                                                FontSize="10"
-                                                Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
+                                                Padding="1 -1 0 0"
+                                                HorizontalAlignment="Left"
+                                                Command="{Binding AddFeatureInstanceRowCommand}"
+                                                Content="+"
+                                                FontWeight="Black"
                                                 IsTabStop="False" />
                                     </Grid>
-
-                                    <ScrollViewer Grid.Row="1"
-                                                  VerticalScrollBarVisibility="Auto">
-                                        <ItemsControl VerticalAlignment="Stretch"
-                                                      Grid.IsSharedSizeScope="True"
-                                                      ItemsSource="{Binding EditingFeatureInstances}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"
-                                                                              SharedSizeGroup="InstanceNumber" />
-                                                            <ColumnDefinition />
-                                                            <ColumnDefinition />
-                                                            <ColumnDefinition Width="Auto" />
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <TextBlock Grid.Column="0"
-                                                                   Margin="0 0 5 0"
-                                                                   HorizontalAlignment="Right"
-                                                                   VerticalAlignment="Center"
-                                                                   Opacity="0.5">
-                                                            <TextBlock.Text>
-                                                                <MultiBinding Converter="{x:Static ui:IndexOfConverter.Instance}"
-                                                                              ConverterParameter="True">
-                                                                    <Binding RelativeSource="{RelativeSource FindAncestor,
-                                                                                                             AncestorType={x:Type ItemsControl}}" />
-                                                                    <Binding Path="." />
-                                                                </MultiBinding>
-                                                            </TextBlock.Text>
-                                                        </TextBlock>
-
-                                                        <TextBox x:Name="InstanceName"
-                                                                 Grid.Column="1"
-                                                                 Margin="2"
-                                                                 materialDesign:HintAssist.Hint="Name"
-                                                                 KeyUp="InstanceName_KeyUp"
-                                                                 Text="{Binding InstanceName.Value,
-                                                                                UpdateSourceTrigger=LostFocus}" />
-                                                        <TextBox x:Name="InstanceCode"
-                                                                 Grid.Column="2"
-                                                                 Margin="2"
-                                                                 materialDesign:HintAssist.Hint="Code"
-                                                                 KeyUp="InstanceCode_KeyUp"
-                                                                 Text="{Binding InstanceCode.Value,
-                                                                                UpdateSourceTrigger=PropertyChanged}" />
-                                                        <Button Grid.Column="3"
-                                                                Width="15"
-                                                                Height="15"
-                                                                Margin="5 0"
-                                                                Padding="0 -1 -1 0"
-                                                                Command="{Binding ElementName=MainWindowView,
-                                                                                  Path=DataContext.RemoveFeatureInstanceRowCommand}"
-                                                                CommandParameter="{Binding .}"
-                                                                Content="-"
-                                                                IsTabStop="False" />
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </ScrollViewer>
-
-                                    <Button Grid.Row="2"
-                                            Width="15"
-                                            Height="15"
-                                            Padding="1 -1 0 0"
-                                            HorizontalAlignment="Left"
-                                            Command="{Binding AddFeatureInstanceRowCommand}"
-                                            Content="+"
-                                            FontWeight="Black"
-                                            IsTabStop="False" />
-                                </Grid>
-                            </materialDesign:Card>
+                                </materialDesign:Card>
+                            </Grid>
                         </Grid>
-                    </Grid>
-                </GroupBox>
+                    </GroupBox>
+                </Grid>
+
+
+
+                <Grid Grid.Row="1"
+                      Visibility="{Binding Path=ShowSettings.Value,
+                                           Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}">
+                    <GroupBox Header="Replacements"
+                              Style="{DynamicResource MaterialDesignCardGroupBox}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox Grid.Column="0"
+                                         Margin="2"
+                                         materialDesign:HintAssist.Hint="To Replace"
+                                         Text="{Binding ToReplaceToAdd.Value,
+                                                        UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Grid.Column="1"
+                                         Margin="2"
+                                         materialDesign:HintAssist.Hint="Replace With"
+                                         Text="{Binding ReplaceWithToAdd.Value,
+                                                        UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Button Grid.Column="2"
+                                        Width="15"
+                                        Height="15"
+                                        Margin="5 0"
+                                        Padding="0 -1 -1 0"
+                                        Command="{Binding AddReplacementCommand}"
+                                        Content="+" />
+                            </Grid>
+
+                            <ItemsControl Grid.Row="1"
+                                          ItemsSource="{Binding Replacements}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0 3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding ToReplace}" />
+                                            <TextBlock Grid.Column="1">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="{Binding ReplaceWith}" />
+
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding ReplaceWith}"
+                                                                         Value="">
+                                                                <Setter Property="Opacity" Value="0.5" />
+                                                                <Setter Property="Text" Value="(remove)" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
 
                 <Grid Grid.Row="2"
-                      Grid.Column="0"
-                      Grid.ColumnSpan="3"
                       Margin="0 4 0 0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />

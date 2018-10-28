@@ -46,7 +46,7 @@ type MainWindow() as this =
         then
             __.ViewModel.BaseDirectory.Value <- folderBrowserDialog.SelectedPath
 
-    member this.Features_SelectedItemChanged (_ : obj, e : RoutedPropertyChangedEventArgs<obj>) =
+    member __.Features_SelectedItemChanged (_ : obj, e : RoutedPropertyChangedEventArgs<obj>) =
         match e.NewValue with
         | :? FeatureViewModel as item -> this.ViewModel.SelectedFeature.Value <- item
         | _ -> ()

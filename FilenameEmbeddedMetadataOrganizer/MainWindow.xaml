@@ -442,115 +442,81 @@
                     </TextBox>
                 </Grid>
 
-                <Grid Grid.Row="1"
-                      Grid.Column="0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition />
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
+                <GroupBox Grid.Row="1"
+                          Grid.Column="0"
+                          Margin="0 0 2 0"
+                          Header="Replacements"
+                          Style="{DynamicResource MaterialDesignCardGroupBox}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
 
-                    <GroupBox Grid.Row="0"
-                              Margin="0 0 2 2"
-                              Header="Replacements"
-                              Style="{DynamicResource MaterialDesignCardGroupBox}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                            <Grid Grid.Row="0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Margin="2"
+                                     materialDesign:HintAssist.Hint="To Replace"
+                                     Text="{Binding ToReplaceToAdd.Value,
+                                                    UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Grid.Column="1"
+                                     Margin="2"
+                                     materialDesign:HintAssist.Hint="Replace With"
+                                     Text="{Binding ReplaceWithToAdd.Value,
+                                                    UpdateSourceTrigger=PropertyChanged}" />
 
-                                <TextBox Grid.Column="0"
-                                         Margin="2"
-                                         materialDesign:HintAssist.Hint="To Replace"
-                                         Text="{Binding ToReplaceToAdd.Value,
-                                                        UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Grid.Column="1"
-                                         Margin="2"
-                                         materialDesign:HintAssist.Hint="Replace With"
-                                         Text="{Binding ReplaceWithToAdd.Value,
-                                                        UpdateSourceTrigger=PropertyChanged}" />
-
-                                <Button Grid.Column="2"
-                                        Width="15"
-                                        Height="15"
-                                        Margin="5 0"
-                                        Padding="0 -1 -1 0"
-                                        Command="{Binding AddReplacementCommand}"
-                                        Content="+" />
-                            </Grid>
-
-                            <ItemsControl Grid.Row="1"
-                                          ItemsSource="{Binding Replacements}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0 3">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition />
-                                                <ColumnDefinition />
-                                            </Grid.ColumnDefinitions>
-
-                                            <TextBlock Grid.Column="0"
-                                                       Text="{Binding ToReplace}" />
-                                            <TextBlock Grid.Column="1">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Text" Value="{Binding ReplaceWith}" />
-
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding ReplaceWith}"
-                                                                         Value="">
-                                                                <Setter Property="Text" Value="(remove)" />
-                                                                <Setter Property="Opacity" Value="0.5" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            <Button Grid.Column="2"
+                                    Width="15"
+                                    Height="15"
+                                    Margin="5 0"
+                                    Padding="0 -1 -1 0"
+                                    Command="{Binding AddReplacementCommand}"
+                                    Content="+" />
                         </Grid>
-                    </GroupBox>
-                    <GroupBox Grid.Row="1"
-                              Margin="0 2 2 0"
-                              Style="{DynamicResource MaterialDesignCardGroupBox}">
-                        <GroupBox.HeaderTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0"
-                                               Text="Destination Directory" />
-                                    <TextBox x:Name="DestinationDirectoryPrefixes"
-                                             Grid.Column="1"
-                                             Margin="0 -5"
-                                             materialDesign:HintAssist.Hint="Prefixes"
-                                             Text="{Binding ElementName=MainWindowView,
-                                                            Path=DataContext.DestinationDirectoryPrefixes.Value,
-                                                            UpdateSourceTrigger=PropertyChanged}"
-                                             ToolTip="Destination folder prefixes" />
-                                </Grid>
-                            </DataTemplate>
-                        </GroupBox.HeaderTemplate>
-                        <ListBox DisplayMemberPath="Name"
-                                 ItemsSource="{Binding DestinationDirectories}"
-                                 SelectedItem="{Binding SelectedDestinationDirectory.Value}" />
-                    </GroupBox>
-                </Grid>
+
+                        <ItemsControl Grid.Row="1"
+                                      ItemsSource="{Binding Replacements}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0 3">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition />
+                                            <ColumnDefinition />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding ToReplace}" />
+                                        <TextBlock Grid.Column="1">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="{Binding ReplaceWith}" />
+
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ReplaceWith}"
+                                                                     Value="">
+                                                            <Setter Property="Opacity" Value="0.5" />
+                                                            <Setter Property="Text" Value="(remove)" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </GroupBox>
 
                 <GroupBox Grid.Row="1"
                           Grid.Column="1"
-                          Margin="2 0 2 0"
+                          Margin="2 0"
                           Header="Names"
                           Style="{DynamicResource MaterialDesignCardGroupBox}">
                     <GroupBox.HeaderTemplate>
@@ -971,18 +937,42 @@
                       Grid.ColumnSpan="3"
                       Margin="0 4 0 0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
+                    <Grid Grid.Column="0"
+                          Width="150">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0"
+                                 Margin="0 2 5 -1"
+                                 Padding="2 0"
+                                 HorizontalAlignment="Left"
+                                 VerticalAlignment="Center"
+                                 materialDesign:HintAssist.Hint="Prefixes"
+                                 Text="{Binding Path=DestinationDirectoryPrefixes.Value,
+                                                UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="Destination directory prefixes" />
+                        <ComboBox Grid.Column="1"
+                                  Padding="2 6"
+                                  HorizontalAlignment="Stretch"
+                                  DisplayMemberPath="Name"
+                                  ItemsSource="{Binding DestinationDirectories}"
+                                  SelectedItem="{Binding SelectedDestinationDirectory.Value}"
+                                  ToolTip="Destination directory" />
+                    </Grid>
                     <TextBlock x:Name="ResultingFilePath"
-                               Grid.Column="0"
+                               Grid.Column="1"
                                Height="Auto"
-                               Margin="0 0 5 0"
+                               Margin="5 0"
                                VerticalAlignment="Center"
                                Text="{Binding ResultingFilePath.Value}"
                                TextWrapping="Wrap" />
-                    <Button Grid.Column="1"
+                    <Button Grid.Column="2"
                             Width="30"
                             Height="30"
                             Padding="0"

@@ -713,20 +713,21 @@ type MainWindowViewModel() as this =
         |> Observable.subscribe (fun _ -> this.RaisePropertyChanged(nameof <@ this.SelectedFeatureInstances @>))
         |> ignore
 
-        this.BaseDirectory
-        |> Observable.throttle (TimeSpan.FromMilliseconds 500.)
-        |> Observable.filter Directory.Exists
+        let validBaseDirectory =
+            this.BaseDirectory
+            |> Observable.throttle (TimeSpan.FromMilliseconds 500.)
+            |> Observable.filter Directory.Exists
+
+        validBaseDirectory
         |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.subscribe loadSettings
         |> ignore
 
         this.SourceDirectoryPrefixes
-        |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
+        |> Observable.throttle (TimeSpan.FromMilliseconds 500.)
         |> Observable.combineLatest this.FilterBySourceDirectoryPrefixes
-        |> Observable.combineLatest
-            (this.BaseDirectory
-             |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
-             |> Observable.filter Directory.Exists)
+        |> Observable.combineLatest validBaseDirectory
+        |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.subscribe (fun (dir, (filterByPrefixes, prefixes)) ->
             directories.Clear()
 

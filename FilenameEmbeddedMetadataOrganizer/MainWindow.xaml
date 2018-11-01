@@ -162,6 +162,7 @@
                                           Margin="0 0 5 0"
                                           Content="From base"
                                           IsChecked="{Binding SearchFromBaseDirectory.Value}"
+                                          IsEnabled="{Binding CanToggleSearchFromBaseDirectory.Value}"
                                           ToolTip="Search from base folder" />
 
                                 <Button Grid.Column="2"
@@ -878,8 +879,6 @@
                         </Grid>
                     </GroupBox>
                 </Grid>
-
-
 
                 <Grid Grid.Row="1"
                       Visibility="{Binding Path=ShowSettings.Value,

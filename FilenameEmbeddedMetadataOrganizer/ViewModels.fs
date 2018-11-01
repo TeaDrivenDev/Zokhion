@@ -188,16 +188,18 @@ type NameViewModel(name : string, isSelected : bool, isNew : bool) =
     member __.ClearNewFlagCommand = ReactiveCommand.Create(fun () -> __.IsNew.Value <- false)
 
 type SearchViewModelCommand =
-    | SelectedDirectory of (DirectoryInfo * string)
+    | SelectedDirectory of (DirectoryInfo option * string)
     | Refresh
 
 type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
     let mutable baseDirectory = ""
-    let mutable selectedDirectory = Unchecked.defaultof<DirectoryInfo>
+    let selectedDirectory = new BehaviorSubject<DirectoryInfo option>(None)
 
     let searchText = new ReactiveProperty<_>("", ReactivePropertyMode.None)
-    let searchFromBaseDirectory = new ReactiveProperty<_>(false)
+    let searchFromBaseDirectory = new ReactiveProperty<_>(true)
+    let mutable canToggleSearchFromBaseDirectory =
+        Unchecked.defaultof<ReadOnlyReactiveProperty<bool>>
     let isActive = new ReactiveProperty<_>(true)
     let files = ObservableCollection()
     let mutable header = Unchecked.defaultof<ReadOnlyReactiveProperty<string>>
@@ -215,7 +217,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                     fi.Name
                     |> Path.GetFileNameWithoutExtension
                     |> toUpper
-                    |> (fun s -> [ s;  s.Replace("_", " ") ])
+                    |> (fun s -> [ s; s.Replace("_", " ") ])
                     |> Seq.exists
                         (containsAll
                             (toUpper searchString
@@ -223,29 +225,33 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                              |> Array.map trim
                              |> Array.toList)))
 
-        let directory =
-            if fromBaseDirectory && not <| String.IsNullOrWhiteSpace searchString
-            then baseDirectory
-            else selectedDirectory.FullName
-
-        Directory.GetFiles(directory, "*", SearchOption.AllDirectories)
-        |> Seq.map FileInfo
-        |> Seq.filter (filter searchString)
+        if fromBaseDirectory && not <| String.IsNullOrWhiteSpace searchString
+        then Some baseDirectory
+        else selectedDirectory.Value |> Option.map (fun selected -> selected.FullName)
+        |> Option.map (fun dir ->
+            Directory.GetFiles(dir, "*", SearchOption.AllDirectories)
+            |> Seq.map FileInfo
+            |> Seq.filter (filter searchString))
 
     do
         header <-
             searchText
             |> Observable.map (function
                 | "" ->
-                    if isNull selectedDirectory
-                    then ""
-                    else sprintf "<%s>" selectedDirectory.Name
+                    selectedDirectory.Value
+                    |> Option.map (fun selected -> selected.Name)
+                    |> Option.defaultValue "(no directory)"
+                    |> sprintf "<%s>"
                 | search -> search)
             |> Observable.startWith [ "Search" ]
             |> toReadOnlyReactiveProperty
 
-        clearSearchTextCommand <-
-            ReactiveCommand.Create(fun () -> searchText.Value <- "")
+        canToggleSearchFromBaseDirectory <-
+            selectedDirectory
+            |> Observable.map Option.isSome
+            |> toReadOnlyReactiveProperty
+
+        clearSearchTextCommand <- ReactiveCommand.Create(fun () -> searchText.Value <- "")
 
         refreshCommand <- ReactiveCommand.Create(fun () -> ignore ())
 
@@ -254,8 +260,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
         |> Observable.combineLatest searchFromBaseDirectory
         |> Observable.iter (fun _ -> isUpdating.TurnOn())
         |> Observable.observeOn ThreadPoolScheduler.Instance
-        |> Observable.filter (fun _ -> not <| isNull selectedDirectory && selectedDirectory.Exists)
-        |> Observable.map (fun (fromBaseDirectory, searchString) ->
+        |> Observable.choose (fun (fromBaseDirectory, searchString) ->
             getFiles searchString fromBaseDirectory)
         |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.subscribe (fun newFiles ->
@@ -278,9 +283,9 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
         |> Observable.mergeSeq
         |> Observable.subscribe (function
             | SelectedDirectory (selected, ``base``) ->
-                selectedDirectory <- selected
+                selectedDirectory.OnNext selected
                 baseDirectory <- ``base``
-                searchFromBaseDirectory.Value <- false
+                searchFromBaseDirectory.Value <- Option.isNone selected
 
                 searchText.Value <- ""
             | Refresh -> searchText.ForceNotify())
@@ -288,6 +293,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
     member __.SearchText = searchText
     member __.SearchFromBaseDirectory = searchFromBaseDirectory
+    member __.CanToggleSearchFromBaseDirectory = canToggleSearchFromBaseDirectory
     member __.IsActive = isActive
     member __.Files = files
     member __.Header = header
@@ -307,8 +313,7 @@ type MainWindowViewModel() as this =
         new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
     let directories = ObservableCollection()
 
-    let isSearchEnabled =
-        new ReactiveProperty<bool>(selectedDirectory |> Observable.map (isNull >> not))
+    let mutable isSearchEnabled = Unchecked.defaultof<ReadOnlyReactiveProperty<bool>>
 
     let searchCommands = new ReplaySubject<SearchViewModelCommand>(1)
     let searches = ObservableCollection<SearchViewModel>()
@@ -593,7 +598,7 @@ type MainWindowViewModel() as this =
                                                 MessageBoxButton.OK,
                                                 MessageBoxImage.Error)
                                 |> ignore
-                            
+
                             searchCommands.OnNext Refresh
                         | _ -> ())
 
@@ -648,9 +653,9 @@ type MainWindowViewModel() as this =
                             this.Features.Remove feature |> ignore
 
                             this.SelectedFeature.Value <- Unchecked.defaultof<FeatureViewModel>
-                            
+
                             index)
-                    
+
                     match index |> Option.defaultValue -1 with
                     | -1 -> features.Add feature
                     | index -> features.Insert(index, feature)
@@ -698,7 +703,7 @@ type MainWindowViewModel() as this =
                 |> Observable.map (Seq.toList >> List.forall id))
 
         this.SelectedDirectory
-        |> Observable.map (fun dir -> SelectedDirectory (dir, this.BaseDirectory.Value))
+        |> Observable.map (fun dir -> SelectedDirectory (Option.ofObj dir, this.BaseDirectory.Value))
         |> Observable.subscribeObserver searchCommands
         |> ignore
 
@@ -720,8 +725,17 @@ type MainWindowViewModel() as this =
 
         validBaseDirectory
         |> Observable.observeOn RxApp.MainThreadScheduler
-        |> Observable.subscribe loadSettings
+        |> Observable.subscribe (fun dir ->
+            loadSettings dir
+            searchCommands.OnNext (SelectedDirectory(None, dir)))
         |> ignore
+
+        let isBaseDirectoryValid =
+            this.BaseDirectory
+            |> Observable.combineLatest validBaseDirectory
+            |> Observable.map (fun (``base``, validBase) -> ``base`` = validBase)
+
+        isSearchEnabled <- isBaseDirectoryValid.ToReadOnlyReactiveProperty()
 
         this.SourceDirectoryPrefixes
         |> Observable.throttle (TimeSpan.FromMilliseconds 500.)

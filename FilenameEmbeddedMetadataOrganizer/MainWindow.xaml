@@ -213,18 +213,26 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <materialDesign:MaterialDataGridTextColumn Width="100"
-                                                                               Header="Directory"
-                                                                               IsReadOnly="True"
-                                                                               SortMemberPath="DirectoryName">
-                                        <DataGridTextColumn.Binding>
-                                            <MultiBinding Converter="{x:Static ui:RelativePathConverter.Instance}">
-                                                <Binding Path="DirectoryName" />
-                                                <Binding ElementName="BaseDirectory"
-                                                         Path="Text" />
-                                            </MultiBinding>
-                                        </DataGridTextColumn.Binding>
-                                    </materialDesign:MaterialDataGridTextColumn>
+                                    <DataGridTemplateColumn Width="100"
+                                                            Header="Directory"
+                                                            IsReadOnly="True"
+                                                            SortMemberPath="DirectoryName">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Cursor="Hand"
+                                                           PreviewMouseLeftButtonUp="SearchResultDirectory_OnPreviewMouseLeftButtonUp"
+                                                           TextDecorations="Underline">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding Converter="{x:Static ui:RelativePathConverter.Instance}">
+                                                            <Binding Path="DirectoryName" />
+                                                            <Binding ElementName="BaseDirectory"
+                                                                     Path="Text" />
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                     <materialDesign:MaterialDataGridTextColumn Width="150"
                                                                                Binding="{Binding LastWriteTime,
                                                                                                  StringFormat=s}"

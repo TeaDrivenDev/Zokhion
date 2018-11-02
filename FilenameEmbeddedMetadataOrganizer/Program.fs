@@ -140,6 +140,15 @@ type MainWindow() as this =
 
             e.Handled <- true
 
+    override __.SearchResultDirectory_OnPreviewMouseLeftButtonUp(sender : obj, args : MouseButtonEventArgs) =
+        match sender with
+        | :? TextBlock as textBlock ->
+            match textBlock.DataContext with
+            | :? System.IO.FileInfo as fileInfo -> Some fileInfo.DirectoryName
+            | _ -> None
+        | _ -> None
+        |> Option.iter __.ViewModel.CreateSearchTabForDirectory
+
 type AppBase = XAML<"App.xaml">
 
 type App() =

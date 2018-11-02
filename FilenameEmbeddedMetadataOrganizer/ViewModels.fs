@@ -537,11 +537,17 @@ type MainWindowViewModel() as this =
         |> Seq.collect (fun vm -> vm.Instances)
         |> this.FeatureInstances.AddRange
 
-    let createSearchTab () =
+    let createSearchTab (directory : string option) =
         let search = SearchViewModel(searchCommands.AsObservable())
 
         selectedFilesSubject.OnNext search.SelectedFile
         this.ActiveSearchTab.Value <- search
+
+        directory
+        |> Option.iter (fun dir ->
+            SelectedDirectory(Some (DirectoryInfo dir), this.BaseDirectory.Value)
+            |> searchCommands.OnNext)
+
         search
 
     do
@@ -755,7 +761,7 @@ type MainWindowViewModel() as this =
             |> Seq.iter directories.Add)
         |> ignore
 
-        createSearchTab () |> searches.Add
+        createSearchTab None |> searches.Add
 
         let existingSelectedFile = this.SelectedFile |> Observable.filter (isNull >> not)
 
@@ -907,7 +913,9 @@ type MainWindowViewModel() as this =
     member __.Directories = directories
 
     member __.Searches = searches
-    member __.CreateSearchTab = Func<_> createSearchTab
+    member __.CreateSearchTab = Func<_>(fun () -> createSearchTab None)
+    member __.CreateSearchTabForDirectory(directory : string) =
+        createSearchTab (Some directory) |> searches.Add
     member __.ActiveSearchTab : ReactiveProperty<SearchViewModel> = activeSearchTab
     member __.IsSearchEnabled = isSearchEnabled
     member __.CloseSearchTabCallback =

@@ -678,80 +678,70 @@
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="3*" />
-
                                 <RowDefinition Height="5" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
 
-                            <Grid Grid.Row="0">
-                                <!--<Grid.RowDefinitions>
-                                <RowDefinition Height="4*" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>-->
-                                <TreeView x:Name="Features"
-                                          Grid.Row="0"
-                                          dd:DragDrop.IsDragSource="{Binding IsFeatureDragDropReorderingEnabled.Value}"
-                                          dd:DragDrop.IsDropTarget="{Binding IsFeatureDragDropReorderingEnabled.Value}"
-                                          dd:DragDrop.UseDefaultDragAdorner="True"
-                                          dd:DragDrop.UseDefaultEffectDataTemplate="True"
-                                          ItemsSource="{Binding Features}"
-                                          SelectedItemChanged="Features_SelectedItemChanged"
-                                          SelectedValuePath="">
-                                    <TreeView.Resources>
-                                        <HierarchicalDataTemplate x:Key="FeatureRootDataTemplate"
-                                                                  DataType="viewModels:FeatureViewModel"
-                                                                  ItemsSource="{Binding Instances}">
-                                            <TextBlock Margin="0 0 0 4"
-                                                       Padding="4 2"
-                                                       Foreground="{StaticResource MaterialDesignBody}">
+                            <TreeView x:Name="Features"
+                                      Grid.Row="0"
+                                      dd:DragDrop.IsDragSource="{Binding IsFeatureDragDropReorderingEnabled.Value}"
+                                      dd:DragDrop.IsDropTarget="{Binding IsFeatureDragDropReorderingEnabled.Value}"
+                                      dd:DragDrop.UseDefaultDragAdorner="True"
+                                      dd:DragDrop.UseDefaultEffectDataTemplate="True"
+                                      ItemsSource="{Binding Features}"
+                                      SelectedItemChanged="Features_SelectedItemChanged"
+                                      SelectedValuePath="">
+                                <TreeView.Resources>
+                                    <HierarchicalDataTemplate x:Key="FeatureRootDataTemplate"
+                                                              DataType="viewModels:FeatureViewModel"
+                                                              ItemsSource="{Binding Instances}">
+                                        <TextBlock Margin="0 0 0 4"
+                                                   Padding="4 2"
+                                                   Foreground="{StaticResource MaterialDesignBody}">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0}: {1}">
+                                                    <Binding Path="FeatureName" />
+                                                    <Binding Path="FeatureCode" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasSelectedInstances.Value}"
+                                                                     Value="True">
+                                                            <Setter Property="Background" Value="{StaticResource FeatureHighlightBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </HierarchicalDataTemplate>
+                                    <HierarchicalDataTemplate x:Key="FeatureInstanceDataTemplate"
+                                                              DataType="viewModels:FeatureInstanceViewModel"
+                                                              ItemsSource="{Binding Instances}">
+                                        <CheckBox IsChecked="{Binding IsSelected}">
+                                            <TextBlock Foreground="{StaticResource MaterialDesignBody}">
                                                 <TextBlock.Text>
                                                     <MultiBinding StringFormat="{}{0}: {1}">
-                                                        <Binding Path="FeatureName" />
-                                                        <Binding Path="FeatureCode" />
+                                                        <Binding Path="InstanceName" />
+                                                        <Binding Path="InstanceCode" />
                                                     </MultiBinding>
                                                 </TextBlock.Text>
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding HasSelectedInstances.Value}"
-                                                                         Value="True">
-                                                                <Setter Property="Background" Value="{StaticResource FeatureHighlightBrush}" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
                                             </TextBlock>
-                                        </HierarchicalDataTemplate>
-                                        <HierarchicalDataTemplate x:Key="FeatureInstanceDataTemplate"
-                                                                  DataType="viewModels:FeatureInstanceViewModel"
-                                                                  ItemsSource="{Binding Instances}">
-                                            <CheckBox IsChecked="{Binding IsSelected}">
-                                                <TextBlock Foreground="{StaticResource MaterialDesignBody}">
-                                                    <TextBlock.Text>
-                                                        <MultiBinding StringFormat="{}{0}: {1}">
-                                                            <Binding Path="InstanceName" />
-                                                            <Binding Path="InstanceCode" />
-                                                        </MultiBinding>
-                                                    </TextBlock.Text>
-                                                </TextBlock>
-                                            </CheckBox>
-                                        </HierarchicalDataTemplate>
-                                    </TreeView.Resources>
-                                    <TreeView.ItemTemplateSelector>
-                                        <ui:FeaturesTreeViewItemTemplateSelector FeatureInstanceTemplate="{StaticResource FeatureInstanceDataTemplate}"
-                                                                                 FeatureRootTemplate="{StaticResource FeatureRootDataTemplate}" />
-                                    </TreeView.ItemTemplateSelector>
-                                    <TreeView.ItemContainerStyle>
-                                        <Style TargetType="{x:Type TreeViewItem}">
-                                            <Setter Property="IsExpanded" Value="{Binding IsExpanded.Value, Mode=TwoWay}" />
-                                            <Setter Property="Margin" Value="0 0 0 7" />
-                                        </Style>
-                                    </TreeView.ItemContainerStyle>
-                                </TreeView>
-
-                                <!--<ListBox Grid.Row="1"
-                                     ItemsSource="{Binding SelectedFeatureInstances}" />-->
-                            </Grid>
+                                        </CheckBox>
+                                    </HierarchicalDataTemplate>
+                                </TreeView.Resources>
+                                <TreeView.ItemTemplateSelector>
+                                    <ui:FeaturesTreeViewItemTemplateSelector FeatureInstanceTemplate="{StaticResource FeatureInstanceDataTemplate}"
+                                                                             FeatureRootTemplate="{StaticResource FeatureRootDataTemplate}" />
+                                </TreeView.ItemTemplateSelector>
+                                <TreeView.ItemContainerStyle>
+                                    <Style TargetType="{x:Type TreeViewItem}">
+                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded.Value, Mode=TwoWay}" />
+                                        <Setter Property="Margin" Value="0 0 0 7" />
+                                    </Style>
+                                </TreeView.ItemContainerStyle>
+                            </TreeView>
 
                             <GridSplitter Grid.Row="1"
                                           Height="5"

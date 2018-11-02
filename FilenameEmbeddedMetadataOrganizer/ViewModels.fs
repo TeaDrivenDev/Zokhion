@@ -782,10 +782,9 @@ type MainWindowViewModel() as this =
             |> List.iter (allNames.Remove >> ignore)
 
             this.OriginalFileName.Value <-
-                string fi.Name |> Path.GetFileNameWithoutExtension)
-        |> ignore
+                string fi.Name |> Path.GetFileNameWithoutExtension
 
-        existingSelectedFile |> Observable.subscribe (fun _ -> this.NewNameToAdd.Value <- "")
+            this.NewNameToAdd.Value <- "")
         |> ignore
 
         [

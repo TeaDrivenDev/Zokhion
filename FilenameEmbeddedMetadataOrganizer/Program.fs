@@ -90,7 +90,6 @@ type MainWindow() as this =
                 match predicted with
                 | :? TextBox as textBox
                     when textBox.Name = "InstanceName" || textBox.Name = "InstanceCode" -> ()
-
                 | _ -> __.ViewModel.AddFeatureInstanceRow()
 
                 focused.Dispatcher.BeginInvoke(DispatcherPriority.Input, Threading.ThreadStart(fun () ->

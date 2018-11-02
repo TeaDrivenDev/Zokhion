@@ -240,7 +240,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                 | "" ->
                     selectedDirectory.Value
                     |> Option.map (fun selected -> selected.Name)
-                    |> Option.defaultValue "(no directory)"
+                    |> Option.defaultValue " (none) "
                     |> sprintf "<%s>"
                 | search -> search)
             |> Observable.startWith [ "Search" ]
@@ -313,7 +313,7 @@ type MainWindowViewModel() as this =
         new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
     let directories = ObservableCollection()
 
-    let mutable isSearchEnabled = Unchecked.defaultof<ReadOnlyReactiveProperty<bool>>
+    let mutable isBaseDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<bool>>
 
     let searchCommands = new ReplaySubject<SearchViewModelCommand>(1)
     let searches = ObservableCollection<SearchViewModel>()
@@ -736,12 +736,11 @@ type MainWindowViewModel() as this =
             searchCommands.OnNext (SelectedDirectory(None, dir)))
         |> ignore
 
-        let isBaseDirectoryValid =
+        isBaseDirectoryValid <-
             this.BaseDirectory
             |> Observable.combineLatest validBaseDirectory
             |> Observable.map (fun (``base``, validBase) -> ``base`` = validBase)
-
-        isSearchEnabled <- isBaseDirectoryValid.ToReadOnlyReactiveProperty()
+            |> toReadOnlyReactiveProperty
 
         this.SourceDirectoryPrefixes
         |> Observable.throttle (TimeSpan.FromMilliseconds 500.)
@@ -916,7 +915,7 @@ type MainWindowViewModel() as this =
     member __.CreateSearchTabForDirectory(directory : string) =
         createSearchTab (Some directory) |> searches.Add
     member __.ActiveSearchTab : ReactiveProperty<SearchViewModel> = activeSearchTab
-    member __.IsSearchEnabled = isSearchEnabled
+    member __.IsBaseDirectoryValid = isBaseDirectoryValid
     member __.CloseSearchTabCallback =
         ItemActionCallback(fun (args : ItemActionCallbackArgs<TabablzControl>) ->
             if args.Owner.Items.Count < 2 then args.Cancel())

@@ -63,11 +63,13 @@
                          TextWrapping="NoWrap" />
                 <ToggleButton Grid.Column="1"
                               IsChecked="{Binding FilterBySourceDirectoryPrefixes.Value}"
+                              IsEnabled="{Binding IsBaseDirectoryValid.Value}"
                               ToolTip="Toggle filtering source folders by prefixes" />
                 <TextBox Grid.Column="2"
                          Height="25"
                          Margin="5"
                          materialDesign:HintAssist.Hint="Prefixes"
+                         IsEnabled="{Binding IsBaseDirectoryValid.Value}"
                          Text="{Binding SourceDirectoryPrefixes.Value,
                                         UpdateSourceTrigger=PropertyChanged}"
                          TextWrapping="NoWrap"
@@ -101,7 +103,7 @@
                                      AddLocationHint="Last"
                                      ClosingItemCallback="{Binding Path=CloseSearchTabCallback}"
                                      HeaderMemberPath="Header.Value"
-                                     IsEnabled="{Binding IsSearchEnabled.Value}"
+                                     IsEnabled="{Binding IsBaseDirectoryValid.Value}"
                                      ItemsSource="{Binding Searches}"
                                      NewItemFactory="{Binding CreateSearchTab}"
                                      SelectedItem="{Binding ActiveSearchTab.Value}"
@@ -320,7 +322,8 @@
                   Margin="5"
                   materialDesign:ShadowAssist.ShadowDepth="Depth3"
                   BorderThickness="0"
-                  Header="Manage Metadata">
+                  Header="Manage Metadata"
+                  IsEnabled="{Binding IsBaseDirectoryValid.Value}">
             <GroupBox.HeaderTemplate>
                 <DataTemplate>
                     <Grid>
@@ -348,11 +351,23 @@
 
                 <Grid Grid.Row="0"
                       Margin="0 0 0 5">
+                    <Grid.Style>
+                        <Style TargetType="{x:Type Grid}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedFile.Value}"
+                                             Value="{x:Null}">
+                                    <Setter Property="IsEnabled" Value="False" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+
                     <Grid.Resources>
                         <SolidColorBrush x:Key="ChangedColor"
                                          Opacity="0.4"
                                          Color="SeaGreen" />
                     </Grid.Resources>
+
                     <Grid.RowDefinitions>
                         <RowDefinition />
                         <RowDefinition />
@@ -953,6 +968,17 @@
 
                 <Grid Grid.Row="2"
                       Margin="0 4 0 0">
+                    <Grid.Style>
+                        <Style TargetType="{x:Type Grid}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedFile.Value}"
+                                             Value="{x:Null}">
+                                    <Setter Property="IsEnabled" Value="False" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition />

@@ -43,7 +43,7 @@ module Utility =
         let linq = FSharp.Linq.RuntimeHelpers.LeafExpressionConverter.QuotationToExpression exp :?> MethodCallExpression
         linq.Arguments.[0] :?> LambdaExpression
 
-    /// Converts a Lambda quotation into a Linq Lamba Expression with 1 parameter
+    /// Converts a Lambda quotation into a Linq Lambda Expression with 1 parameter
     let toLinq (exp : Expr<'a -> 'b>) =
         let lambda = toLambda exp
         Expression.Lambda<Func<'a, 'b>>(lambda.Body, lambda.Parameters)
@@ -363,6 +363,7 @@ type MainWindowViewModel() as this =
         ReactiveList<NameViewModel>([], 0.5, DispatcherScheduler(Application.Current.Dispatcher), ChangeTrackingEnabled = true)
     let names = ObservableCollection()
     let mutable resetNameSelectionCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable searchForNameCommand = Unchecked.defaultof<ReactiveCommand>
 
     let editingFeatureInstances = ObservableCollection()
     let featureToAdd = new ReactiveProperty<_>()
@@ -544,7 +545,7 @@ type MainWindowViewModel() as this =
         |> Seq.collect (fun vm -> vm.Instances)
         |> this.FeatureInstances.AddRange
 
-    let createSearchTab (directory : string option) =
+    let createSearchTab directory searchText =
         let search = SearchViewModel(searchCommands.AsObservable())
 
         selectedFilesSubject.OnNext search.SelectedFile
@@ -554,6 +555,8 @@ type MainWindowViewModel() as this =
         |> Option.iter (fun dir ->
             SelectedDirectory(Some (DirectoryInfo dir), this.BaseDirectory.Value)
             |> searchCommands.OnNext)
+
+        searchText |> Option.iter (fun text -> search.SearchText.Value <- text)
 
         search
 
@@ -630,6 +633,9 @@ type MainWindowViewModel() as this =
         addNameCommand <- ReactiveCommand.Create addName
 
         resetNameSelectionCommand <- ReactiveCommand.Create(fun () -> ignore ())
+
+        searchForNameCommand <-
+            ReactiveCommand.Create(fun name -> createSearchTab None (Some name) |> searches.Add)
 
         confirmEditingFeatureCommand <-
             ReactiveCommand.Create(fun () ->
@@ -767,7 +773,7 @@ type MainWindowViewModel() as this =
             |> Seq.iter directories.Add)
         |> ignore
 
-        createSearchTab None |> searches.Add
+        createSearchTab None None |> searches.Add
 
         let existingSelectedFile = this.SelectedFile |> Observable.filter (isNull >> not)
 
@@ -918,9 +924,9 @@ type MainWindowViewModel() as this =
     member __.Directories = directories
 
     member __.Searches = searches
-    member __.CreateSearchTab = Func<_>(fun () -> createSearchTab None)
+    member __.CreateSearchTab = Func<_>(fun () -> createSearchTab None None)
     member __.CreateSearchTabForDirectory(directory : string) =
-        createSearchTab (Some directory) |> searches.Add
+        createSearchTab (Some directory) None |> searches.Add
     member __.ActiveSearchTab : ReactiveProperty<SearchViewModel> = activeSearchTab
     member __.IsBaseDirectoryValid = isBaseDirectoryValid
     member __.CloseSearchTabCallback =
@@ -970,6 +976,7 @@ type MainWindowViewModel() as this =
     member __.Names : ObservableCollection<NameViewModel> = names
 
     member __.ResetNameSelectionCommand : ReactiveCommand = resetNameSelectionCommand
+    member __.SearchForNameCommand = searchForNameCommand
 
     member __.EditingFeatureInstances : ObservableCollection<NewFeatureInstanceViewModel> = editingFeatureInstances
     member __.RemoveFeatureInstanceRowCommand = removeFeatureInstanceRowCommand

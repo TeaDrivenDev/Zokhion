@@ -527,6 +527,8 @@ type MainWindowViewModel() as this =
         settings.Names
         |> List.iter (fun name -> NameViewModel(name, false, false) |> allNames.Add)
 
+        updateNamesSearchResult ""
+
         features.Clear()
         featureInstances.Clear()
 

@@ -1,5 +1,6 @@
 ﻿<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:dd="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
         xmlns:dragablz="clr-namespace:Dragablz;assembly=Dragablz"
@@ -569,8 +570,17 @@
 
                             <ScrollViewer Grid.Row="1"
                                           VerticalScrollBarVisibility="Auto">
+                                <ScrollViewer.Resources>
+                                    <CollectionViewSource x:Key="SortedNames"
+                                                          Source="{Binding Names}">
+                                        <CollectionViewSource.SortDescriptions>
+                                            <componentModel:SortDescription Direction="Ascending"
+                                                                            PropertyName="Name.Value" />
+                                        </CollectionViewSource.SortDescriptions>
+                                    </CollectionViewSource>
+                                </ScrollViewer.Resources>
                                 <ItemsControl Background="Transparent"
-                                              ItemsSource="{Binding Names}">
+                                              ItemsSource="{Binding Source={StaticResource SortedNames}}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="viewModels:NameViewModel">
                                             <CheckBox Margin="0 3"

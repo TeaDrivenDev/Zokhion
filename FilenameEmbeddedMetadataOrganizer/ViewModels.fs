@@ -393,7 +393,7 @@ type MainWindowViewModel() as this =
         currentFileDirectory ::
         (Directory.GetDirectories this.BaseDirectory.Value
         |> Array.filter (Path.GetFileName >> filter)
-        |> Array.sort
+        |> Array.sortWith (fun x y -> Interop.StrCmpLogicalW(x, y))
         |> Array.toList)
         |> List.distinct
         |> List.map DirectoryInfo
@@ -758,7 +758,7 @@ type MainWindowViewModel() as this =
                 match filterByPrefixes, prefixes with
                 | false, _ | _, "" -> true
                 | _ -> prefixes |> Seq.exists (string >> di.Name.StartsWith))
-            |> Seq.sortBy (fun di -> di.Name)
+            |> Seq.sortWith (fun x y -> Interop.StrCmpLogicalW(x.Name, y.Name))
             |> Seq.iter directories.Add)
         |> ignore
 

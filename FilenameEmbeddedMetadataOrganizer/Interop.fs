@@ -30,7 +30,7 @@ module Interop =
         val mutable hProcess : IntPtr
 
     [<DllImport("shell32.dll", CharSet = CharSet.Auto)>]
-    extern bool ShellExecuteEx(SHELLEXECUTEINFO& lpExecInfo);
+    extern bool ShellExecuteEx(SHELLEXECUTEINFO& lpExecInfo)
 
     type ShowCommands =
         | SW_HIDE = 0
@@ -80,3 +80,6 @@ module Interop =
         info.nShow <- int ShowCommands.SW_SHOW
         info.fMask <- uint32 ShellExecuteMaskFlags.SEE_MASK_INVOKEIDLIST
         ShellExecuteEx(&info);
+
+    [<DllImport("shlwapi.dll", CharSet = CharSet.Unicode, ExactSpelling = true)>]
+    extern int StrCmpLogicalW(String x, String y)

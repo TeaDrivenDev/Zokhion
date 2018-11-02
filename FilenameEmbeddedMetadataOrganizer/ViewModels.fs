@@ -172,7 +172,7 @@ type NewFeatureInstanceViewModel(instanceName : string, instanceCode : string) =
         NewFeatureInstanceViewModel(feature.Name, feature.Code)
 
 [<AllowNullLiteral>]
-type NameViewModel(name : string, isSelected : bool, isNew : bool) =
+type NameViewModel(name : string, isSelected : bool, isNewlyDetected : bool, isAdded : bool) =
     inherit ReactiveObject()
 
     let mutable xIsSelected = isSelected
@@ -183,9 +183,14 @@ type NameViewModel(name : string, isSelected : bool, isNew : bool) =
         with get () = xIsSelected
         and set value = __.RaiseAndSetIfChanged(&xIsSelected, value, nameof <@ __.IsSelected @>) |> ignore
 
-    member val IsNew : ReactiveProperty<bool> = new ReactiveProperty<_>(isNew)
+    member val IsNewlyDetected = new ReactiveProperty<_>(isNewlyDetected)
 
-    member __.ClearNewFlagCommand = ReactiveCommand.Create(fun () -> __.IsNew.Value <- false)
+    member val IsAdded = new ReactiveProperty<_>(isAdded)
+
+    member __.ClearNewFlagCommand =
+        ReactiveCommand.Create(fun () ->
+            __.IsNewlyDetected.Value <- false
+            __.IsAdded.Value <- true)
 
 type SearchViewModelCommand =
     | SelectedDirectory of (DirectoryInfo option * string)
@@ -414,7 +419,7 @@ type MainWindowViewModel() as this =
                 allNames
                 |> Seq.tryFind (fun vm -> vm.Name.Value = name)
                 |> Option.defaultWith (fun () ->
-                    let vm = NameViewModel(trim name, false, false)
+                    let vm = NameViewModel(trim name, false, false, true)
                     allNames.Add vm
                     vm)
 
@@ -428,7 +433,7 @@ type MainWindowViewModel() as this =
         |> Seq.iter (function
             | LeftOnly vm -> vm.IsSelected <- false
             | RightOnly name ->
-                NameViewModel(name, true, true)
+                NameViewModel(name, true, true, false)
                 |> allNames.Add
             | JoinMatch (vm, name) ->
                 vm.Name.Value <- name
@@ -466,7 +471,7 @@ type MainWindowViewModel() as this =
 
     let getAllNames () =
         allNames
-        |> Seq.filter (fun vm -> not vm.IsNew.Value)
+        |> Seq.filter (fun vm -> not vm.IsNewlyDetected.Value)
         |> Seq.map (fun vm -> vm.Name.Value)
         |> Seq.toList
 
@@ -499,7 +504,7 @@ type MainWindowViewModel() as this =
                 Replacements = this.Replacements |> Seq.toList
                 Names =
                     allNames
-                    |> Seq.filter (fun vm -> not vm.IsNew.Value)
+                    |> Seq.filter (fun vm -> not vm.IsNewlyDetected.Value)
                     |> Seq.map (fun vm -> vm.Name.Value)
                     |> Seq.distinct
                     |> Seq.sort
@@ -525,7 +530,7 @@ type MainWindowViewModel() as this =
         allNames.Clear()
 
         settings.Names
-        |> List.iter (fun name -> NameViewModel(name, false, false) |> allNames.Add)
+        |> List.iter (fun name -> NameViewModel(name, false, false, false) |> allNames.Add)
 
         updateNamesSearchResult ""
 
@@ -778,7 +783,7 @@ type MainWindowViewModel() as this =
         existingSelectedFile
         |> Observable.subscribe (fun fi ->
             allNames
-            |> Seq.filter (fun vm -> vm.IsNew.Value)
+            |> Seq.filter (fun vm -> vm.IsNewlyDetected.Value)
             |> Seq.toList
             |> List.iter (allNames.Remove >> ignore)
 

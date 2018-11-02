@@ -590,7 +590,7 @@
                                                 <CheckBox.Style>
                                                     <Style TargetType="CheckBox">
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsNew.Value}"
+                                                            <DataTrigger Binding="{Binding IsNewlyDetected.Value}"
                                                                          Value="True">
                                                                 <Setter Property="Background" Value="{StaticResource SecondaryAccentBrush}" />
                                                             </DataTrigger>
@@ -605,6 +605,15 @@
                                                     <Grid.Style>
                                                         <Style TargetType="Grid">
                                                             <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsAdded.Value}"
+                                                                             Value="True">
+                                                                    <Setter Property="Background">
+                                                                        <Setter.Value>
+                                                                            <SolidColorBrush Opacity="0.4"
+                                                                                             Color="SeaGreen" />
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </DataTrigger>
                                                                 <DataTrigger Binding="{Binding IsSelected}"
                                                                              Value="True">
                                                                     <Setter Property="Background">
@@ -643,7 +652,7 @@
                                                             Padding="0 -5 0 -4"
                                                             Command="{Binding ClearNewFlagCommand}"
                                                             Content="+"
-                                                            Visibility="{Binding IsNew.Value,
+                                                            Visibility="{Binding IsNewlyDetected.Value,
                                                                                  Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
                                                 </Grid>
                                             </CheckBox>

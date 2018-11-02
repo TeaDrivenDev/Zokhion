@@ -912,10 +912,7 @@ type MainWindowViewModel() as this =
     member __.IsSearchEnabled = isSearchEnabled
     member __.CloseSearchTabCallback =
         ItemActionCallback(fun (args : ItemActionCallbackArgs<TabablzControl>) ->
-            let viewModel = args.DragablzItem.DataContext
-
-            if viewModel = args.Owner.Items.[0]
-            then args.Cancel())
+            if args.Owner.Items.Count < 2 then args.Cancel())
 
     member __.SelectedFile : ReadOnlyReactiveProperty<FileInfo> = selectedFile
 

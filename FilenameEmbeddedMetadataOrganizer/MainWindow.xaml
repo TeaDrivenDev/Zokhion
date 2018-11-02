@@ -969,12 +969,8 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <Grid Grid.Column="0"
-                          Width="150">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0"
+                                Width="150">
                         <TextBox Grid.Column="0"
                                  Margin="0 2 5 -1"
                                  Padding="2 0"
@@ -991,7 +987,7 @@
                                   ItemsSource="{Binding DestinationDirectories}"
                                   SelectedItem="{Binding SelectedDestinationDirectory.Value}"
                                   ToolTip="Destination directory" />
-                    </Grid>
+                    </StackPanel>
                     <TextBlock x:Name="ResultingFilePath"
                                Grid.Column="1"
                                Height="Auto"

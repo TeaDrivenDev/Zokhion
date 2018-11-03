@@ -134,8 +134,8 @@ type FeatureToDisplayStringConverter() =
         member this.Convert(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
             let featureViewModel = value :?> FeatureViewModel
 
-            featureViewModel.Adds
-            |> Option.map (fun adds -> " ➔ " + adds)
+            featureViewModel.Include
+            |> Option.map (fun toInclude -> " ➔ " + toInclude)
             |> Option.defaultValue ""
             |> sprintf "%s: %s%s" featureViewModel.FeatureName featureViewModel.FeatureCode
             :> obj

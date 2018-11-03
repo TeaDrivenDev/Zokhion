@@ -654,7 +654,7 @@ module SettingsTests =
                 {
                     Name = "Scene"
                     Code = "S"
-                    Adds = None
+                    Include = None
                     Instances =
                         [
                             { Name = "Sunset"; Code = "Ss" }
@@ -665,7 +665,7 @@ module SettingsTests =
                 {
                     Name = "Type of shot"
                     Code = "T"
-                    Adds = Some "XAb"
+                    Include = Some "XAb"
                     Instances =
                         [
                             { Name = "Aerial, distant"; Code = "Ad" }
@@ -703,8 +703,8 @@ module SettingsTests =
 
         let expectedResult =
             [
-                { Name = "Scene"; Code = "S"; Adds = None; Instances = [] }
-                { Name = "Type of shot"; Code = "T"; Adds = Some "XAb"; Instances = [] }
+                { Name = "Scene"; Code = "S"; Include = None; Instances = [] }
+                { Name = "Type of shot"; Code = "T"; Include = Some "XAb"; Instances = [] }
             ]
 
         // Act
@@ -732,7 +732,7 @@ module SettingsTests =
                 {
                     Name = "Scene"
                     Code = "S"
-                    Adds = None
+                    Include = None
                     Instances =
                         [
                             { Name = "Sunset"; Code = "Ss" }
@@ -743,7 +743,7 @@ module SettingsTests =
                 {
                     Name = "Type of shot"
                     Code = "T"
-                    Adds = Some "XAb"
+                    Include = Some "XAb"
                     Instances =
                         [
                             { Name = "Aerial, distant"; Code = "Ad" }

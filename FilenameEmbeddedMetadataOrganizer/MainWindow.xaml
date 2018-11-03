@@ -967,7 +967,7 @@
                                                            Text="➔" />
                                                 <TextBox Width="50"
                                                          Margin="5 0"
-                                                         materialDesign:HintAssist.Hint="Adds"
+                                                         materialDesign:HintAssist.Hint="Include"
                                                          Text="{Binding EditingFeatureToInclude.Value,
                                                                         UpdateSourceTrigger=PropertyChanged}" />
                                             </StackPanel>

@@ -52,7 +52,7 @@ module Utility =
         observable1.WithLatestFrom(observable2, fun v1 v2 -> v1, v2)
 
     let xwhen (observable2 : IObservable<_>) (observable1 : IObservable<_>) =
-        observable1 |> withLatestFrom observable2 |> Observable.filter snd
+        observable1 |> withLatestFrom observable2 |> Observable.filter snd |> Observable.map fst
 
     let containsAll parts (s : string) = parts |> List.forall s.Contains
 
@@ -92,7 +92,7 @@ type FeatureViewModel(feature : Feature) as this =
 
     member __.FeatureCode = feature.Code
 
-    member __.Adds = feature.Adds
+    member __.Include = feature.Include
 
     member __.Instances = instances
 
@@ -671,7 +671,7 @@ type MainWindowViewModel() as this =
                             {
                                 Name = this.EditingFeatureName.Value
                                 Code = this.EditingFeatureCode.Value
-                                Adds = nonEmptyString this.EditingFeatureToInclude.Value
+                                Include = nonEmptyString this.EditingFeatureToInclude.Value
                                 Instances = []
                             })
 
@@ -762,11 +762,6 @@ type MainWindowViewModel() as this =
             |> Seq.iter (fun vm -> vm.IsActive.Value <- (tab = vm)))
         |> ignore
 
-        this.FeatureInstances.ItemChanged
-        |> Observable.filter (fun change -> change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
-        |> Observable.subscribe (fun _ -> this.RaisePropertyChanged(nameof <@ this.SelectedFeatureInstances @>))
-        |> ignore
-
         let validBaseDirectory =
             this.BaseDirectory
             |> Observable.throttle (TimeSpan.FromMilliseconds 500.)
@@ -845,7 +840,7 @@ type MainWindowViewModel() as this =
         NewFeatureInstanceViewModel()
         |> this.EditingFeatureInstances.Add
 
-        let gate = new BooleanNotifier(true)
+        let updateNewNameGate = new BooleanNotifier(true)
 
         [
             this.TreatParenthesizedPartAsNames |> Observable.map TreatParenthesizedPartAsNames
@@ -857,7 +852,7 @@ type MainWindowViewModel() as this =
             allNames.ItemChanged
             |> Observable.filter (fun change ->
                 change.PropertyName = nameof <@ any<NameViewModel>.IsSelected @>)
-            |> xwhen gate
+            |> xwhen updateNewNameGate
             |> Observable.map (fun _ ->
                 allNames
                 |> Seq.filter (fun n -> n.IsSelected)
@@ -876,8 +871,22 @@ type MainWindowViewModel() as this =
             this.FeatureInstances.ItemChanged
             |> Observable.filter (fun change ->
                 change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
-            |> xwhen gate
-            |> Observable.filter snd
+            |> xwhen updateNewNameGate
+            |> Observable.iter (fun change ->
+                if change.Sender.IsSelected
+                then
+                    updateNewNameGate.TurnOff()
+
+                    change.Sender.Include
+                    |> Option.iter (fun toInclude ->
+                        let featureToInclude =
+                            this.FeatureInstances
+                            |> Seq.tryFind (fun vm -> vm.CompositeInstanceCode = toInclude)
+
+                        featureToInclude
+                        |> Option.iter (fun vm -> vm.IsSelected <- true))
+
+                    updateNewNameGate.TurnOn())
             |> Observable.map (fun _ ->
                 this.SelectedFeatureInstances
                 |> Seq.toList
@@ -899,9 +908,9 @@ type MainWindowViewModel() as this =
             }
             (updateParameters this.Replacements getAllNames)
         |> Observable.subscribe (fun parameters ->
-            gate.TurnOff()
+            updateNewNameGate.TurnOff()
             updateNewName this.OriginalFileName.Value parameters
-            gate.TurnOn())
+            updateNewNameGate.TurnOn())
         |> ignore
 
         this.NewNameToAdd
@@ -920,14 +929,14 @@ type MainWindowViewModel() as this =
         |> Observable.subscribe (fun (OfNull feature) ->
             this.EditingFeatureInstances.Clear()
 
-            let featureName, featureCode, adds =
+            let featureName, featureCode, toInclude =
                 feature
-                |> Option.map (fun feature -> feature.FeatureName, feature.FeatureCode, feature.Adds)
+                |> Option.map (fun feature -> feature.FeatureName, feature.FeatureCode, feature.Include)
                 |> Option.defaultValue ("", "", None)
 
             this.EditingFeatureName.Value <- featureName
             this.EditingFeatureCode.Value <- featureCode
-            this.EditingFeatureToInclude.Value <- adds |> Option.defaultValue ""
+            this.EditingFeatureToInclude.Value <- toInclude |> Option.defaultValue ""
 
             feature
             |> Option.bind (fun feature ->

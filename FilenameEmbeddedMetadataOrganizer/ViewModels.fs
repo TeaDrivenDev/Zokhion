@@ -365,6 +365,7 @@ type MainWindowViewModel() as this =
     let mutable resetNameSelectionCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable searchForTextCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable searchForNameCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable deleteNameCommand = Unchecked.defaultof<ReactiveCommand>
 
     let editingFeatureInstances = ObservableCollection()
     let featureToAdd = new ReactiveProperty<_>()
@@ -644,6 +645,18 @@ type MainWindowViewModel() as this =
         searchForNameCommand <-
             ReactiveCommand.Create(fun name ->
                 sprintf ".%s." name |> Some |> createSearchTab None |> searches.Add)
+
+        deleteNameCommand <-
+            ReactiveCommand.Create(fun (vm : NameViewModel) ->
+                MessageBox.Show(sprintf "Delete name '%s'?" vm.Name.Value,
+                                "Delete Name",
+                                MessageBoxButton.OKCancel,
+                                MessageBoxImage.Question)
+                |> function
+                    | MessageBoxResult.OK ->
+                        allNames.Remove vm |> ignore
+                        updateNamesSearchResult ""
+                    | _ -> ())
 
         confirmEditingFeatureCommand <-
             ReactiveCommand.Create(fun () ->
@@ -986,6 +999,7 @@ type MainWindowViewModel() as this =
     member __.ResetNameSelectionCommand : ReactiveCommand = resetNameSelectionCommand
     member __.SearchForTextCommand = searchForTextCommand
     member __.SearchForNameCommand = searchForNameCommand
+    member __.DeleteNameCommand = deleteNameCommand
 
     member __.EditingFeatureInstances : ObservableCollection<NewFeatureInstanceViewModel> = editingFeatureInstances
     member __.RemoveFeatureInstanceRowCommand = removeFeatureInstanceRowCommand

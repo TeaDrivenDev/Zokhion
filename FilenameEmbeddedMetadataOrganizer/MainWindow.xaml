@@ -648,22 +648,22 @@
                                                     </TextBlock>
                                                     <StackPanel Grid.Column="1"
                                                                 Orientation="Horizontal">
-                                                        <Button x:Name="SearchForNameButton"
+                                                        <Button x:Name="ActionsButton"
                                                                 Width="12"
                                                                 Height="12"
                                                                 Margin="0 0 5 0"
                                                                 Padding="0 -5 0 -4"
-                                                                Content="?">
+                                                                Content="…">
                                                             <Button.Resources>
                                                                 <ui:BindingProxy x:Key="MainWindowBindingProxy"
                                                                                  Data="{Binding ElementName=MainWindowView}" />
                                                                 <ui:BindingProxy x:Key="NameVieWModelBindingProxy"
-                                                                                 Data="{Binding ElementName=SearchForNameButton,
+                                                                                 Data="{Binding ElementName=ActionsButton,
                                                                                                 Path=DataContext}" />
                                                             </Button.Resources>
 
                                                             <Button.ContextMenu>
-                                                                <ContextMenu x:Name="SearchForNameButtonContextMenu">
+                                                                <ContextMenu x:Name="ActionsButtonContextMenu">
                                                                     <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
                                                                                                 Path=Data.DataContext.SearchForTextCommand}"
                                                                               CommandParameter="{Binding Source={StaticResource NameVieWModelBindingProxy},
@@ -674,15 +674,21 @@
                                                                               CommandParameter="{Binding Source={StaticResource NameVieWModelBindingProxy},
                                                                                                          Path=Data.Name.Value}"
                                                                               Header="Search as Name" />
+                                                                    <Separator />
+                                                                    <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
+                                                                                                Path=Data.DataContext.DeleteNameCommand}"
+                                                                              CommandParameter="{Binding Source={StaticResource NameVieWModelBindingProxy},
+                                                                                                         Path=Data}"
+                                                                              Header="Delete" />
                                                                 </ContextMenu>
                                                             </Button.ContextMenu>
 
                                                             <Button.Triggers>
                                                                 <EventTrigger RoutedEvent="Button.Click"
-                                                                              SourceName="SearchForNameButton">
+                                                                              SourceName="ActionsButton">
                                                                     <BeginStoryboard>
                                                                         <Storyboard>
-                                                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="SearchForNameButtonContextMenu"
+                                                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ActionsButtonContextMenu"
                                                                                                            Storyboard.TargetProperty="(ContextMenu.IsOpen)">
                                                                                 <DiscreteObjectKeyFrame KeyTime="0:0:0">
                                                                                     <DiscreteObjectKeyFrame.Value>
@@ -698,19 +704,19 @@
                                                             <Button.Style>
                                                                 <Style BasedOn="{StaticResource MaterialDesignRaisedButton}"
                                                                        TargetType="Button">
-                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <Setter Property="Opacity" Value="0.4" />
 
                                                                     <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding ElementName=SearchForNameButtonContextMenu,
+                                                                        <DataTrigger Binding="{Binding ElementName=ActionsButtonContextMenu,
                                                                                                        Path=IsOpen}"
                                                                                      Value="True">
-                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                            <Setter Property="Opacity" Value="1" />
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor,
                                                                                                                                       AncestorType=CheckBox},
                                                                                                        Path=IsMouseOver}"
                                                                                      Value="True">
-                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                            <Setter Property="Opacity" Value="1" />
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>

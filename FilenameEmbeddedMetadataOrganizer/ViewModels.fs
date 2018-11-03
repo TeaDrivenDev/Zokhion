@@ -607,10 +607,10 @@ type MainWindowViewModel() as this =
                 then
                     MessageBox.Show(sprintf "Delete file %s?" fi.FullName,
                                         "Delete File",
-                                        MessageBoxButton.YesNo,
-                                        MessageBoxImage.Information)
+                                        MessageBoxButton.OKCancel,
+                                        MessageBoxImage.Question)
                     |> function
-                        | MessageBoxResult.Yes ->
+                        | MessageBoxResult.OK ->
                             try
                                 fi.Delete()
                             with _ ->
@@ -731,7 +731,7 @@ type MainWindowViewModel() as this =
                     with
                     | _ ->
                         MessageBox.Show("Renaming failed. Please make sure the file is not in use by another application.",
-                                        "Renaming failed",
+                                        "Renaming Failed",
                                         MessageBoxButton.OK,
                                         MessageBoxImage.Warning)
                         |> ignore),

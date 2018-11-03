@@ -92,6 +92,8 @@ type FeatureViewModel(feature : Feature) as this =
 
     member __.FeatureCode = feature.Code
 
+    member __.Adds = feature.Adds
+
     member __.Instances = instances
 
     member __.HasSelectedInstances = hasSelectedInstances
@@ -368,8 +370,9 @@ type MainWindowViewModel() as this =
     let mutable deleteNameCommand = Unchecked.defaultof<ReactiveCommand>
 
     let editingFeatureInstances = ObservableCollection()
-    let featureToAdd = new ReactiveProperty<_>()
-    let featureCodeToAdd = new ReactiveProperty<_>()
+    let editingFeatureName = new ReactiveProperty<_>()
+    let editingFeatureCode = new ReactiveProperty<_>()
+    let editingFeatureToInclude = new ReactiveProperty<_>()
     let mutable confirmEditingFeatureCommand = Unchecked.defaultof<ReactiveCommand>
     let selectedFeature =
         new ReactiveProperty<_>(Unchecked.defaultof<FeatureViewModel>, ReactivePropertyMode.None)
@@ -660,11 +663,17 @@ type MainWindowViewModel() as this =
 
         confirmEditingFeatureCommand <-
             ReactiveCommand.Create(fun () ->
-                if not <| String.IsNullOrWhiteSpace this.FeatureToAdd.Value
-                    && not <| String.IsNullOrWhiteSpace this.FeatureCodeToAdd.Value
+                if not <| String.IsNullOrWhiteSpace this.EditingFeatureName.Value
+                    && not <| String.IsNullOrWhiteSpace this.EditingFeatureCode.Value
                 then
                     let feature =
-                        FeatureViewModel({ Name = this.FeatureToAdd.Value; Code = this.FeatureCodeToAdd.Value; Instances = [] })
+                        FeatureViewModel(
+                            {
+                                Name = this.EditingFeatureName.Value
+                                Code = this.EditingFeatureCode.Value
+                                Adds = nonEmptyString this.EditingFeatureToInclude.Value
+                                Instances = []
+                            })
 
                     this.EditingFeatureInstances
                     |> Seq.filter (fun vm ->
@@ -676,8 +685,8 @@ type MainWindowViewModel() as this =
 
                         feature.Instances.Add instance)
 
-                    this.FeatureToAdd.Value <- ""
-                    this.FeatureCodeToAdd.Value <- ""
+                    this.EditingFeatureName.Value <- ""
+                    this.EditingFeatureCode.Value <- ""
 
                     this.EditingFeatureInstances.Clear()
                     NewFeatureInstanceViewModel() |> this.EditingFeatureInstances.Add
@@ -911,13 +920,14 @@ type MainWindowViewModel() as this =
         |> Observable.subscribe (fun (OfNull feature) ->
             this.EditingFeatureInstances.Clear()
 
-            let featureName, featureCode =
+            let featureName, featureCode, adds =
                 feature
-                |> Option.map (fun feature -> feature.FeatureName, feature.FeatureCode)
-                |> Option.defaultValue ("", "")
+                |> Option.map (fun feature -> feature.FeatureName, feature.FeatureCode, feature.Adds)
+                |> Option.defaultValue ("", "", None)
 
-            this.FeatureToAdd.Value <- featureName
-            this.FeatureCodeToAdd.Value <- featureCode
+            this.EditingFeatureName.Value <- featureName
+            this.EditingFeatureCode.Value <- featureCode
+            this.EditingFeatureToInclude.Value <- adds |> Option.defaultValue ""
 
             feature
             |> Option.bind (fun feature ->
@@ -1010,9 +1020,9 @@ type MainWindowViewModel() as this =
     member __.ExpandAllFeaturesCommand = expandAllFeaturesCommand
     member __.CollapseAllFeaturesCommand = collapseAllFeaturesCommand
 
-    member __.FeatureToAdd : ReactiveProperty<string> = featureToAdd
-
-    member __.FeatureCodeToAdd : ReactiveProperty<string> = featureCodeToAdd
+    member __.EditingFeatureName : ReactiveProperty<string> = editingFeatureName
+    member __.EditingFeatureCode : ReactiveProperty<string> = editingFeatureCode
+    member __.EditingFeatureToInclude : ReactiveProperty<string> = editingFeatureToInclude
 
     member __.ConfirmEditingFeatureCommand = confirmEditingFeatureCommand
 

@@ -481,6 +481,79 @@
 
                 <Grid Grid.Row="1"
                       Visibility="{Binding Path=ShowSettings.Value,
+                                           Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}">
+                    <GroupBox Header="Replacements"
+                              Style="{DynamicResource MaterialDesignCardGroupBox}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox Grid.Column="0"
+                                         Margin="2"
+                                         materialDesign:HintAssist.Hint="To Replace"
+                                         Text="{Binding ToReplaceToAdd.Value,
+                                                        UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Grid.Column="1"
+                                         Margin="2"
+                                         materialDesign:HintAssist.Hint="Replace With"
+                                         Text="{Binding ReplaceWithToAdd.Value,
+                                                        UpdateSourceTrigger=PropertyChanged}" />
+
+                                <Button Grid.Column="2"
+                                        Width="15"
+                                        Height="15"
+                                        Margin="5 0"
+                                        Padding="0 -1 -1 0"
+                                        Command="{Binding AddReplacementCommand}"
+                                        Content="+" />
+                            </Grid>
+
+                            <ItemsControl Grid.Row="1"
+                                          ItemsSource="{Binding Replacements}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0 3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding ToReplace}" />
+                                            <TextBlock Grid.Column="1">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="{Binding ReplaceWith}" />
+
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding ReplaceWith}"
+                                                                         Value="">
+                                                                <Setter Property="Opacity" Value="0.5" />
+                                                                <Setter Property="Text" Value="(remove)" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+
+                <Grid Grid.Row="1"
+                      Visibility="{Binding Path=ShowSettings.Value,
                                            Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance},
                                            ConverterParameter=True}">
                     <Grid.ColumnDefinitions>
@@ -808,13 +881,10 @@
                                                               ItemsSource="{Binding Instances}">
                                         <TextBlock Margin="0 0 0 4"
                                                    Padding="4 2"
-                                                   Foreground="{StaticResource MaterialDesignBody}">
-                                            <TextBlock.Text>
-                                                <MultiBinding StringFormat="{}{0}: {1}">
-                                                    <Binding Path="FeatureName" />
-                                                    <Binding Path="FeatureCode" />
-                                                </MultiBinding>
-                                            </TextBlock.Text>
+                                                   Foreground="{StaticResource MaterialDesignBody}"
+                                                   Text="{Binding .,
+                                                                  Converter={x:Static ui:FeatureToDisplayStringConverter.Instance}}">
+
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Style.Triggers>
@@ -876,20 +946,33 @@
                                                 <ColumnDefinition />
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
 
                                             <TextBox Grid.Column="0"
                                                      Margin="2"
                                                      materialDesign:HintAssist.Hint="Feature Name"
-                                                     Text="{Binding FeatureToAdd.Value,
+                                                     Text="{Binding EditingFeatureName.Value,
                                                                     UpdateSourceTrigger=PropertyChanged}" />
                                             <TextBox Grid.Column="1"
                                                      Margin="2"
                                                      materialDesign:HintAssist.Hint="Feature Code"
-                                                     Text="{Binding FeatureCodeToAdd.Value,
+                                                     Text="{Binding EditingFeatureCode.Value,
                                                                     UpdateSourceTrigger=PropertyChanged}" />
 
-                                            <Button Grid.Column="2"
+                                            <StackPanel Grid.Column="2"
+                                                        VerticalAlignment="Center"
+                                                        Orientation="Horizontal">
+                                                <TextBlock VerticalAlignment="Center"
+                                                           Text="➔" />
+                                                <TextBox Width="50"
+                                                         Margin="5 0"
+                                                         materialDesign:HintAssist.Hint="Adds"
+                                                         Text="{Binding EditingFeatureToInclude.Value,
+                                                                        UpdateSourceTrigger=PropertyChanged}" />
+                                            </StackPanel>
+
+                                            <Button Grid.Column="3"
                                                     Width="15"
                                                     Height="15"
                                                     Margin="5 0"
@@ -900,7 +983,7 @@
                                                     Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
                                                     IsTabStop="False" />
 
-                                            <Button Grid.Column="3"
+                                            <Button Grid.Column="4"
                                                     Width="15"
                                                     Height="15"
                                                     Margin="5 0"
@@ -985,79 +1068,6 @@
                                     </Grid>
                                 </materialDesign:Card>
                             </Grid>
-                        </Grid>
-                    </GroupBox>
-                </Grid>
-
-                <Grid Grid.Row="1"
-                      Visibility="{Binding Path=ShowSettings.Value,
-                                           Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}">
-                    <GroupBox Header="Replacements"
-                              Style="{DynamicResource MaterialDesignCardGroupBox}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBox Grid.Column="0"
-                                         Margin="2"
-                                         materialDesign:HintAssist.Hint="To Replace"
-                                         Text="{Binding ToReplaceToAdd.Value,
-                                                        UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Grid.Column="1"
-                                         Margin="2"
-                                         materialDesign:HintAssist.Hint="Replace With"
-                                         Text="{Binding ReplaceWithToAdd.Value,
-                                                        UpdateSourceTrigger=PropertyChanged}" />
-
-                                <Button Grid.Column="2"
-                                        Width="15"
-                                        Height="15"
-                                        Margin="5 0"
-                                        Padding="0 -1 -1 0"
-                                        Command="{Binding AddReplacementCommand}"
-                                        Content="+" />
-                            </Grid>
-
-                            <ItemsControl Grid.Row="1"
-                                          ItemsSource="{Binding Replacements}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0 3">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition />
-                                                <ColumnDefinition />
-                                            </Grid.ColumnDefinitions>
-
-                                            <TextBlock Grid.Column="0"
-                                                       Text="{Binding ToReplace}" />
-                                            <TextBlock Grid.Column="1">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Text" Value="{Binding ReplaceWith}" />
-
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding ReplaceWith}"
-                                                                         Value="">
-                                                                <Setter Property="Opacity" Value="0.5" />
-                                                                <Setter Property="Text" Value="(remove)" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
                         </Grid>
                     </GroupBox>
                 </Grid>

@@ -1,4 +1,4 @@
-namespace FilenameEmbeddedMetadataOrganizer.UIHelper
+﻿namespace FilenameEmbeddedMetadataOrganizer.UIHelper
 
 open System
 open System.IO
@@ -121,6 +121,23 @@ type NameHasFeaturesConverter() =
                 |> Path.GetFileNameWithoutExtension
                 |> NameHasFeaturesConverter.FeatureRegex.IsMatch
             | _ -> false
+            :> obj
+
+        member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
+            raise (System.NotImplementedException())
+
+type FeatureToDisplayStringConverter() =
+
+    static member Instance = FeatureToDisplayStringConverter() :> IValueConverter
+
+    interface IValueConverter with
+        member this.Convert(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
+            let featureViewModel = value :?> FeatureViewModel
+
+            featureViewModel.Adds
+            |> Option.map (fun adds -> " ➔ " + adds)
+            |> Option.defaultValue ""
+            |> sprintf "%s: %s%s" featureViewModel.FeatureName featureViewModel.FeatureCode
             :> obj
 
         member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =

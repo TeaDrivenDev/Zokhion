@@ -654,6 +654,7 @@ module SettingsTests =
                 {
                     Name = "Scene"
                     Code = "S"
+                    Adds = None
                     Instances =
                         [
                             { Name = "Sunset"; Code = "Ss" }
@@ -664,6 +665,7 @@ module SettingsTests =
                 {
                     Name = "Type of shot"
                     Code = "T"
+                    Adds = Some "XAb"
                     Instances =
                         [
                             { Name = "Aerial, distant"; Code = "Ad" }
@@ -678,7 +680,7 @@ module SettingsTests =
                 "S|Scene"
                 "	SSs|Sunset"
                 "	SPd|Pre-dawn"
-                "T|Type of shot"
+                "T|Type of shot > XAb"
                 "	TAd|Aerial, distant"
                 "	TAo|Aerial, overhead"
                 "	TGd|Ground level, distant"
@@ -696,13 +698,13 @@ module SettingsTests =
         let values =
             [
                 "S|Scene"
-                "T|Type of shot"
+                "T|Type of shot > XAb"
             ]
 
         let expectedResult =
             [
-                { Name = "Scene"; Code = "S"; Instances = [] }
-                { Name = "Type of shot"; Code = "T"; Instances = [] }
+                { Name = "Scene"; Code = "S"; Adds = None; Instances = [] }
+                { Name = "Type of shot"; Code = "T"; Adds = Some "XAb"; Instances = [] }
             ]
 
         // Act
@@ -719,7 +721,7 @@ module SettingsTests =
                 "S|Scene"
                 "	SSs|Sunset"
                 "	SPd|Pre-dawn"
-                "T|Type of shot"
+                "T|Type of shot > XAb"
                 "	TAd|Aerial, distant"
                 "	TAo|Aerial, overhead"
                 "	TGd|Ground level, distant"
@@ -730,6 +732,7 @@ module SettingsTests =
                 {
                     Name = "Scene"
                     Code = "S"
+                    Adds = None
                     Instances =
                         [
                             { Name = "Sunset"; Code = "Ss" }
@@ -740,6 +743,7 @@ module SettingsTests =
                 {
                     Name = "Type of shot"
                     Code = "T"
+                    Adds = Some "XAb"
                     Instances =
                         [
                             { Name = "Aerial, distant"; Code = "Ad" }

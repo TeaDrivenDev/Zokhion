@@ -55,3 +55,5 @@ module Prelude =
             | None, None -> failwith "This can never happen.")
 
     let (|OfNull|) value = if isNull value then None else Some value
+
+    let nonEmptyString value = if String.IsNullOrWhiteSpace value then None else Some value

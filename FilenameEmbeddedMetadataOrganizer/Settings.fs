@@ -6,7 +6,8 @@ module Settings =
     open System.IO
     open System.Text.RegularExpressions
 
-    type Feature = { Name : string; Code : string; Instances : FeatureInstance list }
+    type Feature =
+        { Name : string; Code : string; Adds : string option; Instances : FeatureInstance list }
     and FeatureInstance = { Name : string; Code : string }
 
     type Replacement = { ToReplace : string; ReplaceWith : string }
@@ -103,7 +104,11 @@ module Settings =
 
         let serializeFeature (feature : Feature) =
             [
-                yield sprintf "%s|%s"feature.Code feature.Name
+                yield
+                    feature.Adds
+                    |> Option.map (fun adds -> " > " + adds)
+                    |> Option.defaultValue ""
+                    |> sprintf "%s|%s%s" feature.Code feature.Name
 
                 yield! feature.Instances |> List.map (serializeInstance feature.Code)
             ]
@@ -121,7 +126,7 @@ module Settings =
             |> File.WriteAllLines
 
     let instanceRegex = Regex "^\t(?<code>.+)\\|(?<name>.+)$"
-    let featureRegex = Regex "^(?<code>.+)\\|(?<name>.+)$"
+    let featureRegex = Regex "^(?<code>.+)\\|(?<name>[^>]+)( > (?<adds>.+))?$"
 
     let deserializeFeatures serialized =
         let (|Instance|_|) featureCode s =
@@ -135,7 +140,7 @@ module Settings =
             let m = featureRegex.Match s
 
             if m.Success
-            then Some (m.Groups.["name"].Value, m.Groups.["code"].Value)
+            then Some (m.Groups.["name"].Value, m.Groups.["code"].Value, nonEmptyString m.Groups.["adds"].Value)
             else None
 
         let rec getInstances featureCode lines =
@@ -147,12 +152,13 @@ module Settings =
 
         let rec deserialize lines =
             match lines with
-            | Feature (name, code) :: tail ->
+            | Feature (name, code, adds) :: tail ->
                 let instances, tail = getInstances code tail
 
                 {
                     Name = name
                     Code = code
+                    Adds = adds
                     Instances =
                         instances
                         |> List.map (fun (name, code) -> { Name = name; Code = code })

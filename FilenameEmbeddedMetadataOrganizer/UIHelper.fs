@@ -114,7 +114,7 @@ type NameHasFeaturesConverter() =
     static member Instance = NameHasFeaturesConverter() :> IValueConverter
 
     interface IValueConverter with
-        member this.Convert(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj = 
+        member this.Convert(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
             match value with
             | :? string as name ->
                 name
@@ -123,5 +123,17 @@ type NameHasFeaturesConverter() =
             | _ -> false
             :> obj
 
-        member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj = 
+        member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
             raise (System.NotImplementedException())
+
+type BindingProxy() =
+    inherit Freezable()
+
+    static let DataProperty =
+        DependencyProperty.Register("Data", typeof<obj>, typeof<BindingProxy>, UIPropertyMetadata(null));
+
+    override __.CreateInstanceCore() = BindingProxy() :> Freezable
+
+    member __.Data
+        with get () = __.GetValue(DataProperty)
+        and set value = __.SetValue(DataProperty, value)

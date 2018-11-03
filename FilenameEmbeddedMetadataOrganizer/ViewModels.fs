@@ -363,6 +363,7 @@ type MainWindowViewModel() as this =
         ReactiveList<NameViewModel>([], 0.5, DispatcherScheduler(Application.Current.Dispatcher), ChangeTrackingEnabled = true)
     let names = ObservableCollection()
     let mutable resetNameSelectionCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable searchForTextCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable searchForNameCommand = Unchecked.defaultof<ReactiveCommand>
 
     let editingFeatureInstances = ObservableCollection()
@@ -556,7 +557,10 @@ type MainWindowViewModel() as this =
             SelectedDirectory(Some (DirectoryInfo dir), this.BaseDirectory.Value)
             |> searchCommands.OnNext)
 
-        searchText |> Option.iter (fun text -> search.SearchText.Value <- text)
+        searchText
+        |> Option.iter (fun text ->
+            search.SearchFromBaseDirectory.Value <- true
+            search.SearchText.Value <- text)
 
         search
 
@@ -634,8 +638,12 @@ type MainWindowViewModel() as this =
 
         resetNameSelectionCommand <- ReactiveCommand.Create(fun () -> ignore ())
 
-        searchForNameCommand <-
+        searchForTextCommand <-
             ReactiveCommand.Create(fun name -> createSearchTab None (Some name) |> searches.Add)
+
+        searchForNameCommand <-
+            ReactiveCommand.Create(fun name ->
+                sprintf ".%s." name |> Some |> createSearchTab None |> searches.Add)
 
         confirmEditingFeatureCommand <-
             ReactiveCommand.Create(fun () ->
@@ -976,6 +984,7 @@ type MainWindowViewModel() as this =
     member __.Names : ObservableCollection<NameViewModel> = names
 
     member __.ResetNameSelectionCommand : ReactiveCommand = resetNameSelectionCommand
+    member __.SearchForTextCommand = searchForTextCommand
     member __.SearchForNameCommand = searchForNameCommand
 
     member __.EditingFeatureInstances : ObservableCollection<NewFeatureInstanceViewModel> = editingFeatureInstances

@@ -319,6 +319,7 @@ type MainWindowViewModel() as this =
     let selectedDirectory =
         new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
     let directories = ObservableCollection()
+    let mutable refreshDirectoriesCommand = Unchecked.defaultof<ReactiveCommand>
 
     let mutable isBaseDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<bool>>
 
@@ -388,6 +389,18 @@ type MainWindowViewModel() as this =
 
     let resultingFilePath = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let mutable applyCommand = Unchecked.defaultof<ReactiveCommand>
+
+    let updateDirectoriesList baseDirectory prefixes filterByPrefixes =
+        directories.Clear()
+
+        Directory.GetDirectories baseDirectory
+        |> Seq.map DirectoryInfo
+        |> Seq.filter (fun di ->
+            match filterByPrefixes, prefixes with
+            | false, _ | _, "" -> true
+            | _ -> prefixes |> Seq.exists (string >> di.Name.StartsWith))
+        |> Seq.sortWith (fun x y -> Interop.StrCmpLogicalW(x.Name, y.Name))
+        |> Seq.iter directories.Add
 
     let updateDestinationDirectories (prefixes : string) (currentFilePath : string) =
         let startsWithAny parts (s : string) =
@@ -571,6 +584,13 @@ type MainWindowViewModel() as this =
 
     do
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
+
+        refreshDirectoriesCommand <-
+            ReactiveCommand.Create(fun () ->
+                updateDirectoriesList
+                    this.BaseDirectory.Value
+                    this.SourceDirectoryPrefixes.Value
+                    this.FilterBySourceDirectoryPrefixes.Value)
 
         selectedFile <-
             selectedFilesSubject
@@ -788,17 +808,8 @@ type MainWindowViewModel() as this =
         |> Observable.combineLatest this.FilterBySourceDirectoryPrefixes
         |> Observable.combineLatest validBaseDirectory
         |> Observable.observeOn RxApp.MainThreadScheduler
-        |> Observable.subscribe (fun (dir, (filterByPrefixes, prefixes)) ->
-            directories.Clear()
-
-            Directory.GetDirectories dir
-            |> Seq.map DirectoryInfo
-            |> Seq.filter (fun di ->
-                match filterByPrefixes, prefixes with
-                | false, _ | _, "" -> true
-                | _ -> prefixes |> Seq.exists (string >> di.Name.StartsWith))
-            |> Seq.sortWith (fun x y -> Interop.StrCmpLogicalW(x.Name, y.Name))
-            |> Seq.iter directories.Add)
+        |> Observable.subscribe (fun (baseDirectory, (filterByPrefixes, prefixes)) ->
+            updateDirectoriesList baseDirectory prefixes filterByPrefixes)
         |> ignore
 
         createSearchTab None None |> searches.Add
@@ -959,8 +970,9 @@ type MainWindowViewModel() as this =
     member __.Shutdown () = saveSettings __.BaseDirectory.Value
 
     member __.BaseDirectory : ReactiveProperty<string> = baseDirectory
-    member __.FilterBySourceDirectoryPrefixes = filterBySourceDirectoryPrefixes
+    member __.FilterBySourceDirectoryPrefixes : ReactiveProperty<_> = filterBySourceDirectoryPrefixes
     member __.SourceDirectoryPrefixes : ReactiveProperty<_> = sourceDirectoryPrefixes
+    member __.RefreshDirectoriesCommand = refreshDirectoriesCommand
 
     member __.SelectedDirectory : ReactiveProperty<DirectoryInfo> = selectedDirectory
 
@@ -971,7 +983,7 @@ type MainWindowViewModel() as this =
     member __.CreateSearchTabForDirectory(directory : string) =
         createSearchTab (Some directory) None |> searches.Add
     member __.ActiveSearchTab : ReactiveProperty<SearchViewModel> = activeSearchTab
-    member __.IsBaseDirectoryValid = isBaseDirectoryValid
+    member __.IsBaseDirectoryValid : ReadOnlyReactiveProperty<_> = isBaseDirectoryValid
     member __.CloseSearchTabCallback =
         ItemActionCallback(fun (args : ItemActionCallbackArgs<TabablzControl>) ->
             if args.Owner.Items.Count < 2 then args.Cancel())

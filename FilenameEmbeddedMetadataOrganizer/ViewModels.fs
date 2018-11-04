@@ -198,6 +198,11 @@ type SearchViewModelCommand =
     | SelectedDirectory of (DirectoryInfo option * string)
     | Refresh
 
+type SearchCriterion =
+    | Contains of string list
+    | SmallerThan of int
+    | LargerThan of int
+
 type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
     let mutable baseDirectory = ""
@@ -215,22 +220,63 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     let mutable clearSearchTextCommand = Unchecked.defaultof<ReactiveCommand>
     let isUpdating = BooleanNotifier(false)
 
+    let smallerThanRegex = System.Text.RegularExpressions.Regex(@"^<\s*(?<size>\d+)MB$")
+    let largerThanRegex = System.Text.RegularExpressions.Regex(@"^>\s*(?<size>\d+)MB$")
+
     let getFiles searchString fromBaseDirectory =
         let filter searchString =
             if String.IsNullOrWhiteSpace searchString
             then (fun _ -> true)
             else
-                (fun (fi : FileInfo) ->
-                    fi.Name
-                    |> Path.GetFileNameWithoutExtension
+                let smaller, contains, larger =
+                    searchString
                     |> toUpper
-                    |> (fun s -> [ s; s.Replace("_", " ") ])
-                    |> Seq.exists
-                        (containsAll
-                            (toUpper searchString
-                             |> split [| "&&" |]
-                             |> Array.map trim
-                             |> Array.toList)))
+                    |> split [| "&&" |]
+                    |> Array.map trim
+                    |> Array.toList
+                    |> List.map (fun part ->
+                        let m = smallerThanRegex.Match part
+
+                        if m.Success
+                        then m.Groups.["size"].Value |> Int32.Parse |> (*) (1024 * 1024) |> SmallerThan
+                        else
+                            let m = largerThanRegex.Match part
+
+                            if m.Success
+                            then m.Groups.["size"].Value |> Int32.Parse |> (*) (1024 * 1024) |> LargerThan
+                            else Contains [ toUpper part ])
+                    |> asSnd (None, [], None)
+                    ||> List.fold (fun (smaller, contains, larger) current ->
+                        match current with
+                        | SmallerThan smaller -> Some smaller, contains, larger
+                        | Contains parts -> smaller, parts @ contains, larger
+                        | LargerThan larger -> smaller, contains, Some larger)
+
+                let filters =
+                    [
+                        yield
+                            smaller
+                            |> Option.map (fun smaller -> fun (fi : FileInfo) -> fi.Length < int64 smaller)
+
+                        yield
+                            larger
+                            |> Option.map (fun larger -> fun (fi : FileInfo) -> fi.Length > int64 larger)
+
+                        yield
+                            match contains with
+                            | [] -> None
+                            | contains ->
+                                (fun (fi : FileInfo) ->
+                                    fi.Name
+                                    |> Path.GetFileNameWithoutExtension
+                                    |> toUpper
+                                    |> (fun s -> [ s; s.Replace("_", " ") ])
+                                    |> Seq.exists (containsAll contains))
+                                    |> Some
+                    ]
+                    |> List.choose id
+
+                fun (fi : FileInfo) -> filters |> Seq.forall (fun filter -> filter fi)
 
         if fromBaseDirectory && not <| String.IsNullOrWhiteSpace searchString
         then Some baseDirectory

@@ -127,7 +127,6 @@ type NameHasFeaturesConverter() =
             raise (System.NotImplementedException())
 
 type FeatureToDisplayStringConverter() =
-
     static member Instance = FeatureToDisplayStringConverter() :> IValueConverter
 
     interface IValueConverter with

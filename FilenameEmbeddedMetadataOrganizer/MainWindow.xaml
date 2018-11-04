@@ -33,9 +33,9 @@
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="3*" />
             <ColumnDefinition Width="5" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="2*" />
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0">
@@ -67,8 +67,9 @@
                     <Button Width="20"
                             Height="20"
                             Margin="3"
-                            Padding="0 -10" IsEnabled="{Binding IsBaseDirectoryValid.Value}"
+                            Padding="0 -10"
                             Command="{Binding RefreshDirectoriesCommand}"
+                            IsEnabled="{Binding IsBaseDirectoryValid.Value}"
                             ToolTip="Refresh directories">
                         <materialDesign:PackIcon Kind="Reload" />
                     </Button>
@@ -212,7 +213,7 @@
                                     </Style>
                                 </DataGrid.RowStyle>
                                 <DataGrid.Columns>
-                                    <DataGridTemplateColumn Width="450"
+                                    <DataGridTemplateColumn Width="600"
                                                             Header="Name"
                                                             IsReadOnly="True"
                                                             SortMemberPath="Name">

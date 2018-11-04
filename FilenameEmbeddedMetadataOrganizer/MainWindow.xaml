@@ -335,12 +335,24 @@
                         </Grid.ColumnDefinitions>
 
                         <TextBlock Grid.Column="0"
+                                   VerticalAlignment="Center"
                                    Text="{Binding}" />
 
-                        <ToggleButton Grid.Column="1"
-                                      IsChecked="{Binding ElementName=MainWindowView,
-                                                          Path=DataContext.ShowSettings.Value}"
-                                      ToolTip="Show settings" />
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal">
+                            <ToggleButton IsChecked="{Binding ElementName=MainWindowView,
+                                                              Path=DataContext.ShowSettings.Value}"
+                                          ToolTip="Show additional settings" />
+                            <Button Width="20"
+                                    Height="20"
+                                    Margin="5 0 0 0"
+                                    Padding="0"
+                                    Command="{Binding ElementName=MainWindowView,
+                                                      Path=DataContext.SaveSettingsCommand}"
+                                    ToolTip="Save Settings">
+                                <materialDesign:PackIcon Kind="ContentSave" />
+                            </Button>
+                        </StackPanel>
                     </Grid>
                 </DataTemplate>
             </GroupBox.HeaderTemplate>

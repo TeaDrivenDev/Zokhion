@@ -330,6 +330,7 @@ type MainWindowViewModel() as this =
     let mutable selectedFile = Unchecked.defaultof<ReadOnlyReactiveProperty<FileInfo>>
 
     let mutable showSettings = new ReactiveProperty<_>(false)
+    let mutable saveSettingsCommand = Unchecked.defaultof<ReactiveCommand>
 
     let originalFileName = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let originalFileNameSelectedText = new ReactiveProperty<_>("", ReactivePropertyMode.None)
@@ -575,6 +576,8 @@ type MainWindowViewModel() as this =
             selectedFilesSubject
             |> Observable.flatmap id
             |> toReadOnlyReactiveProperty
+
+        saveSettingsCommand <- ReactiveCommand.Create(fun () -> saveSettings this.BaseDirectory.Value)
 
         openCommand <-
             ReactiveCommand.Create(
@@ -976,21 +979,18 @@ type MainWindowViewModel() as this =
     member __.SelectedFile : ReadOnlyReactiveProperty<FileInfo> = selectedFile
 
     member __.ShowSettings = showSettings
+    member __.SaveSettingsCommand = saveSettingsCommand
 
     member __.OriginalFileName : ReactiveProperty<string> = originalFileName
     member __.OriginalFileNameSelectedText : ReactiveProperty<_> = originalFileNameSelectedText
     member __.NewFileName : ReactiveProperty<string> = newFileName
     member __.NewFileNameSelectedText : ReactiveProperty<_> = newFileNameSelectedText
 
-    member __.TreatParenthesizedPartAsNames : ReactiveProperty<bool> = treatParenthesizedPartAsNames
-
-    member __.FixupNamesInMainPart : ReactiveProperty<bool> = fixupNamesInMainPart
-
-    member __.ReplaceUnderscores : ReactiveProperty<bool> = replaceUnderscores
-
+    member __.TreatParenthesizedPartAsNames : ReactiveProperty<_> = treatParenthesizedPartAsNames
+    member __.FixupNamesInMainPart : ReactiveProperty<_> = fixupNamesInMainPart
+    member __.ReplaceUnderscores : ReactiveProperty<_> = replaceUnderscores
     member __.DetectNamesInMainAndNamesParts : ReactiveProperty<_> = detectNamesInMainAndNamesParts
-
-    member __.RecapitalizeNames : ReactiveProperty<bool> = recapitalizeNames
+    member __.RecapitalizeNames : ReactiveProperty<_> = recapitalizeNames
 
     member __.OpenCommand = openCommand
     member __.OpenFromSearchCommand = openFromSearchCommand

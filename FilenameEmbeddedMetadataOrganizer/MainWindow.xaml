@@ -200,6 +200,10 @@
                                       PreviewMouseLeftButtonDown="FilesGrid_PreviewMouseLeftButtonDown"
                                       SelectedItem="{Binding SelectedFile.Value}"
                                       SelectionMode="Extended">
+                                <DataGrid.Resources>
+                                    <ui:BindingProxy x:Key="MainWindowBindingProxy"
+                                                     Data="{Binding ElementName=MainWindowView}" />
+                                </DataGrid.Resources>
                                 <DataGrid.RowStyle>
                                     <Style BasedOn="{StaticResource MaterialDesignDataGridRow}"
                                            TargetType="DataGridRow">
@@ -213,7 +217,90 @@
                                     </Style>
                                 </DataGrid.RowStyle>
                                 <DataGrid.Columns>
-                                    <DataGridTemplateColumn Width="600"
+                                    <DataGridTemplateColumn>
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button x:Name="FileActionsButton"
+                                                        Width="18"
+                                                        Height="18"
+                                                        Margin="3 -3"
+                                                        Padding="0 -1 -1 0"
+                                                        Content="…"
+                                                        ToolTip="File Actions">
+                                                    <Button.Resources>
+                                                        <ui:BindingProxy x:Key="FileInfoBindingProxy"
+                                                                         Data="{Binding .}" />
+                                                    </Button.Resources>
+
+                                                    <Button.ContextMenu>
+                                                        <ContextMenu x:Name="FileActionsButtonContextMenu">
+                                                            <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
+                                                                                        Path=Data.DataContext.OpenFromSearchCommand}"
+                                                                      CommandParameter="{Binding Source={StaticResource FileInfoBindingProxy},
+                                                                                                 Path=Data}"
+                                                                      Header="Open File" />
+                                                            <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
+                                                                                        Path=Data.DataContext.OpenExplorerCommand}"
+                                                                      CommandParameter="{Binding Source={StaticResource FileInfoBindingProxy},
+                                                                                                 Path=Data}"
+                                                                      Header="Show in Explorer" />
+                                                            <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
+                                                                                        Path=Data.DataContext.ShowFilePropertiesCommand}"
+                                                                      CommandParameter="{Binding Source={StaticResource FileInfoBindingProxy},
+                                                                                                 Path=Data}"
+                                                                      Header="Show File Properties" />
+                                                            <Separator />
+                                                            <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
+                                                                                        Path=Data.DataContext.DeleteFileCommand}"
+                                                                      CommandParameter="{Binding Source={StaticResource FileInfoBindingProxy},
+                                                                                                 Path=Data}"
+                                                                      Header="Delete File" />
+                                                        </ContextMenu>
+                                                    </Button.ContextMenu>
+
+                                                    <Button.Triggers>
+                                                        <EventTrigger RoutedEvent="Button.Click"
+                                                                      SourceName="FileActionsButton">
+                                                            <BeginStoryboard>
+                                                                <Storyboard>
+                                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="FileActionsButtonContextMenu"
+                                                                                                   Storyboard.TargetProperty="(ContextMenu.IsOpen)">
+                                                                        <DiscreteObjectKeyFrame KeyTime="0:0:0">
+                                                                            <DiscreteObjectKeyFrame.Value>
+                                                                                <system:Boolean>True</system:Boolean>
+                                                                            </DiscreteObjectKeyFrame.Value>
+                                                                        </DiscreteObjectKeyFrame>
+                                                                    </ObjectAnimationUsingKeyFrames>
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </EventTrigger>
+                                                    </Button.Triggers>
+
+                                                    <Button.Style>
+                                                        <Style BasedOn="{StaticResource MaterialDesignRaisedButton}"
+                                                               TargetType="Button">
+                                                            <Setter Property="Opacity" Value="0.4" />
+
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding ElementName=FileActionsButtonContextMenu,
+                                                                                               Path=IsOpen}"
+                                                                             Value="True">
+                                                                    <Setter Property="Opacity" Value="1" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor,
+                                                                                                                              AncestorType=DataGridRow},
+                                                                                               Path=IsMouseOver}"
+                                                                             Value="True">
+                                                                    <Setter Property="Opacity" Value="1" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Width="700"
                                                             Header="Name"
                                                             IsReadOnly="True"
                                                             SortMemberPath="Name">
@@ -257,53 +344,6 @@
                                                                                                  StringFormat={}{0:###0.0} MB}"
                                                                                Header="Size"
                                                                                IsReadOnly="True" />
-                                    <DataGridTemplateColumn>
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Button Width="18"
-                                                            Height="18"
-                                                            Margin="3 -3"
-                                                            Padding="0 -1 -1 0"
-                                                            Command="{Binding ElementName=MainWindowView,
-                                                                              Path=DataContext.OpenFromSearchCommand}"
-                                                            CommandParameter="{Binding .}"
-                                                            ToolTip="Open file">
-                                                        <materialDesign:PackIcon Kind="OpenInNew" />
-                                                    </Button>
-                                                    <Button Width="18"
-                                                            Height="18"
-                                                            Margin="3 -3"
-                                                            Padding="0 -1 -1 0"
-                                                            Command="{Binding ElementName=MainWindowView,
-                                                                              Path=DataContext.OpenExplorerCommand}"
-                                                            CommandParameter="{Binding .}"
-                                                            ToolTip="Show in Explorer">
-                                                        <materialDesign:PackIcon Kind="FolderOutline" />
-                                                    </Button>
-                                                    <Button Width="18"
-                                                            Height="18"
-                                                            Margin="3 -3"
-                                                            Padding="0 -1 -1 0"
-                                                            Command="{Binding ElementName=MainWindowView,
-                                                                              Path=DataContext.ShowFilePropertiesCommand}"
-                                                            CommandParameter="{Binding .}"
-                                                            ToolTip="Show file properties">
-                                                        <materialDesign:PackIcon Kind="FileDocumentBox" />
-                                                    </Button>
-                                                    <Button Width="18"
-                                                            Height="18"
-                                                            Margin="3 -3"
-                                                            Padding="0"
-                                                            Command="{Binding ElementName=MainWindowView,
-                                                                              Path=DataContext.DeleteFileCommand}"
-                                                            CommandParameter="{Binding .}"
-                                                            Content="&#x2716;"
-                                                            ToolTip="Delete file" />
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
 

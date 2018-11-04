@@ -135,6 +135,29 @@ module RenameTests =
         // Assert
         Assert.StrictEqual (expectedResult, result)
 
+    [<Theory>]
+    [<InlineData("Mountains at dusk", false)>]
+    [<InlineData("In the Mountains at dusk", false)>]
+    [<InlineData("This is paramount", false)>]
+    [<InlineData("Mount Kenya at dusk", true)>]
+    [<InlineData("Near Mount Kenya at dusk", true)>]
+    [<InlineData("Near the mount", true)>]
+    let ``A detected name is only returned if it stands alone`` (originalName, expectedDetected) =
+        // Arrange
+        let nameToDetect = "Mount"
+
+        let parameters =
+            {
+                baseParameters with
+                    AllNames = nameToDetect :: baseParameters.AllNames
+            }
+
+        // Act
+        let { DetectedNames = detectedNames } = rename parameters originalName
+
+        // Assert
+        Assert.Equal (detectedNames |> List.contains nameToDetect, expectedDetected)
+
     [<Fact>]
     let ``A selected name that is part of another returned name is returned`` () =
         // Arrange

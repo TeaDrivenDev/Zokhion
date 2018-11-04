@@ -138,12 +138,12 @@ module Logic =
         let part = part.ToUpper()
 
         allNames
-        |> List.map (fun name -> name, toUpper name)
-        |> List.filter (snd >> part.Contains)
-        |> List.map (fun (name, normalized) ->
+        |> List.filter (fun name ->
+            Regex.IsMatch(part, sprintf @"\b%s\b" name, RegexOptions.IgnoreCase) )
+        |> List.map (fun name ->
             {
                 Name = name
-                Normalized = normalized
+                Normalized = toUpper name
                 Source = source
             })
 

@@ -53,7 +53,9 @@ type MainWindow() as this =
 
     override __.SearchText_KeyUp(sender : obj, e : Input.KeyEventArgs) =
         if e.Key = Input.Key.Escape
-        then (sender :?> TextBox).Text <- ""
+        then
+            (sender :?> TextBox).Text <- ""
+            e.Handled <- true
 
     override __.OriginalFileName_SelectionChanged(sender : obj, e : RoutedEventArgs) =
         __.ViewModel.OriginalFileNameSelectedText.Value <- (sender :?> TextBox).SelectedText
@@ -65,8 +67,12 @@ type MainWindow() as this =
         let sender = sender :?> TextBox
 
         match e.Key with
-        | Input.Key.Enter -> __.ViewModel.AddName sender.Text
-        | Input.Key.Escape -> __.ViewModel.ClearNewNameToAdd()
+        | Input.Key.Enter ->
+            __.ViewModel.AddName sender.Text
+            e.Handled <- true
+        | Input.Key.Escape ->
+            __.ViewModel.ClearNewNameToAdd()
+            e.Handled <- true
         | _ -> ()
 
     // see https://stackoverflow.com/a/29028817/236507
@@ -74,7 +80,9 @@ type MainWindow() as this =
         let sender = sender :?> TextBox
 
         match e.Key with
-        | Key.Escape -> sender.Text <- ""
+        | Key.Escape ->
+            sender.Text <- ""
+            e.Handled <- true
         | Key.Enter ->
             let focusDirection =
                 match sender.Name with
@@ -96,6 +104,8 @@ type MainWindow() as this =
                     focused.MoveFocus request |> ignore))
                 |> ignore
             | _ -> ()
+
+            e.Handled <- true
         | _ -> ()
 
     override __.InstanceCode_KeyUp(sender : obj, e : Input.KeyEventArgs) =

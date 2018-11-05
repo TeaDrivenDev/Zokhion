@@ -507,15 +507,18 @@ type MainWindowViewModel() as this =
                 vm.IsSelected <- true)
 
     let updateNamesSearchResult name =
-        this.Names.Clear()
-
         match name with
-        | "" -> allNames :> _ seq
+        | "" -> allNames |> Seq.toList
         | _ ->
             let up = toUpper name
 
-            allNames |> Seq.filter (fun n -> n.Name.Value.ToUpper().Contains up)
-        |> Seq.iter (this.Names.Add)
+            allNames |> Seq.filter (fun n -> n.Name.Value.ToUpper().Contains up) |> Seq.toList
+        |> asSnd (Seq.toList this.Names)
+        ||> fullOuterJoin (fun vm -> vm.Name) (fun vm -> vm.Name)
+        |> Seq.iter (function
+            | LeftOnly vm -> this.Names.Add vm
+            | RightOnly vm -> this.Names.Remove vm |> ignore
+            | JoinMatch (vm, _) -> ())
 
     let updateSelectedFeatures isInitial selectedFeatures =
         (selectedFeatures, featureInstances)

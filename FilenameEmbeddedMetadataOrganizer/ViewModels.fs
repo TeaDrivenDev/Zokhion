@@ -5,6 +5,7 @@ open System.Collections.ObjectModel
 open System.Diagnostics
 open System.IO
 open System.Reactive.Concurrency
+open System.Reactive.Disposables
 open System.Reactive.Linq
 open System.Reactive.Subjects
 open System.Windows
@@ -203,6 +204,39 @@ type SearchCriterion =
     | SmallerThan of int
     | LargerThan of int
 
+type SelectiveBehaviorSubject<'T>(selector : 'T -> bool) =
+    let compositeDisposable = new CompositeDisposable()
+
+    let innerSubject = new System.Reactive.Subjects.Subject<'T>()
+
+    let mutable lastValue = None
+
+    do
+        innerSubject
+        |> Observable.subscribe (fun value -> if selector value then lastValue <- Some value)
+        |> compositeDisposable.Add
+
+        compositeDisposable.Add innerSubject
+
+    interface ISubject<'T> with
+        member this.OnCompleted(): unit =
+            innerSubject.OnCompleted()
+        member this.OnError(error: exn): unit =
+            innerSubject.OnError error
+        member this.OnNext(value: 'T): unit =
+            innerSubject.OnNext value
+        member this.Subscribe(observer: IObserver<'T>): IDisposable =
+            lastValue
+            |> Option.iter (fun command -> observer.OnNext command)
+
+            let sub = innerSubject |> Observable.subscribeObserver observer
+            compositeDisposable.Add sub
+            sub
+
+    interface IDisposable with
+        member this.Dispose(): unit =
+            compositeDisposable.Dispose()
+
 type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
     let mutable baseDirectory = ""
@@ -370,7 +404,9 @@ type MainWindowViewModel() as this =
 
     let mutable isBaseDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<bool>>
 
-    let searchCommands = new ReplaySubject<SearchViewModelCommand>(1)
+    let searchCommands =
+        new SelectiveBehaviorSubject<_>(function | SelectedDirectory _ -> true | _ -> false)
+        :> ISubject<SearchViewModelCommand>
     let searches = ObservableCollection<SearchViewModel>()
     let activeSearchTab = new ReactiveProperty<SearchViewModel>()
     let selectedFilesSubject = new System.Reactive.Subjects.Subject<IObservable<FileInfo>>()
@@ -518,7 +554,7 @@ type MainWindowViewModel() as this =
         |> Seq.iter (function
             | LeftOnly vm -> this.Names.Add vm
             | RightOnly vm -> this.Names.Remove vm |> ignore
-            | JoinMatch (vm, _) -> ())
+            | JoinMatch _ -> ())
 
     let updateSelectedFeatures isInitial selectedFeatures =
         (selectedFeatures, featureInstances)

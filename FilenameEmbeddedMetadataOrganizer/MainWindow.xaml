@@ -707,8 +707,11 @@
                                           VerticalScrollBarVisibility="Auto">
                                 <ScrollViewer.Resources>
                                     <CollectionViewSource x:Key="SortedNames"
+                                                          IsLiveSortingRequested="True"
                                                           Source="{Binding Names}">
                                         <CollectionViewSource.SortDescriptions>
+                                            <componentModel:SortDescription Direction="Descending"
+                                                                            PropertyName="IsNewlyDetected.Value" />
                                             <componentModel:SortDescription Direction="Ascending"
                                                                             PropertyName="Name.Value" />
                                         </CollectionViewSource.SortDescriptions>

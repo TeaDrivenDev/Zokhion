@@ -252,7 +252,9 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     let selectedFile = new ReactiveProperty<FileInfo>()
     let mutable refreshCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable clearSearchTextCommand = Unchecked.defaultof<ReactiveCommand>
-    let isUpdating = BooleanNotifier(false)
+
+    let isUpdatingNotifier = BooleanNotifier(false)
+    let mutable isUpdating = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     let smallerThanRegex = System.Text.RegularExpressions.Regex(@"^<\s*(?<size>\d+)MB$")
     let largerThanRegex = System.Text.RegularExpressions.Regex(@"^>\s*(?<size>\d+)MB$")
@@ -343,10 +345,18 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
         refreshCommand <- ReactiveCommand.Create(fun () -> ignore ())
 
+        isUpdating <-
+            isUpdatingNotifier
+            |> Observable.filter not
+            |> Observable.merge
+                (isUpdatingNotifier
+                 |> Observable.throttle (TimeSpan.FromSeconds 1.5))
+            |> toReadOnlyReactiveProperty
+
         searchText
         |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
         |> Observable.combineLatest searchFromBaseDirectory
-        |> Observable.iter (fun _ -> isUpdating.TurnOn())
+        |> Observable.iter (fun _ -> isUpdatingNotifier.TurnOn())
         |> Observable.observeOn ThreadPoolScheduler.Instance
         |> Observable.choose (fun (fromBaseDirectory, searchString) ->
             getFiles searchString fromBaseDirectory)
@@ -359,7 +369,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                 | RightOnly fi -> files.Add fi
                 | JoinMatch _ -> ())
 
-            isUpdating.TurnOff())
+            isUpdatingNotifier.TurnOff())
         |> ignore
 
         [

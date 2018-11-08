@@ -352,9 +352,12 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
             getFiles searchString fromBaseDirectory)
         |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.subscribe (fun newFiles ->
-            files.Clear()
-
-            newFiles |> Seq.iter files.Add
+            (newFiles, (files |> Seq.toList))
+            ||> fullOuterJoin (fun fi -> fi.FullName) (fun (fi : FileInfo) -> fi.FullName)
+            |> Seq.iter (function
+                | LeftOnly fi -> files.Remove fi |> ignore
+                | RightOnly fi -> files.Add fi
+                | JoinMatch _ -> ())
 
             isUpdating.TurnOff())
         |> ignore

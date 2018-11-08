@@ -382,6 +382,11 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
             | Refresh -> searchText.ForceNotify())
         |> ignore
 
+        isActive
+        |> Observable.filter id
+        |> Observable.subscribe (fun _ -> selectedFile.ForceNotify())
+        |> ignore
+
     member __.SearchText = searchText
     member __.SearchFromBaseDirectory = searchFromBaseDirectory
     member __.CanToggleSearchFromBaseDirectory = canToggleSearchFromBaseDirectory

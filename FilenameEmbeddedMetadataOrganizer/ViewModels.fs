@@ -1,9 +1,11 @@
 ﻿namespace FilenameEmbeddedMetadataOrganizer.ViewModels
 
 open System
+open System.Collections.Generic
 open System.Collections.ObjectModel
 open System.Diagnostics
 open System.IO
+open System.Linq
 open System.Reactive.Concurrency
 open System.Reactive.Disposables
 open System.Reactive.Linq
@@ -407,6 +409,10 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     member __.RefreshCommand = refreshCommand
     member __.ClearSearchTextCommand = clearSearchTextCommand
     member __.IsUpdating = isUpdating
+
+type FileToRename =
+    | Add of oldName:string * newName:string
+    | Remove of oldNames:string list
 
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
@@ -860,23 +866,59 @@ type MainWindowViewModel() as this =
 
         applyCommand <-
             ReactiveCommand.Create(
-                (fun () ->
-                    try
-                        File.Move(this.SelectedFile.Value.FullName, this.ResultingFilePath.Value)
-                        searchCommands.OnNext Refresh
-                    with
-                    | _ ->
-                        MessageBox.Show("Renaming failed. Please make sure the file is not in use by another application.",
-                                        "Renaming Failed",
-                                        MessageBoxButton.OK,
-                                        MessageBoxImage.Warning)
-                        |> ignore),
+                (fun () -> ()),
                 [
                     this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists)
                     this.ResultingFilePath |> Observable.map (fun path -> not <| isNull path && not <| File.Exists path)
                 ]
                 |> Observable.combineLatestSeq
                 |> Observable.map (Seq.toList >> List.forall id))
+
+        let removeFilesToRenameSubject = new System.Reactive.Subjects.Subject<_>()
+
+        applyCommand.IsExecuting
+        |> Observable.distinctUntilChanged
+        |> Observable.filter id
+        |> Observable.choose (fun _ ->
+            let oldName, newName = this.SelectedFile.Value.FullName, this.ResultingFilePath.Value
+
+            try
+                File.Move(oldName, newName)
+                searchCommands.OnNext Refresh
+                None
+            with _ -> Add (oldName, newName) |> Some)
+        |> Observable.merge (removeFilesToRenameSubject |> Observable.observeOn ThreadPoolScheduler.Instance)
+        |> Observable.scanInit
+            (Dictionary())
+            (fun items fileToRename ->
+                match fileToRename with
+                | Add (oldName, newName) -> items.[oldName] <- newName
+                | Remove oldNames -> oldNames |> Seq.iter (items.Remove >> ignore)
+
+                items)
+        |> Observable.filter (fun items -> items.Any())
+        |> Observable.throttle (TimeSpan.FromSeconds 2.)
+        |> Observable.subscribe (fun filesToRename ->
+            let renamedFiles =
+                filesToRename
+                |> Seq.choose (fun (KeyValuePair (oldName, newName)) ->
+
+                    if File.Exists oldName
+                    then
+                        try
+                            File.Move(oldName, newName)
+                            Some oldName
+                        with
+                        | _ -> None
+                    else Some oldName)
+                |> Seq.toList
+
+            removeFilesToRenameSubject.OnNext (Remove renamedFiles)
+
+            match renamedFiles with
+            | [] -> ()
+            | _ -> searchCommands.OnNext Refresh)
+        |> ignore
 
         this.SelectedDirectory
         |> Observable.map (fun dir -> SelectedDirectory (Option.ofObj dir, this.BaseDirectory.Value))

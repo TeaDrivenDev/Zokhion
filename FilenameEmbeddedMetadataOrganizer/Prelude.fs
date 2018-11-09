@@ -3,6 +3,7 @@
 [<AutoOpen>]
 module Prelude =
     open System
+    open System.Collections.Generic
     open System.Linq
 
     type FullJoinResult<'TLeft, 'TRight> =
@@ -55,5 +56,7 @@ module Prelude =
             | None, None -> failwith "This can never happen.")
 
     let (|OfNull|) value = if isNull value then None else Some value
+
+    let (|KeyValuePair|) (kvp : KeyValuePair<_, _>) = kvp.Key, kvp.Value
 
     let nonEmptyString value = if String.IsNullOrWhiteSpace value then None else Some value

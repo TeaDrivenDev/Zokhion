@@ -934,6 +934,38 @@ module GenerateCodeTests =
         // Assert
         Assert.StrictEqual (expectedResult, result)
 
+    [<Theory>]
+    [<InlineData("Sea Travel", 5, FillupWithVowelsEnum.DoNotFillup, "STrvl")>]
+    [<InlineData("Sea Travel", 6, FillupWithVowelsEnum.DoNotFillup, "STrvl")>]
+    [<InlineData("Some Sea Thing", 7, FillupWithVowelsEnum.DoNotFillup, "SmSThng")>]
+    [<InlineData("A B Sailor", 6, FillupWithVowelsEnum.DoNotFillup, "ABSlr")>]
+    [<InlineData("A Different Name", 7, FillupWithVowelsEnum.DoNotFillup, "ADffNm")>]
+    [<InlineData("Sea Travel", 5, FillupWithVowelsEnum.FillFromStart, "SeTrv")>]
+    [<InlineData("Sea Travel", 6, FillupWithVowelsEnum.FillFromStart, "SeaTrv")>]
+    [<InlineData("Some Sea Thing", 7, FillupWithVowelsEnum.FillFromStart, "SmSeThn")>]
+    [<InlineData("A B Sailor", 6, FillupWithVowelsEnum.FillFromStart, "ABSalr")>]
+    [<InlineData("A Different Name", 7, FillupWithVowelsEnum.FillFromStart, "ADffNam")>]
+    [<InlineData("Sea Travel", 5, FillupWithVowelsEnum.FillFromEnd, "SaTrv")>]
+    [<InlineData("Sea Travel", 6, FillupWithVowelsEnum.FillFromEnd, "SeaTrv")>]
+    [<InlineData("Some Sea Thing", 7, FillupWithVowelsEnum.FillFromEnd, "SmSaThn")>]
+    [<InlineData("A B Sailor", 6, FillupWithVowelsEnum.FillFromEnd, "ABSlor")>]
+    [<InlineData("A Different Name", 7, FillupWithVowelsEnum.FillFromEnd, "ADffNme")>]
+    let ``Multi-word names are converted correctly when preferring consonants`` (name, codeLength, fillupWithVowels, expectedResult ) =
+        // Arrange
+        let parameters =
+            {
+                baseParameters with
+                    CodeLength = codeLength
+                    PreferConsonants =
+                        fillupWithVowels |> toProperFillupMode |> Some
+            }
+
+        // Act
+        let result = generateCode parameters [] name
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
 module SplitLengthTests =
     type CodePartLengthsTheoryData() as this =
         inherit TheoryData<int, int, int []>()

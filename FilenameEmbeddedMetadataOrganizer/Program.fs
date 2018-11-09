@@ -58,10 +58,12 @@ type MainWindow() as this =
             e.Handled <- true
 
     override __.OriginalFileName_SelectionChanged(sender : obj, e : RoutedEventArgs) =
-        __.ViewModel.OriginalFileNameSelectedText.Value <- (sender :?> TextBox).SelectedText
+        __.ViewModel.OriginalFileNameSelectedText.Value <-
+            (sender :?> TextBox).SelectedText.Trim()
 
     override __.NewFileName_SelectionChanged(sender : obj, e : RoutedEventArgs) =
-        __.ViewModel.NewFileNameSelectedText.Value <- (sender :?> TextBox).SelectedText
+        __.ViewModel.NewFileNameSelectedText.Value <-
+            (sender :?> TextBox).SelectedText.Trim()
 
     override __.NewNameToAdd_KeyUp(sender : obj, e : Input.KeyEventArgs) =
         let sender = sender :?> TextBox

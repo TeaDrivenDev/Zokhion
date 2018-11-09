@@ -676,6 +676,7 @@ type MainWindowViewModel() as this =
 
     let createSearchTab directory searchText =
         let search = SearchViewModel(searchCommands.AsObservable())
+        search.SearchFromBaseDirectory.Value <- true
 
         selectedFilesSubject.OnNext search.SelectedFile
         this.ActiveSearchTab.Value <- search

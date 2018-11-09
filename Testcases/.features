@@ -1,0 +1,19 @@
+T|Type of shot
+	TAe|Aerial
+	TGd|Ground
+	TUw|Underwater
+	TSp|Space
+S|Scene
+	SSs|Sunset
+	SPd|Pre-dawn
+	SNi|Night
+	SDa|Dawn
+	SDy|Daylight
+Ae|Aerial > TAe
+	AeSid|Sideways
+	AeOhd|Overhead
+	AeDst|Distance
+Gr|Ground > TGd
+	GrDst|Distance
+	GrBlw|Below
+	GrAbv|Above

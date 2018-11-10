@@ -5,6 +5,10 @@ module Prelude =
     open System
     open System.Collections.Generic
     open System.Linq
+    open System.Reactive.Disposables
+    open System.Reactive.Subjects
+
+    open FSharp.Control.Reactive
 
     type FullJoinResult<'TLeft, 'TRight> =
         | LeftOnly of 'TLeft
@@ -62,3 +66,36 @@ module Prelude =
     let nonEmptyString value = if String.IsNullOrWhiteSpace value then None else Some value
 
     let inline (<&&>) f g x = f x && g x
+
+    type SelectiveBehaviorSubject<'T>(selector : 'T -> bool) =
+        let compositeDisposable = new CompositeDisposable()
+
+        let innerSubject = new System.Reactive.Subjects.Subject<'T>()
+
+        let mutable lastValue = None
+
+        do
+            innerSubject
+            |> Observable.subscribe (fun value -> if selector value then lastValue <- Some value)
+            |> compositeDisposable.Add
+
+            compositeDisposable.Add innerSubject
+
+        interface ISubject<'T> with
+            member this.OnCompleted(): unit =
+                innerSubject.OnCompleted()
+            member this.OnError(error: exn): unit =
+                innerSubject.OnError error
+            member this.OnNext(value: 'T): unit =
+                innerSubject.OnNext value
+            member this.Subscribe(observer: IObserver<'T>): IDisposable =
+                lastValue
+                |> Option.iter (fun command -> observer.OnNext command)
+
+                let sub = innerSubject |> Observable.subscribeObserver observer
+                compositeDisposable.Add sub
+                sub
+
+        interface IDisposable with
+            member this.Dispose(): unit =
+                compositeDisposable.Dispose()

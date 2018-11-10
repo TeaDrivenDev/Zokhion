@@ -42,7 +42,7 @@ module Utility =
 
     // From http://stackoverflow.com/questions/2682475/converting-f-quotations-into-linq-expressions
     /// Converts a F# Expression to a LINQ Lambda
-    let toLambda (exp:Expr) =
+    let toLambda (exp : Expr) =
         let linq = FSharp.Linq.RuntimeHelpers.LeafExpressionConverter.QuotationToExpression exp :?> MethodCallExpression
         linq.Arguments.[0] :?> LambdaExpression
 
@@ -198,7 +198,7 @@ type NameViewModel(name : string, isSelected : bool, isNewlyDetected : bool, isA
             __.IsAdded.Value <- true)
 
 type SearchViewModelCommand =
-    | SelectedDirectory of (DirectoryInfo option * string)
+    | Directories of (DirectoryInfo option * string)
     | Refresh
 
 type SearchCriterion =
@@ -206,38 +206,25 @@ type SearchCriterion =
     | SmallerThan of int
     | LargerThan of int
 
-type SelectiveBehaviorSubject<'T>(selector : 'T -> bool) =
-    let compositeDisposable = new CompositeDisposable()
+type SearchFilterParameters =
+    {
+        BaseDirectory : string
+        SelectedDirectory : string option
+        SearchString : string
+        SearchFromBaseDirectory : bool
+    }
 
-    let innerSubject = new System.Reactive.Subjects.Subject<'T>()
+type SearchFilter =
+    {
+        Filter : FileInfo -> bool
+        Parameters : SearchFilterParameters
+    }
 
-    let mutable lastValue = None
-
-    do
-        innerSubject
-        |> Observable.subscribe (fun value -> if selector value then lastValue <- Some value)
-        |> compositeDisposable.Add
-
-        compositeDisposable.Add innerSubject
-
-    interface ISubject<'T> with
-        member this.OnCompleted(): unit =
-            innerSubject.OnCompleted()
-        member this.OnError(error: exn): unit =
-            innerSubject.OnError error
-        member this.OnNext(value: 'T): unit =
-            innerSubject.OnNext value
-        member this.Subscribe(observer: IObserver<'T>): IDisposable =
-            lastValue
-            |> Option.iter (fun command -> observer.OnNext command)
-
-            let sub = innerSubject |> Observable.subscribeObserver observer
-            compositeDisposable.Add sub
-            sub
-
-    interface IDisposable with
-        member this.Dispose(): unit =
-            compositeDisposable.Dispose()
+type SearchFilterChange =
+    | BaseDirectory of string
+    | SelectedDirectory of string
+    | SearchString of string
+    | SearchFromBaseDirectory of bool
 
 type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
@@ -258,16 +245,18 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     let isUpdatingNotifier = BooleanNotifier(false)
     let mutable isUpdating = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
+    let mutable filter = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
+
     let smallerThanRegex = System.Text.RegularExpressions.Regex(@"^<\s*(?<size>\d+)MB$")
     let largerThanRegex = System.Text.RegularExpressions.Regex(@"^>\s*(?<size>\d+)MB$")
 
-    let getFiles searchString fromBaseDirectory =
-        let filter searchString =
-            if String.IsNullOrWhiteSpace searchString
+    let createFilter searchFilterParameters =
+        let filter =
+            if String.IsNullOrWhiteSpace searchFilterParameters.SearchString
             then (fun _ -> true)
             else
                 let smaller, contains, larger =
-                    searchString
+                    searchFilterParameters.SearchString
                     |> toUpper
                     |> split [| "&&" |]
                     |> Array.map trim
@@ -316,14 +305,21 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
                 fun (fi : FileInfo) -> filters |> Seq.forall (fun filter -> filter fi)
 
-        if fromBaseDirectory && not <| String.IsNullOrWhiteSpace searchString
-        then Some baseDirectory
+        {
+            Filter = filter
+            Parameters = searchFilterParameters
+        }
+
+    let getFiles filter =
+        if filter.Parameters.SearchFromBaseDirectory
+           && not <| String.IsNullOrWhiteSpace filter.Parameters.SearchString
+        then Some filter.Parameters.BaseDirectory
         else selectedDirectory.Value |> Option.map (fun selected -> selected.FullName)
         |> Option.filter (String.IsNullOrWhiteSpace >> not <&&> Directory.Exists)
         |> Option.map (fun dir ->
             Directory.GetFiles(dir, "*", SearchOption.AllDirectories)
             |> Seq.map FileInfo
-            |> Seq.filter (filter searchString))
+            |> Seq.filter filter.Filter)
 
     do
         header <-
@@ -355,13 +351,49 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                  |> Observable.throttle (TimeSpan.FromSeconds 1.5))
             |> toReadOnlyReactiveProperty
 
-        searchText
-        |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
-        |> Observable.combineLatest searchFromBaseDirectory
+        filter <-
+            [
+                commands
+                |> Observable.map (function
+                    | Directories (dir, ``base``) ->
+                        [
+                            dir |> Option.map (fun di -> SelectedDirectory di.FullName)
+
+                            Some (BaseDirectory ``base``)
+                        ]
+                        |> List.choose id
+                    | Refresh -> [])
+
+                searchText
+                |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
+                |> Observable.map (SearchString >> List.singleton)
+
+                searchFromBaseDirectory |> Observable.map (SearchFromBaseDirectory >> List.singleton)
+            ]
+            |> Observable.mergeSeq
+            |> Observable.scanInit
+                {
+                    BaseDirectory = ""
+                    SelectedDirectory = None
+                    SearchString = ""
+                    SearchFromBaseDirectory = searchFromBaseDirectory.Value
+                }
+                (fun parameters changes ->
+                    (parameters, changes)
+                    ||> List.fold (fun current change ->
+                        match change with
+                        | BaseDirectory ``base`` -> { current with BaseDirectory = ``base`` }
+                        | SelectedDirectory dir -> { current with SelectedDirectory = Some dir }
+                        | SearchString searchString -> { current with SearchString = searchString}
+                        | SearchFromBaseDirectory fromBase ->
+                            { current with SearchFromBaseDirectory = fromBase }))
+            |> Observable.map createFilter
+            |> toReadOnlyReactiveProperty
+
+        filter
         |> Observable.iter (fun _ -> isUpdatingNotifier.TurnOn())
         |> Observable.observeOn ThreadPoolScheduler.Instance
-        |> Observable.choose (fun (fromBaseDirectory, searchString) ->
-            getFiles searchString fromBaseDirectory)
+        |> Observable.choose getFiles
         |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.subscribe (fun newFiles ->
             (newFiles, (files |> Seq.toList))
@@ -385,7 +417,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
         ]
         |> Observable.mergeSeq
         |> Observable.subscribe (function
-            | SelectedDirectory (selected, ``base``) ->
+            | Directories (selected, ``base``) ->
                 selectedDirectory.OnNext selected
                 baseDirectory <- ``base``
                 searchFromBaseDirectory.Value <- Option.isNone selected
@@ -429,7 +461,7 @@ type MainWindowViewModel() as this =
     let mutable isBaseDirectoryValid = Unchecked.defaultof<ReadOnlyReactiveProperty<bool>>
 
     let searchCommands =
-        new SelectiveBehaviorSubject<_>(function | SelectedDirectory _ -> true | _ -> false)
+        new SelectiveBehaviorSubject<_>(function | Directories _ -> true | _ -> false)
         :> ISubject<SearchViewModelCommand>
     let searches = ObservableCollection<SearchViewModel>()
     let activeSearchTab = new ReactiveProperty<SearchViewModel>()
@@ -683,7 +715,7 @@ type MainWindowViewModel() as this =
 
         directory
         |> Option.iter (fun dir ->
-            SelectedDirectory(Some (DirectoryInfo dir), this.BaseDirectory.Value)
+            Directories (Some (DirectoryInfo dir), this.BaseDirectory.Value)
             |> searchCommands.OnNext)
 
         searchText
@@ -926,7 +958,7 @@ type MainWindowViewModel() as this =
         |> ignore
 
         this.SelectedDirectory
-        |> Observable.map (fun dir -> SelectedDirectory (Option.ofObj dir, this.BaseDirectory.Value))
+        |> Observable.map (fun dir -> Directories (Option.ofObj dir, this.BaseDirectory.Value))
         |> Observable.subscribeObserver searchCommands
         |> ignore
 
@@ -945,7 +977,7 @@ type MainWindowViewModel() as this =
         |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.subscribe (fun dir ->
             loadSettings dir
-            searchCommands.OnNext (SelectedDirectory(None, dir)))
+            searchCommands.OnNext (Directories (None, dir)))
         |> ignore
 
         isBaseDirectoryValid <-

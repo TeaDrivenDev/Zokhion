@@ -199,7 +199,7 @@ type NameViewModel(name : string, isSelected : bool, isNewlyDetected : bool, isA
 
 type SearchViewModelCommand =
     | Directories of (DirectoryInfo option * string)
-    | Refresh
+    | Refresh of FileInfo list
 
 type SearchCriterion =
     | Contains of string list
@@ -214,10 +214,12 @@ type SearchFilterParameters =
         SearchFromBaseDirectory : bool
     }
 
+type FilterMode = Search | CheckAffected
+
 type SearchFilter =
     {
-        Filter : FileInfo -> bool
-        Parameters : SearchFilterParameters
+        Filter : FilterMode -> FileInfo -> bool
+        SearchDirectory : string option
     }
 
 type SearchFilterChange =
@@ -251,7 +253,13 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     let largerThanRegex = System.Text.RegularExpressions.Regex(@"^>\s*(?<size>\d+)MB$")
 
     let createFilter searchFilterParameters =
-        let filter =
+        let searchDirectory =
+            if searchFilterParameters.SearchFromBaseDirectory
+               && not <| String.IsNullOrWhiteSpace searchFilterParameters.SearchString
+            then Some searchFilterParameters.BaseDirectory
+            else searchFilterParameters.SelectedDirectory
+
+        let searchFilter =
             if String.IsNullOrWhiteSpace searchFilterParameters.SearchString
             then (fun _ -> true)
             else
@@ -305,21 +313,29 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
                 fun (fi : FileInfo) -> filters |> Seq.forall (fun filter -> filter fi)
 
+        let filter =
+            let checkFilter =
+                fun (fi : FileInfo) ->
+                    (toUpper fi.FullName).StartsWith(searchDirectory |> Option.defaultValue "" |> toUpper)
+                    && searchFilter fi
+
+            fun filterMode (fi : FileInfo) ->
+                match filterMode with
+                | Search -> searchFilter fi
+                | CheckAffected -> checkFilter fi
+
         {
             Filter = filter
-            Parameters = searchFilterParameters
+            SearchDirectory = searchDirectory
         }
 
     let getFiles filter =
-        if filter.Parameters.SearchFromBaseDirectory
-           && not <| String.IsNullOrWhiteSpace filter.Parameters.SearchString
-        then Some filter.Parameters.BaseDirectory
-        else selectedDirectory.Value |> Option.map (fun selected -> selected.FullName)
+        filter.SearchDirectory
         |> Option.filter (String.IsNullOrWhiteSpace >> not <&&> Directory.Exists)
         |> Option.map (fun dir ->
             Directory.GetFiles(dir, "*", SearchOption.AllDirectories)
             |> Seq.map FileInfo
-            |> Seq.filter filter.Filter)
+            |> Seq.filter (filter.Filter Search))
 
     do
         header <-
@@ -354,6 +370,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
         filter <-
             [
                 commands
+                |> Observable.filter (fun _ -> isActive.Value)
                 |> Observable.map (function
                     | Directories (dir, ``base``) ->
                         [
@@ -362,7 +379,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                             Some (BaseDirectory ``base``)
                         ]
                         |> List.choose id
-                    | Refresh -> [])
+                    | Refresh _ -> [])
 
                 searchText
                 |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
@@ -410,20 +427,25 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
             refreshCommand.IsExecuting
             |> Observable.distinctUntilChanged
             |> Observable.filter id
-            |> Observable.map (fun _ -> Refresh)
+            |> Observable.map (fun _ -> Refresh [])
 
             commands
-            |> Observable.filter (fun _ -> isActive.Value)
         ]
         |> Observable.mergeSeq
         |> Observable.subscribe (function
             | Directories (selected, ``base``) ->
-                selectedDirectory.OnNext selected
-                baseDirectory <- ``base``
-                searchFromBaseDirectory.Value <- Option.isNone selected
+                if isActive.Value
+                then
+                    selectedDirectory.OnNext selected
+                    baseDirectory <- ``base``
+                    searchFromBaseDirectory.Value <- Option.isNone selected
 
-                searchText.Value <- ""
-            | Refresh -> searchText.ForceNotify())
+                    searchText.Value <- ""
+            | Refresh files ->
+                match files with
+                | [] -> isActive.Value
+                | _ -> files |> List.exists (filter.Value.Filter CheckAffected)
+                |> fun refresh -> if refresh then searchText.ForceNotify())
         |> ignore
 
         isActive
@@ -443,7 +465,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     member __.IsUpdating = isUpdating
 
 type FileToRename =
-    | Add of oldName:string * newName:string
+    | Add of oldFile:FileInfo * newName:string
     | Remove of oldNames:string list
 
 type MainWindowViewModel() as this =
@@ -789,7 +811,7 @@ type MainWindowViewModel() as this =
                                                 MessageBoxImage.Error)
                                 |> ignore
 
-                            searchCommands.OnNext Refresh
+                            searchCommands.OnNext (Refresh [])
                         | _ -> ())
 
         addReplacementCommand <-
@@ -917,44 +939,53 @@ type MainWindowViewModel() as this =
         |> Observable.distinctUntilChanged
         |> Observable.filter id
         |> Observable.choose (fun _ ->
-            let oldName, newName = this.SelectedFile.Value.FullName, this.ResultingFilePath.Value
+            let oldFile, newName = this.SelectedFile.Value, this.ResultingFilePath.Value
 
             try
-                File.Move(oldName, newName)
-                searchCommands.OnNext Refresh
+                File.Move(oldFile.FullName, newName)
+
+                [ oldFile; FileInfo newName ] |> Refresh |> searchCommands.OnNext
+
                 None
-            with _ -> Add (oldName, newName) |> Some)
+            with _ -> Add (oldFile, newName) |> Some)
         |> Observable.merge (removeFilesToRenameSubject |> Observable.observeOn ThreadPoolScheduler.Instance)
         |> Observable.scanInit
             (Dictionary())
             (fun items fileToRename ->
                 match fileToRename with
-                | Add (oldName, newName) -> items.[oldName] <- newName
+                | Add (oldFile, newName) -> items.[oldFile.FullName] <- (oldFile, newName)
                 | Remove oldNames -> oldNames |> Seq.iter (items.Remove >> ignore)
 
                 items)
         |> Observable.filter (fun items -> items.Any())
         |> Observable.throttle (TimeSpan.FromSeconds 2.)
         |> Observable.subscribe (fun filesToRename ->
-            let renamedFiles =
-                filesToRename
-                |> Seq.choose (fun (KeyValuePair (oldName, newName)) ->
+            let renamedFiles, IsSome newFiles =
+                filesToRename.Values
+                |> Seq.choose (fun (oldFile, newName) ->
 
-                    if File.Exists oldName
+                    if File.Exists oldFile.FullName
                     then
                         try
-                            File.Move(oldName, newName)
-                            Some oldName
+                            File.Move(oldFile.FullName, newName)
+                            Some (oldFile, Some (FileInfo newName))
                         with
                         | _ -> None
-                    else Some oldName)
+                    else Some (oldFile, None))
                 |> Seq.toList
+                |> List.unzip
 
-            removeFilesToRenameSubject.OnNext (Remove renamedFiles)
+            renamedFiles
+            |> List.map (fun fi -> fi.FullName)
+            |> Remove
+            |> removeFilesToRenameSubject.OnNext
 
             match renamedFiles with
             | [] -> ()
-            | _ -> searchCommands.OnNext Refresh)
+            | _ ->
+                List.append renamedFiles newFiles
+                |> Refresh
+                |> searchCommands.OnNext)
         |> ignore
 
         this.SelectedDirectory

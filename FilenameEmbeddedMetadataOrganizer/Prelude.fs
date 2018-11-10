@@ -60,3 +60,5 @@ module Prelude =
     let (|KeyValuePair|) (kvp : KeyValuePair<_, _>) = kvp.Key, kvp.Value
 
     let nonEmptyString value = if String.IsNullOrWhiteSpace value then None else Some value
+
+    let inline (<&&>) f g x = f x && g x

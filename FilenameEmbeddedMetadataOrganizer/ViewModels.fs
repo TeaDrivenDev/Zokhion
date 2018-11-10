@@ -319,7 +319,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
         if fromBaseDirectory && not <| String.IsNullOrWhiteSpace searchString
         then Some baseDirectory
         else selectedDirectory.Value |> Option.map (fun selected -> selected.FullName)
-        |> Option.filter (String.IsNullOrWhiteSpace >> not)
+        |> Option.filter (String.IsNullOrWhiteSpace >> not <&&> Directory.Exists)
         |> Option.map (fun dir ->
             Directory.GetFiles(dir, "*", SearchOption.AllDirectories)
             |> Seq.map FileInfo

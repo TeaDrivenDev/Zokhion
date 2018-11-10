@@ -815,7 +815,11 @@ type MainWindowViewModel() as this =
                         && not <| String.IsNullOrWhiteSpace vm.InstanceCode.Value)
                     |> Seq.iter (fun vm ->
                         let instance =
-                            FeatureInstanceViewModel(feature.Feature, { Name = vm.InstanceName.Value; Code = vm.InstanceCode.Value })
+                            FeatureInstanceViewModel(feature.Feature,
+                                                     {
+                                                        Name = vm.InstanceName.Value
+                                                        Code = vm.InstanceCode.Value
+                                                     })
 
                         feature.Instances.Add instance)
 
@@ -829,9 +833,6 @@ type MainWindowViewModel() as this =
                         this.SelectedFeature.Value
                         |> Option.ofObj
                         |> Option.map (fun feature ->
-                            feature.Instances
-                            |> Seq.iter (this.FeatureInstances.Remove >> ignore)
-
                             let index = this.Features.IndexOf feature
                             this.Features.Remove feature |> ignore
 
@@ -843,7 +844,10 @@ type MainWindowViewModel() as this =
                     | -1 -> features.Add feature
                     | index -> features.Insert(index, feature)
 
-                    feature.Instances |> Seq.iter this.FeatureInstances.Add)
+                    this.FeatureInstances.Clear()
+
+                    features
+                    |> Seq.iter (fun feature -> this.FeatureInstances.AddRange feature.Instances))
 
         removeFeatureInstanceRowCommand <-
             ReactiveCommand.Create(fun (vm : NewFeatureInstanceViewModel) ->

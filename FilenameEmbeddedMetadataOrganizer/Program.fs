@@ -51,7 +51,7 @@ type MainWindow() as this =
         | :? FeatureViewModel as item -> this.ViewModel.SelectedFeature.Value <- item
         | _ -> ()
 
-    override __.SearchText_KeyUp(sender : obj, e : Input.KeyEventArgs) =
+    override __.SearchString_KeyUp(sender : obj, e : Input.KeyEventArgs) =
         if e.Key = Input.Key.Escape
         then
             (sender :?> TextBox).Text <- ""

@@ -210,7 +210,7 @@ type SearchFilterParameters =
     {
         BaseDirectory : string
         SelectedDirectory : string option
-        SearchString : string
+        SearchValues : string list
         SearchFromBaseDirectory : bool
     }
 
@@ -225,7 +225,7 @@ type SearchFilter =
 type SearchFilterChange =
     | BaseDirectory of string
     | SelectedDirectory of string
-    | SearchString of string
+    | SearchValues of string list
     | SearchFromBaseDirectory of bool
 
 type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
@@ -233,7 +233,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     let mutable baseDirectory = ""
     let selectedDirectory = new BehaviorSubject<DirectoryInfo option>(None)
 
-    let searchText = new ReactiveProperty<_>("", ReactivePropertyMode.None)
+    let searchString = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let searchFromBaseDirectory = new ReactiveProperty<_>(true)
     let mutable canToggleSearchFromBaseDirectory =
         Unchecked.defaultof<ReadOnlyReactiveProperty<bool>>
@@ -255,20 +255,16 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     let createFilter searchFilterParameters =
         let searchDirectory =
             if searchFilterParameters.SearchFromBaseDirectory
-               && not <| String.IsNullOrWhiteSpace searchFilterParameters.SearchString
+               && searchFilterParameters.SearchValues <> []
             then Some searchFilterParameters.BaseDirectory
             else searchFilterParameters.SelectedDirectory
 
         let searchFilter =
-            if String.IsNullOrWhiteSpace searchFilterParameters.SearchString
-            then (fun _ -> true)
-            else
+            match searchFilterParameters.SearchValues with
+            | [] -> (fun _ -> true)
+            | _ ->
                 let smaller, contains, larger =
-                    searchFilterParameters.SearchString
-                    |> toUpper
-                    |> split [| "&&" |]
-                    |> Array.map trim
-                    |> Array.toList
+                    searchFilterParameters.SearchValues
                     |> List.map (fun part ->
                         let m = smallerThanRegex.Match part
 
@@ -339,7 +335,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
     do
         header <-
-            searchText
+            searchString
             |> Observable.map (function
                 | "" ->
                     selectedDirectory.Value
@@ -355,7 +351,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
             |> Observable.map Option.isSome
             |> toReadOnlyReactiveProperty
 
-        clearSearchTextCommand <- ReactiveCommand.Create(fun () -> searchText.Value <- "")
+        clearSearchTextCommand <- ReactiveCommand.Create(fun () -> searchString.Value <- "")
 
         refreshCommand <- ReactiveCommand.Create(fun () -> ignore ())
 
@@ -381,9 +377,16 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                         |> List.choose id
                     | Refresh _ -> [])
 
-                searchText
+                searchString
                 |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
-                |> Observable.map (SearchString >> List.singleton)
+                |> Observable.map
+                    (toUpper
+                     >> split [| "&&" |]
+                     >> Array.map trim
+                     >> Array.toList
+                     >> SearchValues
+                     >> List.singleton)
+                |> Observable.distinctUntilChanged
 
                 searchFromBaseDirectory |> Observable.map (SearchFromBaseDirectory >> List.singleton)
             ]
@@ -392,7 +395,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                 {
                     BaseDirectory = ""
                     SelectedDirectory = None
-                    SearchString = ""
+                    SearchValues = []
                     SearchFromBaseDirectory = searchFromBaseDirectory.Value
                 }
                 (fun parameters changes ->
@@ -401,9 +404,10 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                         match change with
                         | BaseDirectory ``base`` -> { current with BaseDirectory = ``base`` }
                         | SelectedDirectory dir -> { current with SelectedDirectory = Some dir }
-                        | SearchString searchString -> { current with SearchString = searchString}
+                        | SearchValues searchValues -> { current with SearchValues = searchValues }
                         | SearchFromBaseDirectory fromBase ->
                             { current with SearchFromBaseDirectory = fromBase }))
+            |> Observable.distinctUntilChanged
             |> Observable.map createFilter
             |> toReadOnlyReactiveProperty
 
@@ -440,12 +444,12 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                     baseDirectory <- ``base``
                     searchFromBaseDirectory.Value <- Option.isNone selected
 
-                    searchText.Value <- ""
+                    searchString.Value <- ""
             | Refresh files ->
                 match files with
                 | [] -> isActive.Value
                 | _ -> files |> List.exists (filter.Value.Filter CheckAffected)
-                |> fun refresh -> if refresh then searchText.ForceNotify())
+                |> fun refresh -> if refresh then searchString.ForceNotify())
         |> ignore
 
         isActive
@@ -453,7 +457,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
         |> Observable.subscribe (fun _ -> selectedFile.ForceNotify())
         |> ignore
 
-    member __.SearchText = searchText
+    member __.SearchString = searchString
     member __.SearchFromBaseDirectory = searchFromBaseDirectory
     member __.CanToggleSearchFromBaseDirectory = canToggleSearchFromBaseDirectory
     member __.IsActive = isActive
@@ -730,7 +734,7 @@ type MainWindowViewModel() as this =
         |> Seq.collect (fun vm -> vm.Instances)
         |> this.FeatureInstances.AddRange
 
-    let createSearchTab directory searchText =
+    let createSearchTab directory searchString =
         let search = SearchViewModel(searchCommands.AsObservable())
         search.SearchFromBaseDirectory.Value <- true
 
@@ -742,10 +746,10 @@ type MainWindowViewModel() as this =
             Directories (Some (DirectoryInfo dir), this.BaseDirectory.Value)
             |> searchCommands.OnNext)
 
-        searchText
+        searchString
         |> Option.iter (fun text ->
             search.SearchFromBaseDirectory.Value <- true
-            search.SearchText.Value <- text)
+            search.SearchString.Value <- text)
 
         search
 

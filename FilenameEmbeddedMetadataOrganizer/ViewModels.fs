@@ -464,9 +464,11 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     member __.ClearSearchTextCommand = clearSearchTextCommand
     member __.IsUpdating = isUpdating
 
-type FileToRename =
-    | Add of oldFile:FileInfo * newName:string
-    | Remove of oldNames:string list
+type FileOperation =
+    | AddRename of oldFile:FileInfo * newName:string
+    | RemoveRename of oldNames:string list
+    | AddDelete of FileInfo
+    | RemoveDelete of string list
 
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
@@ -933,7 +935,7 @@ type MainWindowViewModel() as this =
                 |> Observable.combineLatestSeq
                 |> Observable.map (Seq.toList >> List.forall id))
 
-        let removeFilesToRenameSubject = new System.Reactive.Subjects.Subject<_>()
+        let removeFilesToChangeSubject = new System.Reactive.Subjects.Subject<_>()
 
         applyCommand.IsExecuting
         |> Observable.distinctUntilChanged
@@ -947,21 +949,25 @@ type MainWindowViewModel() as this =
                 [ oldFile; FileInfo newName ] |> Refresh |> searchCommands.OnNext
 
                 None
-            with _ -> Add (oldFile, newName) |> Some)
-        |> Observable.merge (removeFilesToRenameSubject |> Observable.observeOn ThreadPoolScheduler.Instance)
+            with _ -> [ AddRename (oldFile, newName) ] |> Some)
+        |> Observable.merge (removeFilesToChangeSubject |> Observable.observeOn ThreadPoolScheduler.Instance)
         |> Observable.scanInit
-            (Dictionary())
-            (fun items fileToRename ->
-                match fileToRename with
-                | Add (oldFile, newName) -> items.[oldFile.FullName] <- (oldFile, newName)
-                | Remove oldNames -> oldNames |> Seq.iter (items.Remove >> ignore)
+            (Dictionary(), Dictionary())
+            (fun (toRename, toDelete) changes ->
+                ((toRename, toDelete), changes)
+                ||> List.fold (fun (toRename, toDelete) change ->
+                    match change with
+                    | AddRename (oldFile, newName) -> toRename.[oldFile.FullName] <- (oldFile, newName)
+                    | RemoveRename oldNames -> oldNames |> Seq.iter (toRename.Remove >> ignore)
+                    | AddDelete file -> toDelete.[file.FullName] <- file
+                    | RemoveDelete fileNames -> fileNames |> Seq.iter (toDelete.Remove >> ignore)
 
-                items)
-        |> Observable.filter (fun items -> items.Any())
+                    toRename, toDelete))
+        |> Observable.filter (fun (toRename, toDelete) -> toRename.Any() || toDelete.Any())
         |> Observable.throttle (TimeSpan.FromSeconds 2.)
-        |> Observable.subscribe (fun filesToRename ->
+        |> Observable.subscribe (fun (toRename, toDelete) ->
             let renamedFiles, IsSome newFiles =
-                filesToRename.Values
+                toRename.Values
                 |> Seq.choose (fun (oldFile, newName) ->
 
                     if File.Exists oldFile.FullName
@@ -969,16 +975,25 @@ type MainWindowViewModel() as this =
                         try
                             File.Move(oldFile.FullName, newName)
                             Some (oldFile, Some (FileInfo newName))
-                        with
-                        | _ -> None
+                        with _ -> None
                     else Some (oldFile, None))
                 |> Seq.toList
                 |> List.unzip
 
-            renamedFiles
-            |> List.map (fun fi -> fi.FullName)
-            |> Remove
-            |> removeFilesToRenameSubject.OnNext
+            let deletedFiles =
+                toDelete.Values
+                |> Seq.choose (fun file ->
+                    try
+                        File.Delete file.FullName
+                        Some file
+                    with _ -> None)
+                |> Seq.toList
+
+            [
+                renamedFiles |> List.map (fun fi -> fi.FullName) |> RemoveRename
+                deletedFiles |> List.map (fun fi -> fi.FullName) |> RemoveDelete
+            ]
+            |> removeFilesToChangeSubject.OnNext
 
             match renamedFiles with
             | [] -> ()

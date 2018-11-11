@@ -511,7 +511,7 @@ type MainWindowViewModel() as this =
     let mutable openFromSearchCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable openExplorerCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable showFilePropertiesCommand = Unchecked.defaultof<ReactiveCommand>
-    let mutable deleteFileCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable deleteFileCommand = Unchecked.defaultof<ReactiveCommand<_, _>>
 
     let selectedDestinationDirectory =
         new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
@@ -551,7 +551,7 @@ type MainWindowViewModel() as this =
     let mutable collapseAllFeaturesCommand = Unchecked.defaultof<ReactiveCommand>
 
     let resultingFilePath = new ReactiveProperty<_>("", ReactivePropertyMode.None)
-    let mutable applyCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable applyCommand = Unchecked.defaultof<ReactiveCommand<_, _>>
 
     let updateDirectoriesList baseDirectory prefixes filterByPrefixes =
         directories.Clear()
@@ -805,16 +805,13 @@ type MainWindowViewModel() as this =
                     |> function
                         | MessageBoxResult.OK ->
                             try
-                                fi.Delete()
-                            with _ ->
-                                MessageBox.Show(sprintf "Could not delete file %s." fi.FullName,
-                                                "Delete Failed",
-                                                MessageBoxButton.OK,
-                                                MessageBoxImage.Error)
-                                |> ignore
+                                File.Delete fi.FullName
+                                searchCommands.OnNext (Refresh [ fi ])
 
-                            searchCommands.OnNext (Refresh [])
-                        | _ -> ())
+                                None
+                            with _ -> Some [ AddDelete fi ]
+                        | _ -> None
+                else None)
 
         addReplacementCommand <-
             ReactiveCommand.Create(
@@ -926,8 +923,17 @@ type MainWindowViewModel() as this =
                 this.Features |> Seq.iter (fun vm -> vm.IsExpanded.Value <- false))
 
         applyCommand <-
-            ReactiveCommand.Create(
-                (fun () -> ()),
+            ReactiveCommand.Create<_, _>(
+                (fun () ->
+                    let oldFile, newName = this.SelectedFile.Value, this.ResultingFilePath.Value
+
+                    try
+                        File.Move(oldFile.FullName, newName)
+
+                        [ oldFile; FileInfo newName ] |> Refresh |> searchCommands.OnNext
+
+                        None
+                    with _ -> [ AddRename (oldFile, newName) ] |> Some),
                 [
                     this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists)
                     this.ResultingFilePath |> Observable.map (fun path -> not <| isNull path && not <| File.Exists path)
@@ -937,20 +943,15 @@ type MainWindowViewModel() as this =
 
         let removeFilesToChangeSubject = new System.Reactive.Subjects.Subject<_>()
 
-        applyCommand.IsExecuting
-        |> Observable.distinctUntilChanged
-        |> Observable.filter id
-        |> Observable.choose (fun _ ->
-            let oldFile, newName = this.SelectedFile.Value, this.ResultingFilePath.Value
+        [
+            applyCommand |> Observable.choose id
 
-            try
-                File.Move(oldFile.FullName, newName)
+            deleteFileCommand |> Observable.choose id
 
-                [ oldFile; FileInfo newName ] |> Refresh |> searchCommands.OnNext
-
-                None
-            with _ -> [ AddRename (oldFile, newName) ] |> Some)
-        |> Observable.merge (removeFilesToChangeSubject |> Observable.observeOn ThreadPoolScheduler.Instance)
+            removeFilesToChangeSubject |> Observable.observeOn ThreadPoolScheduler.Instance
+        ]
+        |> Observable.mergeSeq
+        |> Observable.filter (List.isEmpty >> not)
         |> Observable.scanInit
             (Dictionary(), Dictionary())
             (fun (toRename, toDelete) changes ->

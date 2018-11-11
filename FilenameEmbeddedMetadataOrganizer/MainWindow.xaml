@@ -132,7 +132,6 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition />
                                     <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
                                 <TextBox x:Name="SearchString"
@@ -171,22 +170,31 @@
                                     </Button.Style>
                                 </Button>
 
-                                <CheckBox Grid.Column="1"
-                                          Margin="0 0 5 0"
-                                          Content="From base"
-                                          IsChecked="{Binding SearchFromBaseDirectory.Value}"
-                                          IsEnabled="{Binding CanToggleSearchFromBaseDirectory.Value}"
-                                          ToolTip="Search from base folder" />
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal">
+                                    <CheckBox Margin="0 0 5 0"
+                                              Content="From base"
+                                              IsChecked="{Binding SearchFromBaseDirectory.Value}"
+                                              IsEnabled="{Binding CanToggleSearchFromBaseDirectory.Value}"
+                                              ToolTip="Search from base folder" />
+                                    <CheckBox Margin="0 0 5 0"
+                                              Content="No features"
+                                              IsChecked="{Binding FilterHasNoFeatures.Value}"
+                                              ToolTip="Show files without features" />
+                                    <CheckBox Margin="0 0 5 0"
+                                              Content="Features"
+                                              IsChecked="{Binding FilterHasFeatures.Value}"
+                                              ToolTip="Show files with features" />
 
-                                <Button Grid.Column="2"
-                                        Width="20"
-                                        Height="20"
-                                        Margin="5 3"
-                                        Padding="0 -10"
-                                        Command="{Binding RefreshCommand}"
-                                        ToolTip="Refresh view">
-                                    <materialDesign:PackIcon Kind="Reload" />
-                                </Button>
+                                    <Button Width="20"
+                                            Height="20"
+                                            Margin="5 3"
+                                            Padding="0 -10"
+                                            Command="{Binding RefreshCommand}"
+                                            ToolTip="Refresh view">
+                                        <materialDesign:PackIcon Kind="Reload" />
+                                    </Button>
+                                </StackPanel>
                             </Grid>
 
                             <DataGrid x:Name="FilesGrid"

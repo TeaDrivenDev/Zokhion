@@ -10,6 +10,7 @@ open System.Reactive.Concurrency
 open System.Reactive.Disposables
 open System.Reactive.Linq
 open System.Reactive.Subjects
+open System.Text.RegularExpressions
 open System.Windows
 
 open Dragablz
@@ -206,11 +207,14 @@ type SearchCriterion =
     | SmallerThan of int
     | LargerThan of int
 
+type WithFeatures = HasNoFeatures | HasFeatures | Both
+
 type SearchFilterParameters =
     {
         BaseDirectory : string
         SelectedDirectory : string option
         SearchValues : string list
+        WithFeatures : WithFeatures
         SearchFromBaseDirectory : bool
     }
 
@@ -227,6 +231,7 @@ type SearchFilterChange =
     | SelectedDirectory of string
     | SearchValues of string list
     | SearchFromBaseDirectory of bool
+    | WithFeatures of WithFeatures
 
 type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
@@ -242,15 +247,19 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     let mutable header = Unchecked.defaultof<ReadOnlyReactiveProperty<string>>
     let selectedFile = new ReactiveProperty<FileInfo>()
     let mutable refreshCommand = Unchecked.defaultof<ReactiveCommand>
-    let mutable clearSearchTextCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable clearSearchStringCommand = Unchecked.defaultof<ReactiveCommand>
+
+    let filterHasNoFeatures = new ReactiveProperty<_>(true)
+    let filterHasFeatures = new ReactiveProperty<_>(true)
 
     let isUpdatingNotifier = BooleanNotifier(false)
     let mutable isUpdating = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     let mutable filter = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
-    let smallerThanRegex = System.Text.RegularExpressions.Regex(@"^<\s*(?<size>\d+)MB$")
-    let largerThanRegex = System.Text.RegularExpressions.Regex(@"^>\s*(?<size>\d+)MB$")
+    let smallerThanRegex = Regex(@"^<\s*(?<size>\d+)MB$", RegexOptions.Compiled)
+    let largerThanRegex = Regex(@"^>\s*(?<size>\d+)MB$", RegexOptions.Compiled)
+    let hasFeaturesRegex = Regex(@"^.+\[\..+\.\]$", RegexOptions.Compiled)
 
     let createFilter searchFilterParameters =
         let searchDirectory =
@@ -259,65 +268,79 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
             then Some searchFilterParameters.BaseDirectory
             else searchFilterParameters.SelectedDirectory
 
-        let searchFilter =
-            match searchFilterParameters.SearchValues with
-            | [] -> (fun _ -> true)
-            | _ ->
-                let smaller, contains, larger =
-                    searchFilterParameters.SearchValues
-                    |> List.map (fun part ->
-                        let m = smallerThanRegex.Match part
+        let searchFilters =
+            let filters =
+                [
+                    yield!
+                        match searchFilterParameters.SearchValues with
+                        | [] -> [ Some (fun _ -> true) ]
+                        | _ ->
+                            let smaller, contains, larger =
+                                searchFilterParameters.SearchValues
+                                |> List.map (fun part ->
+                                    let m = smallerThanRegex.Match part
 
-                        if m.Success
-                        then m.Groups.["size"].Value |> Int32.Parse |> (*) (1024 * 1024) |> SmallerThan
-                        else
-                            let m = largerThanRegex.Match part
+                                    if m.Success
+                                    then m.Groups.["size"].Value |> Int32.Parse |> (*) (1024 * 1024) |> SmallerThan
+                                    else
+                                        let m = largerThanRegex.Match part
 
-                            if m.Success
-                            then m.Groups.["size"].Value |> Int32.Parse |> (*) (1024 * 1024) |> LargerThan
-                            else Contains [ toUpper part ])
-                    |> asSnd (None, [], None)
-                    ||> List.fold (fun (smaller, contains, larger) current ->
-                        match current with
-                        | SmallerThan smaller -> Some smaller, contains, larger
-                        | Contains parts -> smaller, parts @ contains, larger
-                        | LargerThan larger -> smaller, contains, Some larger)
+                                        if m.Success
+                                        then m.Groups.["size"].Value |> Int32.Parse |> (*) (1024 * 1024) |> LargerThan
+                                        else Contains [ toUpper part ])
+                                |> asSnd (None, [], None)
+                                ||> List.fold (fun (smaller, contains, larger) current ->
+                                    match current with
+                                    | SmallerThan smaller -> Some smaller, contains, larger
+                                    | Contains parts -> smaller, parts @ contains, larger
+                                    | LargerThan larger -> smaller, contains, Some larger)
 
-                let filters =
-                    [
-                        yield
-                            smaller
-                            |> Option.map (fun smaller -> fun (fi : FileInfo) -> fi.Length < int64 smaller)
+                            [
+                                yield
+                                    smaller
+                                    |> Option.map (fun smaller -> fun (fi : FileInfo) -> fi.Length < int64 smaller)
 
-                        yield
-                            larger
-                            |> Option.map (fun larger -> fun (fi : FileInfo) -> fi.Length > int64 larger)
+                                yield
+                                    larger
+                                    |> Option.map (fun larger -> fun (fi : FileInfo) -> fi.Length > int64 larger)
 
-                        yield
-                            match contains with
-                            | [] -> None
-                            | contains ->
-                                (fun (fi : FileInfo) ->
-                                    fi.Name
-                                    |> Path.GetFileNameWithoutExtension
-                                    |> toUpper
-                                    |> (fun s -> [ s; s.Replace("_", " ") ])
-                                    |> Seq.exists (containsAll contains))
-                                    |> Some
-                    ]
-                    |> List.choose id
+                                yield
+                                    match contains with
+                                    | [] -> None
+                                    | contains ->
+                                        (fun (fi : FileInfo) ->
+                                            fi.Name
+                                            |> Path.GetFileNameWithoutExtension
+                                            |> toUpper
+                                            |> (fun s -> [ s; s.Replace("_", " ") ])
+                                            |> Seq.exists (containsAll contains))
+                                            |> Some
+                            ]
 
-                fun (fi : FileInfo) -> filters |> Seq.forall (fun filter -> filter fi)
+                    let checkHasFeatures (fi : FileInfo) =
+                        fi.FullName
+                        |> Path.GetFileNameWithoutExtension
+                        |> hasFeaturesRegex.IsMatch
+
+                    yield
+                        match searchFilterParameters.WithFeatures with
+                        | HasNoFeatures -> Some (checkHasFeatures >> not)
+                        | HasFeatures -> Some checkHasFeatures
+                        | Both -> None
+                ]
+                |> List.choose id
+
+            fun (fi : FileInfo) -> filters |> Seq.forall (fun filter -> filter fi)
 
         let filter =
             let checkFilter =
                 fun (fi : FileInfo) ->
                     (toUpper fi.FullName).StartsWith(searchDirectory |> Option.defaultValue "" |> toUpper)
-                    && searchFilter fi
+                    && searchFilters fi
 
             fun filterMode (fi : FileInfo) ->
                 match filterMode with
-                | Search -> searchFilter fi
+                | Search -> searchFilters fi
                 | CheckAffected -> checkFilter fi
 
         {
@@ -351,7 +374,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
             |> Observable.map Option.isSome
             |> toReadOnlyReactiveProperty
 
-        clearSearchTextCommand <- ReactiveCommand.Create(fun () -> searchString.Value <- "")
+        clearSearchStringCommand <- ReactiveCommand.Create(fun () -> searchString.Value <- "")
 
         refreshCommand <- ReactiveCommand.Create(fun () -> ignore ())
 
@@ -389,6 +412,15 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                 |> Observable.distinctUntilChanged
 
                 searchFromBaseDirectory |> Observable.map (SearchFromBaseDirectory >> List.singleton)
+
+                Observable.combineLatest filterHasNoFeatures filterHasFeatures
+                |> Observable.map (fun flags ->
+                    match flags with
+                    | true, false -> HasNoFeatures
+                    | false, true -> HasFeatures
+                    | _ -> Both
+                    |> WithFeatures
+                    |> List.singleton)
             ]
             |> Observable.mergeSeq
             |> Observable.scanInit
@@ -396,6 +428,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                     BaseDirectory = ""
                     SelectedDirectory = None
                     SearchValues = []
+                    WithFeatures = Both
                     SearchFromBaseDirectory = searchFromBaseDirectory.Value
                 }
                 (fun parameters changes ->
@@ -405,6 +438,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                         | BaseDirectory ``base`` -> { current with BaseDirectory = ``base`` }
                         | SelectedDirectory dir -> { current with SelectedDirectory = Some dir }
                         | SearchValues searchValues -> { current with SearchValues = searchValues }
+                        | WithFeatures withFeatures -> { current with WithFeatures = withFeatures }
                         | SearchFromBaseDirectory fromBase ->
                             { current with SearchFromBaseDirectory = fromBase }))
             |> Observable.distinctUntilChanged
@@ -465,8 +499,10 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     member __.Header = header
     member __.SelectedFile = selectedFile
     member __.RefreshCommand = refreshCommand
-    member __.ClearSearchTextCommand = clearSearchTextCommand
+    member __.ClearSearchStringCommand = clearSearchStringCommand
     member __.IsUpdating = isUpdating
+    member __.FilterHasNoFeatures = filterHasNoFeatures
+    member __.FilterHasFeatures = filterHasFeatures
 
 type FileOperation =
     | AddRename of oldFile:FileInfo * newName:string

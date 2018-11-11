@@ -441,7 +441,6 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                         | WithFeatures withFeatures -> { current with WithFeatures = withFeatures }
                         | SearchFromBaseDirectory fromBase ->
                             { current with SearchFromBaseDirectory = fromBase }))
-            |> Observable.distinctUntilChanged
             |> Observable.map createFilter
             |> toReadOnlyReactiveProperty
 

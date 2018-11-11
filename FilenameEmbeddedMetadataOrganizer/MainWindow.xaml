@@ -123,6 +123,16 @@
                 <TabControl.ContentTemplate>
                     <DataTemplate DataType="{x:Type viewModels:SearchViewModel}">
                         <Grid>
+                            <Grid.Resources>
+                                <CollectionViewSource x:Key="SortedFiles"
+                                                      IsLiveSortingRequested="True"
+                                                      Source="{Binding Files}">
+                                    <CollectionViewSource.SortDescriptions>
+                                        <componentModel:SortDescription Direction="Ascending"
+                                                                        PropertyName="CreationTime" />
+                                    </CollectionViewSource.SortDescriptions>
+                                </CollectionViewSource>
+                            </Grid.Resources>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition />
@@ -203,7 +213,7 @@
                                       materialDesign:DataGridAssist.CellPadding="4 2 2 2"
                                       materialDesign:DataGridAssist.ColumnHeaderPadding="4 2 2 2"
                                       AutoGenerateColumns="False"
-                                      ItemsSource="{Binding Files}"
+                                      ItemsSource="{Binding Source={StaticResource SortedFiles}}"
                                       MouseMove="FilesGrid_MouseMove"
                                       PreviewMouseLeftButtonDown="FilesGrid_PreviewMouseLeftButtonDown"
                                       SelectedItem="{Binding SelectedFile.Value}"

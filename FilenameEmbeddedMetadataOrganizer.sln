@@ -3,12 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{EB44DA97-F53F-4170-82FA-AE062864DBE4}"
-	ProjectSection(SolutionItems) = preProject
-		paket.dependencies = paket.dependencies
-		paket.lock = paket.lock
-	EndProjectSection
-EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FilenameEmbeddedMetadataOrganizer", "FilenameEmbeddedMetadataOrganizer\FilenameEmbeddedMetadataOrganizer.fsproj", "{20343DC6-232B-4241-A2CD-770B3E819DC1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution", "Solution", "{CC4C3174-3F8D-49DF-93A4-604AEB162DBD}"

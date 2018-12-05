@@ -379,11 +379,12 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
         refreshCommand <- ReactiveCommand.Create(fun () -> ignore ())
 
         isUpdating <-
-            isUpdatingNotifier
-            |> Observable.filter not
-            |> Observable.merge
-                (isUpdatingNotifier
-                 |> Observable.throttle (TimeSpan.FromSeconds 1.5))
+            [
+                isUpdatingNotifier |> Observable.filter not
+
+                isUpdatingNotifier |> Observable.throttle (TimeSpan.FromSeconds 1.5)
+            ]
+            |> Observable.mergeSeq
             |> toReadOnlyReactiveProperty
 
         filter <-

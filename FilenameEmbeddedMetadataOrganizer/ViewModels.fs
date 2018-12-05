@@ -249,8 +249,8 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     let mutable refreshCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable clearSearchStringCommand = Unchecked.defaultof<ReactiveCommand>
 
-    let filterHasNoFeatures = new ReactiveProperty<_>(true)
-    let filterHasFeatures = new ReactiveProperty<_>(true)
+    let filterHasNoFeatures = new ReactiveProperty<_>(false)
+    let filterHasFeatures = new ReactiveProperty<_>(false)
 
     let isUpdatingNotifier = BooleanNotifier(false)
     let mutable isUpdating = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>

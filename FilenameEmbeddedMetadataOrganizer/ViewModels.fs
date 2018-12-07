@@ -246,8 +246,10 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     let files = ObservableCollection()
     let mutable header = Unchecked.defaultof<ReadOnlyReactiveProperty<string>>
     let selectedFile = new ReactiveProperty<FileInfo>()
-    let mutable refreshCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable refreshCommand = Unchecked.defaultof<ReactiveCommand<_, _>>
     let mutable clearSearchStringCommand = Unchecked.defaultof<ReactiveCommand>
+
+    let refreshSubject = new System.Reactive.Subjects.Subject<_>()
 
     let filterHasNoFeatures = new ReactiveProperty<_>(false)
     let filterHasFeatures = new ReactiveProperty<_>(false)
@@ -376,7 +378,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
         clearSearchStringCommand <- ReactiveCommand.Create(fun () -> searchString.Value <- "")
 
-        refreshCommand <- ReactiveCommand.Create(fun () -> ignore ())
+        refreshCommand <- ReactiveCommand.Create<_>(fun () -> Refresh [])
 
         isUpdating <-
             [
@@ -422,6 +424,8 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                     | _ -> Both
                     |> WithFeatures
                     |> List.singleton)
+
+                refreshSubject |> Observable.map (fun () -> [])
             ]
             |> Observable.mergeSeq
             |> Observable.scanInit
@@ -461,14 +465,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
             isUpdatingNotifier.TurnOff())
         |> ignore
 
-        [
-            refreshCommand.IsExecuting
-            |> Observable.distinctUntilChanged
-            |> Observable.filter id
-            |> Observable.map (fun _ -> Refresh [])
-
-            commands
-        ]
+        [ refreshCommand.AsObservable(); commands ]
         |> Observable.mergeSeq
         |> Observable.subscribe (function
             | Directories (selected, ``base``) ->
@@ -483,7 +480,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                 match files with
                 | [] -> isActive.Value
                 | _ -> files |> List.exists (filter.Value.Filter CheckAffected)
-                |> fun refresh -> if refresh then searchString.ForceNotify())
+                |> fun refresh -> if refresh then refreshSubject.OnNext ())
         |> ignore
 
         isActive

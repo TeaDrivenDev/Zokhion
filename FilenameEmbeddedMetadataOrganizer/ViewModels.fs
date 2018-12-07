@@ -1033,12 +1033,14 @@ type MainWindowViewModel() as this =
             ]
             |> removeFilesToChangeSubject.OnNext
 
-            match renamedFiles with
-            | [] -> ()
-            | _ ->
-                List.append renamedFiles newFiles
-                |> Refresh
-                |> searchCommands.OnNext)
+            [ renamedFiles; deletedFiles; newFiles ]
+            |> List.concat
+            |> function
+                | [] -> ()
+                | files ->
+                    files
+                    |> Refresh
+                    |> searchCommands.OnNext)
         |> ignore
 
         this.SelectedDirectory

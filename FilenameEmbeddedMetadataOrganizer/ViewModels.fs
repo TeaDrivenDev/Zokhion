@@ -973,7 +973,13 @@ type MainWindowViewModel() as this =
                     with _ -> [ AddRename (oldFile, newName) ] |> Some),
                 [
                     this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists)
-                    this.ResultingFilePath |> Observable.map (fun path -> not <| isNull path && not <| File.Exists path)
+
+                    this.ResultingFilePath
+                    |> Observable.map (fun path ->
+                        not <| isNull path
+                        && (not <| File.Exists path
+                            || this.SelectedFile.Value.FullName <> path
+                                && String.Compare(this.SelectedFile.Value.FullName, path, true) = 0))
                 ]
                 |> Observable.combineLatestSeq
                 |> Observable.map (Seq.toList >> List.forall id))

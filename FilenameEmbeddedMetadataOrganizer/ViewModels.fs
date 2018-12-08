@@ -233,6 +233,14 @@ type SearchFilterChange =
     | SearchFromBaseDirectory of bool
     | WithFeatures of WithFeatures
 
+type RenamedFile = { OriginalFile : FileInfo; NewFilePath : string }
+
+type FileChanges =
+    {
+        RenamedFiles : Dictionary<string, RenamedFile>
+        DeletedFiles : Dictionary<string, FileInfo>
+    }
+
 type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
 
     let mutable baseDirectory = ""
@@ -549,6 +557,8 @@ type MainWindowViewModel() as this =
     let mutable openExplorerCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable showFilePropertiesCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable deleteFileCommand = Unchecked.defaultof<ReactiveCommand<_, _>>
+
+    let mutable fileChanges = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     let selectedDestinationDirectory =
         new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
@@ -986,6 +996,8 @@ type MainWindowViewModel() as this =
 
         let removeFilesToChangeSubject = new System.Reactive.Subjects.Subject<_>()
 
+        let fileChangesSubject = new System.Reactive.Subjects.Subject<_>()
+
         [
             applyCommand |> Observable.choose id
 
@@ -996,23 +1008,29 @@ type MainWindowViewModel() as this =
         |> Observable.mergeSeq
         |> Observable.filter (List.isEmpty >> not)
         |> Observable.scanInit
-            (Dictionary(), Dictionary())
-            (fun (toRename, toDelete) changes ->
-                ((toRename, toDelete), changes)
-                ||> List.fold (fun (toRename, toDelete) change ->
+            { RenamedFiles = Dictionary(); DeletedFiles = Dictionary() }
+            (fun fileChanges changes ->
+                (fileChanges, changes)
+                ||> List.fold (fun { RenamedFiles = toRename; DeletedFiles = toDelete } change ->
                     match change with
-                    | AddRename (oldFile, newName) -> toRename.[oldFile.FullName] <- (oldFile, newName)
+                    | AddRename (oldFile, newName) ->
+                        toRename.[oldFile.FullName] <- { OriginalFile = oldFile; NewFilePath = newName }
                     | RemoveRename oldNames -> oldNames |> Seq.iter (toRename.Remove >> ignore)
                     | AddDelete file -> toDelete.[file.FullName] <- file
                     | RemoveDelete fileNames -> fileNames |> Seq.iter (toDelete.Remove >> ignore)
 
-                    toRename, toDelete))
-        |> Observable.filter (fun (toRename, toDelete) -> toRename.Any() || toDelete.Any())
+                    { RenamedFiles = toRename; DeletedFiles = toDelete }))
+        |> Observable.subscribeObserver fileChangesSubject
+        |> ignore
+
+        fileChangesSubject
+        |> Observable.filter (fun fileChanges ->
+            fileChanges.RenamedFiles.Any() || fileChanges.DeletedFiles.Any())
         |> Observable.throttle (TimeSpan.FromSeconds 2.)
-        |> Observable.subscribe (fun (toRename, toDelete) ->
+        |> Observable.subscribe (fun fileChanges ->
             let renamedFiles, IsSome newFiles =
-                toRename.Values
-                |> Seq.choose (fun (oldFile, newName) ->
+                fileChanges.RenamedFiles.Values
+                |> Seq.choose (fun { OriginalFile = oldFile; NewFilePath = newName } ->
 
                     if File.Exists oldFile.FullName
                     then
@@ -1025,7 +1043,7 @@ type MainWindowViewModel() as this =
                 |> List.unzip
 
             let deletedFiles =
-                toDelete.Values
+                fileChanges.DeletedFiles.Values
                 |> Seq.choose (fun file ->
                     try
                         File.Delete file.FullName
@@ -1048,6 +1066,10 @@ type MainWindowViewModel() as this =
                     |> Refresh
                     |> searchCommands.OnNext)
         |> ignore
+
+        fileChanges <-
+            fileChangesSubject.ToReadOnlyReactiveProperty(
+                mode = ReactivePropertyMode.RaiseLatestValueOnSubscribe)
 
         this.SelectedDirectory
         |> Observable.map (fun dir -> Directories (Option.ofObj dir, this.BaseDirectory.Value))
@@ -1284,6 +1306,8 @@ type MainWindowViewModel() as this =
     member __.OpenExplorerCommand = openExplorerCommand
     member __.ShowFilePropertiesCommand = showFilePropertiesCommand
     member __.DeleteFileCommand = deleteFileCommand
+
+    member __.FileChanges = fileChanges
 
     member __.SelectedDestinationDirectory : ReactiveProperty<_> = selectedDestinationDirectory
     member __.DestinationDirectoryPrefixes : ReactiveProperty<_> = destinationDirectoryPrefixes

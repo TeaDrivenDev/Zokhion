@@ -153,3 +153,31 @@ type BindingProxy() =
     member __.Data
         with get () = __.GetValue(DataProperty)
         and set value = __.SetValue(DataProperty, value)
+
+type FileChange =
+    | NoChange = 0
+    | Renamed = 1
+    | Moved = 2
+    | Deleted = 3
+
+type FileChangesToEnumConverter() =
+    static member Instance = FileChangesToEnumConverter() :> IMultiValueConverter
+
+    interface IMultiValueConverter with
+        member this.Convert(values: obj [], targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
+            match values with
+            | [| :? FileInfo as fileInfo; :? FileChanges as fileChanges |] ->
+                match fileChanges.RenamedFiles.TryGetValue fileInfo.FullName with
+                | true, renamedFile ->
+                    if Path.GetDirectoryName renamedFile.OriginalFile.FullName = Path.GetDirectoryName renamedFile.NewFilePath
+                    then FileChange.Renamed
+                    else FileChange.Moved
+                | false, _ ->
+                    match fileChanges.DeletedFiles.TryGetValue fileInfo.FullName with
+                    | true, _ -> FileChange.Deleted
+                    | _ -> FileChange.NoChange
+            | _ -> FileChange.NoChange
+            :> obj
+
+        member this.ConvertBack(value: obj, targetTypes: Type [], parameter: obj, culture: Globalization.CultureInfo): obj [] =
+            raise (System.NotImplementedException()) 

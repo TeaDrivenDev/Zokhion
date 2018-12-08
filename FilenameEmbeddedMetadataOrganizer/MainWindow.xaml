@@ -324,10 +324,92 @@
                                                             SortMemberPath="Name">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding Name}"
-                                                           TextTrimming="CharacterEllipsis"
-                                                           ToolTip="{Binding RelativeSource={RelativeSource Self},
-                                                                             Path=Text}" />
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <Grid.Resources>
+                                                        <ui:BindingProxy x:Key="FileChangeBindingProxy">
+                                                            <ui:BindingProxy.Data>
+                                                                <MultiBinding Converter="{x:Static ui:FileChangesToEnumConverter.Instance}">
+                                                                    <Binding />
+                                                                    <Binding ElementName="MainWindowView"
+                                                                             Path="DataContext.FileChanges.Value" />
+                                                                </MultiBinding>
+                                                            </ui:BindingProxy.Data>
+                                                        </ui:BindingProxy>
+                                                    </Grid.Resources>
+
+                                                    <TextBlock Grid.Column="0"
+                                                               Text="{Binding Name}"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               ToolTip="{Binding RelativeSource={RelativeSource Self},
+                                                                                 Path=Text}" />
+                                                    <StackPanel Grid.Column="1">
+                                                        <materialDesign:PackIcon Kind="Edit">
+                                                            <materialDesign:PackIcon.Style>
+                                                                <Style TargetType="materialDesign:PackIcon">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Value="Renamed">
+                                                                            <DataTrigger.Binding>
+                                                                                <MultiBinding Converter="{x:Static ui:FileChangesToEnumConverter.Instance}">
+                                                                                    <Binding />
+                                                                                    <Binding ElementName="MainWindowView"
+                                                                                             Path="DataContext.FileChanges.Value" />
+                                                                                </MultiBinding>
+                                                                            </DataTrigger.Binding>
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </materialDesign:PackIcon.Style>
+                                                        </materialDesign:PackIcon>
+                                                        <materialDesign:PackIcon Kind="ArrowRightBold">
+                                                            <materialDesign:PackIcon.Style>
+                                                                <Style TargetType="materialDesign:PackIcon">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Value="Moved">
+                                                                            <DataTrigger.Binding>
+                                                                                <MultiBinding Converter="{x:Static ui:FileChangesToEnumConverter.Instance}">
+                                                                                    <Binding />
+                                                                                    <Binding ElementName="MainWindowView"
+                                                                                             Path="DataContext.FileChanges.Value" />
+                                                                                </MultiBinding>
+                                                                            </DataTrigger.Binding>
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </materialDesign:PackIcon.Style>
+                                                        </materialDesign:PackIcon>
+                                                        <materialDesign:PackIcon Kind="DeleteForever">
+                                                            <materialDesign:PackIcon.Style>
+                                                                <Style TargetType="materialDesign:PackIcon">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Value="Deleted">
+                                                                            <DataTrigger.Binding>
+                                                                                <MultiBinding Converter="{x:Static ui:FileChangesToEnumConverter.Instance}">
+                                                                                    <Binding />
+                                                                                    <Binding ElementName="MainWindowView"
+                                                                                             Path="DataContext.FileChanges.Value" />
+                                                                                </MultiBinding>
+                                                                            </DataTrigger.Binding>
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </materialDesign:PackIcon.Style>
+                                                        </materialDesign:PackIcon>
+                                                    </StackPanel>
+                                                </Grid>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>

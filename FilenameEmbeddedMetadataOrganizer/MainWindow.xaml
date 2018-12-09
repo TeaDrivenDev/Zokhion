@@ -318,7 +318,7 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Width="700"
+                                    <DataGridTemplateColumn Width="*"
                                                             Header="Name"
                                                             IsReadOnly="True"
                                                             SortMemberPath="Name">

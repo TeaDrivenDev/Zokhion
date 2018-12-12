@@ -254,6 +254,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     let files = ObservableCollection()
     let mutable header = Unchecked.defaultof<ReadOnlyReactiveProperty<string>>
     let selectedFile = new ReactiveProperty<FileInfo>()
+    let mutable selectedFileWhenActive = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
     let mutable refreshCommand = Unchecked.defaultof<ReactiveCommand<_, _>>
     let mutable clearSearchStringCommand = Unchecked.defaultof<ReactiveCommand>
 
@@ -496,6 +497,11 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
         |> Observable.subscribe (fun _ -> selectedFile.ForceNotify())
         |> ignore
 
+        selectedFileWhenActive <-
+            selectedFile
+            |> Observable.filter (fun _ -> isActive.Value)
+            |> toReadOnlyReactiveProperty
+
     member __.SearchString = searchString
     member __.SearchFromBaseDirectory = searchFromBaseDirectory
     member __.CanToggleSearchFromBaseDirectory = canToggleSearchFromBaseDirectory
@@ -503,6 +509,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
     member __.Files = files
     member __.Header = header
     member __.SelectedFile = selectedFile
+    member __.SelectedFileWhenActive = selectedFileWhenActive
     member __.RefreshCommand = refreshCommand
     member __.ClearSearchStringCommand = clearSearchStringCommand
     member __.IsUpdating = isUpdating
@@ -781,7 +788,7 @@ type MainWindowViewModel() as this =
         let search = SearchViewModel(searchCommands.AsObservable())
         search.SearchFromBaseDirectory.Value <- true
 
-        selectedFilesSubject.OnNext search.SelectedFile
+        selectedFilesSubject.OnNext search.SelectedFileWhenActive
         this.ActiveSearchTab.Value <- search
 
         directory

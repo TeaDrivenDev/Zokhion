@@ -12,6 +12,7 @@ open System.Reactive.Linq
 open System.Reactive.Subjects
 open System.Text.RegularExpressions
 open System.Windows
+open System.Windows.Input
 
 open Dragablz
 
@@ -525,6 +526,11 @@ type FileOperation =
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
+    let hasTouchInput =
+        Tablet.TabletDevices
+        |> Seq.cast<TabletDevice>
+        |> Seq.exists (fun tablet -> tablet.Type = TabletDeviceType.Touch)
+
     let baseDirectory = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let filterBySourceDirectoryPrefixes = new ReactiveProperty<_>(true)
     let sourceDirectoryPrefixes =
@@ -554,7 +560,7 @@ type MainWindowViewModel() as this =
     let newFileNameSelectedText = new ReactiveProperty<_>("", ReactivePropertyMode.None)
 
     let treatParenthesizedPartAsNames = new ReactiveProperty<_>(true)
-    let fixupNamesInMainPart = new ReactiveProperty<_>(false)
+    let fixupNamesInMainPart = new ReactiveProperty<_>(true)
     let replaceUnderscores = new ReactiveProperty<_>(true)
     let detectNamesInMainAndNamesParts = new ReactiveProperty<_>(false)
     let recapitalizeNames = new ReactiveProperty<_>(false)
@@ -1272,6 +1278,8 @@ type MainWindowViewModel() as this =
         |> ignore
 
     member __.Shutdown () = saveSettings __.BaseDirectory.Value
+
+    member __.HasTouchInput = hasTouchInput
 
     member __.BaseDirectory : ReactiveProperty<string> = baseDirectory
     member __.FilterBySourceDirectoryPrefixes : ReactiveProperty<_> = filterBySourceDirectoryPrefixes

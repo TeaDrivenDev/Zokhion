@@ -30,6 +30,22 @@
         <SolidColorBrush x:Key="FeatureHighlightBrush"
                          Opacity="0.3"
                          Color="Teal" />
+
+        <ui:BindingProxy x:Key="MainWindowBindingProxy"
+                         Data="{Binding ElementName=MainWindowView}" />
+
+        <Style x:Key="TabletEnabledButton"
+               BasedOn="{StaticResource MaterialDesignRaisedButton}"
+               TargetType="{x:Type Button}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Source={StaticResource MainWindowBindingProxy},
+                                               Path=Data.DataContext.HasTouchInput}"
+                             Value="True">
+                    <Setter Property="Height" Value="32" />
+                    <Setter Property="Width" Value="32" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -64,13 +80,17 @@
 
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal">
-                    <Button Width="20"
-                            Height="20"
-                            Margin="3"
-                            Padding="0 -10"
+                    <Button Padding="0 -10"
                             Command="{Binding RefreshDirectoriesCommand}"
                             IsEnabled="{Binding IsBaseDirectoryValid.Value}"
                             ToolTip="Refresh directories">
+                        <Button.Style>
+                            <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                   TargetType="{x:Type Button}">
+                                <Setter Property="Height" Value="20" />
+                                <Setter Property="Width" Value="20" />
+                            </Style>
+                        </Button.Style>
                         <materialDesign:PackIcon Kind="Reload" />
                     </Button>
                     <ToggleButton Margin="3 0 0 0"
@@ -85,14 +105,22 @@
                                             UpdateSourceTrigger=PropertyChanged}"
                              TextWrapping="NoWrap"
                              ToolTip="Source folder prefixes" />
-                    <Button Width="30"
-                            Margin="5"
+                    <Button Margin="5"
                             Padding="0"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
                             Click="SelectFolder_Click"
                             Content="…"
-                            ToolTip="Select base folder" />
+                            ToolTip="Select base folder">
+                        <Button.Style>
+                            <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                   TargetType="{x:Type Button}">
+                                <Setter Property="Height" Value="30" />
+                                <Setter Property="Width" Value="30" />
+                                <Setter Property="Margin" Value="3" />
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </StackPanel>
             </Grid>
 
@@ -155,8 +183,6 @@
                                          TextWrapping="NoWrap" />
 
                                 <Button Grid.Column="0"
-                                        Width="15"
-                                        Height="15"
                                         Margin="5 0"
                                         Padding="0 -1 -1 0"
                                         HorizontalAlignment="Right"
@@ -167,8 +193,11 @@
                                         IsTabStop="False"
                                         ToolTip="Clear search text">
                                     <Button.Style>
-                                        <Style BasedOn="{StaticResource MaterialDesignRaisedButton}"
+                                        <Style BasedOn="{StaticResource TabletEnabledButton}"
                                                TargetType="Button">
+                                            <Setter Property="Height" Value="15" />
+                                            <Setter Property="Width" Value="15" />
+
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding ElementName=SearchString,
                                                                                Path=Text}"
@@ -196,12 +225,18 @@
                                               IsChecked="{Binding FilterHasFeatures.Value}"
                                               ToolTip="Show files with features" />
 
-                                    <Button Width="20"
-                                            Height="20"
-                                            Margin="5 3"
+                                    <Button Margin="5 3"
                                             Padding="0 -10"
                                             Command="{Binding RefreshCommand}"
                                             ToolTip="Refresh view">
+                                        <Button.Style>
+                                            <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                                   TargetType="{x:Type Button}">
+                                                <Setter Property="Height" Value="20" />
+                                                <Setter Property="Width" Value="20" />
+                                            </Style>
+                                        </Button.Style>
+
                                         <materialDesign:PackIcon Kind="Reload" />
                                     </Button>
                                 </StackPanel>
@@ -219,8 +254,27 @@
                                       SelectedItem="{Binding SelectedFile.Value}"
                                       SelectionMode="Extended">
                                 <DataGrid.Resources>
-                                    <ui:BindingProxy x:Key="MainWindowBindingProxy"
-                                                     Data="{Binding ElementName=MainWindowView}" />
+                                    <Style TargetType="{x:Type ContentPresenter}">
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+
+                                    <Style BasedOn="{StaticResource MaterialDesignDataGridCell}"
+                                           TargetType="{x:Type DataGridCell}">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type DataGridCell}">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            SnapsToDevicePixels="True">
+                                                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                                                          VerticalAlignment="Center"
+                                                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
                                 </DataGrid.Resources>
                                 <DataGrid.RowStyle>
                                     <Style BasedOn="{StaticResource MaterialDesignDataGridRow}"
@@ -239,9 +293,6 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Button x:Name="FileActionsButton"
-                                                        Width="18"
-                                                        Height="18"
-                                                        Margin="3 -3"
                                                         Padding="0 -1 -1 0"
                                                         Content="…"
                                                         ToolTip="File Actions">
@@ -295,8 +346,11 @@
                                                     </Button.Triggers>
 
                                                     <Button.Style>
-                                                        <Style BasedOn="{StaticResource MaterialDesignRaisedButton}"
+                                                        <Style BasedOn="{StaticResource TabletEnabledButton}"
                                                                TargetType="Button">
+                                                            <Setter Property="Height" Value="18" />
+                                                            <Setter Property="Width" Value="18" />
+                                                            <Setter Property="Margin" Value="3 -3" />
                                                             <Setter Property="Opacity" Value="0.4" />
 
                                                             <Style.Triggers>
@@ -310,6 +364,11 @@
                                                                                                Path=IsMouseOver}"
                                                                              Value="True">
                                                                     <Setter Property="Opacity" Value="1" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding ElementName=MainWindowView,
+                                                                                               Path=DataContext.HasTouchInput}"
+                                                                             Value="True">
+                                                                    <Setter Property="Margin" Value="3 -1" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -492,13 +551,19 @@
                             <ToggleButton IsChecked="{Binding ElementName=MainWindowView,
                                                               Path=DataContext.ShowSettings.Value}"
                                           ToolTip="Show additional settings" />
-                            <Button Width="20"
-                                    Height="20"
-                                    Margin="5 0 0 0"
+                            <Button Margin="5 0 0 0"
                                     Padding="0"
                                     Command="{Binding ElementName=MainWindowView,
                                                       Path=DataContext.SaveSettingsCommand}"
                                     ToolTip="Save Settings">
+                                <Button.Style>
+                                    <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                           TargetType="{x:Type Button}">
+                                        <Setter Property="Height" Value="20" />
+                                        <Setter Property="Width" Value="20" />
+                                    </Style>
+                                </Button.Style>
+
                                 <materialDesign:PackIcon Kind="ContentSave" />
                             </Button>
                         </StackPanel>
@@ -554,12 +619,18 @@
 
                     <Button Grid.Row="0"
                             Grid.Column="1"
-                            Width="30"
-                            Height="30"
                             Padding="0"
                             Command="{Binding OpenCommand}"
                             CommandParameter="{Binding SelectedFile.Value}"
                             ToolTip="Open file">
+                        <Button.Style>
+                            <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                   TargetType="{x:Type Button}">
+                                <Setter Property="Height" Value="30" />
+                                <Setter Property="Width" Value="30" />
+                            </Style>
+                        </Button.Style>
+
                         <materialDesign:PackIcon Kind="OpenInNew" />
                     </Button>
 
@@ -600,13 +671,19 @@
 
                     <Button Grid.Row="1"
                             Grid.Column="1"
-                            Width="30"
-                            Height="30"
                             Margin="0 5"
                             Padding="0"
                             Command="{Binding OpenExplorerCommand}"
                             CommandParameter="{Binding SelectedFile.Value}"
                             ToolTip="Show in Explorer">
+                        <Button.Style>
+                            <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                   TargetType="{x:Type Button}">
+                                <Setter Property="Height" Value="30" />
+                                <Setter Property="Width" Value="30" />
+                            </Style>
+                        </Button.Style>
+
                         <materialDesign:PackIcon Kind="FolderOutline" />
                     </Button>
 
@@ -670,12 +747,18 @@
                                                         UpdateSourceTrigger=PropertyChanged}" />
 
                                 <Button Grid.Column="2"
-                                        Width="15"
-                                        Height="15"
                                         Margin="5 0"
                                         Padding="0 -1 -1 0"
                                         Command="{Binding AddReplacementCommand}"
-                                        Content="+" />
+                                        Content="+">
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                               TargetType="{x:Type Button}">
+                                            <Setter Property="Height" Value="30" />
+                                            <Setter Property="Width" Value="30" />
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                             </Grid>
 
                             <ItemsControl Grid.Row="1"
@@ -734,13 +817,21 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0"
+                                               VerticalAlignment="Center"
                                                Text="Names" />
                                     <Button Grid.Column="1"
-                                            Height="16"
                                             Padding="0 -10"
                                             Command="{Binding ElementName=MainWindowView,
                                                               Path=DataContext.ResetNameSelectionCommand}"
                                             ToolTip="Reset name selection">
+                                        <Button.Style>
+                                            <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                                   TargetType="{x:Type Button}">
+                                                <Setter Property="Height" Value="16" />
+                                                <Setter Property="Width" Value="16" />
+                                            </Style>
+                                        </Button.Style>
+
                                         <materialDesign:PackIcon Kind="Undo" />
                                     </Button>
                                 </Grid>
@@ -751,6 +842,11 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition />
                             </Grid.RowDefinitions>
+
+                            <Grid.Resources>
+                                <ui:BindingProxy x:Key="MainWindowBindingProxy"
+                                                 Data="{Binding ElementName=MainWindowView}" />
+                            </Grid.Resources>
 
                             <Grid Grid.Row="0">
                                 <Grid.ColumnDefinitions>
@@ -767,8 +863,6 @@
                                                         UpdateSourceTrigger=PropertyChanged}" />
 
                                 <Button Grid.Column="0"
-                                        Width="15"
-                                        Height="15"
                                         Margin="5 0"
                                         Padding="0 -1 -1 0"
                                         HorizontalAlignment="Right"
@@ -779,8 +873,11 @@
                                         IsTabStop="False"
                                         ToolTip="Clear name">
                                     <Button.Style>
-                                        <Style BasedOn="{StaticResource MaterialDesignRaisedButton}"
+                                        <Style BasedOn="{StaticResource TabletEnabledButton}"
                                                TargetType="Button">
+                                            <Setter Property="Height" Value="15" />
+                                            <Setter Property="Width" Value="15" />
+
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding ElementName=NewNameToAdd,
                                                                                Path=Text}"
@@ -793,14 +890,20 @@
                                 </Button>
 
                                 <Button Grid.Column="1"
-                                        Width="15"
-                                        Height="15"
                                         Margin="5 0"
                                         Padding="0 -1 -1 0"
                                         Command="{Binding AddNameCommand}"
                                         CommandParameter="{Binding ElementName=NewNameToAdd,
                                                                    Path=Text}"
-                                        Content="+" />
+                                        Content="+">
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                               TargetType="{x:Type Button}">
+                                            <Setter Property="Height" Value="15" />
+                                            <Setter Property="Width" Value="15" />
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                             </Grid>
 
                             <ScrollViewer Grid.Row="1"
@@ -825,6 +928,7 @@
                                         <DataTemplate DataType="viewModels:NameViewModel">
                                             <CheckBox Margin="0 3"
                                                       HorizontalContentAlignment="Stretch"
+                                                      VerticalContentAlignment="Center"
                                                       Foreground="{StaticResource MaterialDesignBody}"
                                                       IsChecked="{Binding IsSelected}">
                                                 <CheckBox.Style>
@@ -869,6 +973,7 @@
                                                     <TextBlock Grid.Column="0"
                                                                Margin="5 0 15 0"
                                                                HorizontalAlignment="Stretch"
+                                                               VerticalAlignment="Center"
                                                                Text="{Binding Name.Value}">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
@@ -887,36 +992,49 @@
                                                     </TextBlock>
                                                     <StackPanel Grid.Column="1"
                                                                 Orientation="Horizontal">
-                                                        <Button x:Name="ActionsButton"
-                                                                Width="12"
-                                                                Height="12"
-                                                                Margin="0 0 5 0"
-                                                                Padding="0 -5 0 -4"
-                                                                Content="…">
-                                                            <Button.Resources>
-                                                                <ui:BindingProxy x:Key="MainWindowBindingProxy"
-                                                                                 Data="{Binding ElementName=MainWindowView}" />
-                                                                <ui:BindingProxy x:Key="NameVieWModelBindingProxy"
-                                                                                 Data="{Binding ElementName=ActionsButton,
-                                                                                                Path=DataContext}" />
-                                                            </Button.Resources>
+                                                        <StackPanel.Resources>
+                                                            <ui:BindingProxy x:Key="MainWindowBindingProxy"
+                                                                             Data="{Binding ElementName=MainWindowView}" />
+                                                            <ui:BindingProxy x:Key="NameViewModelBindingProxy"
+                                                                             Data="{Binding ElementName=ActionsButton,
+                                                                                            Path=DataContext}" />
 
+                                                            <Style x:Key="NameActionButton"
+                                                                   BasedOn="{StaticResource TabletEnabledButton}"
+                                                                   TargetType="{x:Type Button}">
+                                                                <Setter Property="Height" Value="12" />
+                                                                <Setter Property="Width" Value="12" />
+                                                                <Setter Property="Margin" Value="0 0 5 0" />
+                                                                <Setter Property="Padding" Value="0 -5 0 -4" />
+
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding ElementName=MainWindowView,
+                                                                                                   Path=DataContext.HasTouchInput}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Margin" Value="0 2 5 2" />
+                                                                        <Setter Property="Opacity" Value="1" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </StackPanel.Resources>
+                                                        <Button x:Name="ActionsButton"
+                                                                Content="…">
                                                             <Button.ContextMenu>
                                                                 <ContextMenu x:Name="ActionsButtonContextMenu">
                                                                     <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
                                                                                                 Path=Data.DataContext.SearchForTextCommand}"
-                                                                              CommandParameter="{Binding Source={StaticResource NameVieWModelBindingProxy},
+                                                                              CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
                                                                                                          Path=Data.Name.Value}"
                                                                               Header="Search" />
                                                                     <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
                                                                                                 Path=Data.DataContext.SearchForNameCommand}"
-                                                                              CommandParameter="{Binding Source={StaticResource NameVieWModelBindingProxy},
+                                                                              CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
                                                                                                          Path=Data.Name.Value}"
                                                                               Header="Search as Name" />
                                                                     <Separator />
                                                                     <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
                                                                                                 Path=Data.DataContext.DeleteNameCommand}"
-                                                                              CommandParameter="{Binding Source={StaticResource NameVieWModelBindingProxy},
+                                                                              CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
                                                                                                          Path=Data}"
                                                                               Header="Delete" />
                                                                 </ContextMenu>
@@ -941,7 +1059,7 @@
                                                             </Button.Triggers>
 
                                                             <Button.Style>
-                                                                <Style BasedOn="{StaticResource MaterialDesignRaisedButton}"
+                                                                <Style BasedOn="{StaticResource NameActionButton}"
                                                                        TargetType="Button">
                                                                     <Setter Property="Opacity" Value="0.4" />
 
@@ -961,12 +1079,9 @@
                                                                 </Style>
                                                             </Button.Style>
                                                         </Button>
-                                                        <Button Width="12"
-                                                                Height="12"
-                                                                Margin="0 0 5 0"
-                                                                Padding="0 -5 0 -4"
-                                                                Command="{Binding ClearNewFlagCommand}"
+                                                        <Button Command="{Binding ClearNewFlagCommand}"
                                                                 Content="+"
+                                                                Style="{StaticResource NameActionButton}"
                                                                 Visibility="{Binding IsNewlyDetected.Value,
                                                                                      Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
                                                     </StackPanel>
@@ -992,6 +1107,7 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0"
+                                               VerticalAlignment="Center"
                                                Text="Features" />
                                     <StackPanel Grid.Column="1"
                                                 HorizontalAlignment="Right"
@@ -1001,25 +1117,37 @@
                                                       IsChecked="{Binding ElementName=MainWindowView,
                                                                           Path=DataContext.IsFeatureDragDropReorderingEnabled.Value}"
                                                       ToolTip="Enable drag and drop reordering" />
-                                        <Button Width="16"
-                                                Height="16"
-                                                Padding="0 -10"
+                                        <Button Padding="0 -10"
                                                 Command="{Binding ElementName=MainWindowView,
                                                                   Path=DataContext.ExpandAllFeaturesCommand}"
                                                 Content="+"
                                                 FontSize="16"
                                                 FontWeight="Black"
-                                                ToolTip="Expand all" />
-                                        <Button Width="16"
-                                                Height="16"
-                                                Margin="7 0 0 0"
+                                                ToolTip="Expand all">
+                                            <Button.Style>
+                                                <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                                       TargetType="{x:Type Button}">
+                                                    <Setter Property="Height" Value="16" />
+                                                    <Setter Property="Width" Value="16" />
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Button Margin="7 0 0 0"
                                                 Padding="0 -10"
                                                 Command="{Binding ElementName=MainWindowView,
                                                                   Path=DataContext.CollapseAllFeaturesCommand}"
                                                 Content="-"
                                                 FontSize="16"
                                                 FontWeight="Black"
-                                                ToolTip="Collapse all" />
+                                                ToolTip="Collapse all">
+                                            <Button.Style>
+                                                <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                                       TargetType="{x:Type Button}">
+                                                    <Setter Property="Height" Value="16" />
+                                                    <Setter Property="Width" Value="16" />
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>
@@ -1139,26 +1267,38 @@
                                             </StackPanel>
 
                                             <Button Grid.Column="3"
-                                                    Width="15"
-                                                    Height="15"
                                                     Margin="5 0"
                                                     Padding="-2 -1 -1 0"
                                                     Command="{Binding ConfirmEditingFeatureCommand}"
                                                     Content="&#x2714;"
                                                     FontSize="10"
                                                     Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
-                                                    IsTabStop="False" />
+                                                    IsTabStop="False">
+                                                <Button.Style>
+                                                    <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                                           TargetType="{x:Type Button}">
+                                                        <Setter Property="Height" Value="15" />
+                                                        <Setter Property="Width" Value="15" />
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
 
                                             <Button Grid.Column="4"
-                                                    Width="15"
-                                                    Height="15"
                                                     Margin="5 0"
                                                     Padding="0 -1 -1 0"
                                                     Command="{Binding ClearSelectedFeatureCommand}"
                                                     Content="&#x2716;"
                                                     FontSize="10"
                                                     Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
-                                                    IsTabStop="False" />
+                                                    IsTabStop="False">
+                                                <Button.Style>
+                                                    <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                                           TargetType="{x:Type Button}">
+                                                        <Setter Property="Height" Value="15" />
+                                                        <Setter Property="Width" Value="15" />
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
                                         </Grid>
 
                                         <ScrollViewer Grid.Row="1"
@@ -1207,15 +1347,29 @@
                                                                      Text="{Binding InstanceCode.Value,
                                                                                     UpdateSourceTrigger=PropertyChanged}" />
                                                             <Button Grid.Column="3"
-                                                                    Width="15"
-                                                                    Height="15"
-                                                                    Margin="5 0"
                                                                     Padding="0 -1 -1 0"
                                                                     Command="{Binding ElementName=MainWindowView,
                                                                                       Path=DataContext.RemoveFeatureInstanceRowCommand}"
                                                                     CommandParameter="{Binding .}"
                                                                     Content="-"
-                                                                    IsTabStop="False" />
+                                                                    IsTabStop="False">
+                                                                <Button.Style>
+                                                                    <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                                                           TargetType="{x:Type Button}">
+                                                                        <Setter Property="Height" Value="15" />
+                                                                        <Setter Property="Width" Value="15" />
+                                                                        <Setter Property="Margin" Value="5 0" />
+
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding ElementName=MainWindowView,
+                                                                                                           Path=DataContext.HasTouchInput}"
+                                                                                         Value="True">
+                                                                                <Setter Property="Margin" Value="5 2" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Button.Style>
+                                                            </Button>
                                                         </Grid>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
@@ -1223,14 +1377,20 @@
                                         </ScrollViewer>
 
                                         <Button Grid.Row="2"
-                                                Width="15"
-                                                Height="15"
                                                 Padding="1 -1 0 0"
                                                 HorizontalAlignment="Left"
                                                 Command="{Binding AddFeatureInstanceRowCommand}"
                                                 Content="+"
                                                 FontWeight="Black"
-                                                IsTabStop="False" />
+                                                IsTabStop="False">
+                                            <Button.Style>
+                                                <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                                       TargetType="{x:Type Button}">
+                                                    <Setter Property="Height" Value="15" />
+                                                    <Setter Property="Width" Value="15" />
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
                                     </Grid>
                                 </materialDesign:Card>
                             </Grid>
@@ -1284,11 +1444,17 @@
                                Text="{Binding ResultingFilePath.Value}"
                                TextWrapping="Wrap" />
                     <Button Grid.Column="2"
-                            Width="30"
-                            Height="30"
                             Padding="0"
                             Command="{Binding ApplyCommand}"
                             ToolTip="Apply">
+                        <Button.Style>
+                            <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                   TargetType="{x:Type Button}">
+                                <Setter Property="Height" Value="30" />
+                                <Setter Property="Width" Value="30" />
+                            </Style>
+                        </Button.Style>
+
                         <materialDesign:PackIcon Kind="Check" />
                     </Button>
                 </Grid>

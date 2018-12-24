@@ -617,25 +617,44 @@
                              Text="{Binding OriginalFileName.Value}"
                              TextWrapping="NoWrap" />
 
-                    <Button Grid.Row="0"
-                            Grid.Column="1"
-                            Padding="0"
-                            Command="{Binding OpenCommand}"
-                            CommandParameter="{Binding SelectedFile.Value}"
-                            ToolTip="Open file">
-                        <Button.Style>
-                            <Style BasedOn="{StaticResource TabletEnabledButton}"
-                                   TargetType="{x:Type Button}">
-                                <Setter Property="Height" Value="30" />
-                                <Setter Property="Width" Value="30" />
-                            </Style>
-                        </Button.Style>
+                    <StackPanel Grid.Row="0"
+                                Grid.Column="1"
+                                Orientation="Horizontal">
+                        <Button Padding="0"
+                                Command="{Binding OpenCommand}"
+                                CommandParameter="{Binding SelectedFile.Value}"
+                                ToolTip="Open file">
+                            <Button.Style>
+                                <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                       TargetType="{x:Type Button}">
+                                    <Setter Property="Height" Value="30" />
+                                    <Setter Property="Width" Value="30" />
+                                </Style>
+                            </Button.Style>
 
-                        <materialDesign:PackIcon Kind="OpenInNew" />
-                    </Button>
+                            <materialDesign:PackIcon Kind="OpenInNew" />
+                        </Button>
+
+                        <Button Margin="5 0 0 0"
+                                Padding="0"
+                                Command="{Binding OpenExplorerCommand}"
+                                CommandParameter="{Binding SelectedFile.Value}"
+                                ToolTip="Show in Explorer">
+                            <Button.Style>
+                                <Style BasedOn="{StaticResource TabletEnabledButton}"
+                                       TargetType="{x:Type Button}">
+                                    <Setter Property="Height" Value="30" />
+                                    <Setter Property="Width" Value="30" />
+                                </Style>
+                            </Button.Style>
+
+                            <materialDesign:PackIcon Kind="FolderOutline" />
+                        </Button>
+                    </StackPanel>
 
                     <WrapPanel Grid.Row="1"
                                Grid.Column="0"
+                               Grid.ColumnSpan="2"
                                Margin="0 5 5 5"
                                Orientation="Horizontal">
                         <CheckBox Height="23"
@@ -668,24 +687,6 @@
                                   Content="Recapitalize names"
                                   IsChecked="{Binding RecapitalizeNames.Value}" />
                     </WrapPanel>
-
-                    <Button Grid.Row="1"
-                            Grid.Column="1"
-                            Margin="0 5"
-                            Padding="0"
-                            Command="{Binding OpenExplorerCommand}"
-                            CommandParameter="{Binding SelectedFile.Value}"
-                            ToolTip="Show in Explorer">
-                        <Button.Style>
-                            <Style BasedOn="{StaticResource TabletEnabledButton}"
-                                   TargetType="{x:Type Button}">
-                                <Setter Property="Height" Value="30" />
-                                <Setter Property="Width" Value="30" />
-                            </Style>
-                        </Button.Style>
-
-                        <materialDesign:PackIcon Kind="FolderOutline" />
-                    </Button>
 
                     <TextBox x:Name="NewName"
                              Grid.Row="2"

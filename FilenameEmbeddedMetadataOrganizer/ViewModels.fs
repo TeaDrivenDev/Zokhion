@@ -499,9 +499,8 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
         |> ignore
 
         selectedFileWhenActive <-
-            selectedFile
-            |> Observable.filter (fun _ -> isActive.Value)
-            |> toReadOnlyReactiveProperty
+            let observable = selectedFile |> Observable.filter (fun _ -> isActive.Value)
+            observable.ToReadOnlyReactiveProperty(mode = ReactivePropertyMode.RaiseLatestValueOnSubscribe)
 
     member __.SearchString = searchString
     member __.SearchFromBaseDirectory = searchFromBaseDirectory

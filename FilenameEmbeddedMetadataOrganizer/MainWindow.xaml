@@ -93,7 +93,7 @@
                         </Button.Style>
                         <materialDesign:PackIcon Kind="Reload" />
                     </Button>
-                    <ToggleButton Margin="3 0 0 0"
+                    <ToggleButton Margin="7 0 0 0"
                                   IsChecked="{Binding FilterBySourceDirectoryPrefixes.Value}"
                                   IsEnabled="{Binding IsBaseDirectoryValid.Value}"
                                   ToolTip="Toggle filtering source folders by prefixes" />
@@ -502,7 +502,13 @@
                                                                                                  Converter={x:Static ui:BytesToMegabytesConverter.Instance},
                                                                                                  StringFormat={}{0:###0.0} MB}"
                                                                                Header="Size"
-                                                                               IsReadOnly="True" />
+                                                                               IsReadOnly="True">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="{x:Type TextBlock}">
+                                                <Setter Property="HorizontalAlignment" Value="Right" />
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </materialDesign:MaterialDataGridTextColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
 
@@ -512,10 +518,16 @@
                                     Visibility="{Binding IsUpdating.Value,
                                                          Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
 
-                            <TextBlock Grid.Row="2"
-                                       Margin="5 3 5 5"
-                                       Text="{Binding Files.Count,
-                                                      StringFormat={}{0} items}" />
+                            <StackPanel Grid.Row="2"
+                                        Orientation="Horizontal">
+                                <TextBlock Margin="5 3 5 5"
+                                           Text="{Binding Files.Count,
+                                                          StringFormat={}{0} items}" />
+                                <TextBlock Margin="5 3 5 5"
+                                           Text="{Binding Files,
+                                                          Converter={x:Static ui:FilesToTotalSizeConverter.Instance},
+                                                          StringFormat='({0:#,###,##0.0} MB)'}" />
+                            </StackPanel>
                         </Grid>
                     </DataTemplate>
                 </TabControl.ContentTemplate>

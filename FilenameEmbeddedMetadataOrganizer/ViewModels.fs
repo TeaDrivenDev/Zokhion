@@ -242,7 +242,8 @@ type FileChanges =
         DeletedFiles : Dictionary<string, FileInfo>
     }
 
-type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
+type SearchViewModel(commands : IObservable<SearchViewModelCommand>) as this =
+    inherit ReactiveObject()
 
     let mutable baseDirectory = ""
     let selectedDirectory = new BehaviorSubject<DirectoryInfo option>(None)
@@ -472,7 +473,9 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) =
                 | RightOnly fi -> files.Add fi
                 | JoinMatch _ -> ())
 
-            isUpdatingNotifier.TurnOff())
+            isUpdatingNotifier.TurnOff()
+
+            this.RaisePropertyChanged(nameof <@ this.Files @>))
         |> ignore
 
         [ refreshCommand.AsObservable(); commands ]

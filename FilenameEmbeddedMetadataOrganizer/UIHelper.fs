@@ -9,6 +9,9 @@ open System.Windows.Data
 
 open FilenameEmbeddedMetadataOrganizer.ViewModels
 
+module Utilities =
+    let bytesToMegabytes (value : float) = value / (1024. * 1024.)
+
 type FeaturesTreeViewItemTemplateSelector() =
     inherit DataTemplateSelector()
 
@@ -64,7 +67,7 @@ type BytesToMegabytesConverter() =
         member this.Convert(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
             if value = DependencyProperty.UnsetValue
             then 0.
-            else (System.Convert.ToDouble value) / (1024. * 1024.)
+            else value |> System.Convert.ToDouble |> Utilities.bytesToMegabytes
             :> obj
 
         member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
@@ -180,4 +183,18 @@ type FileChangesToEnumConverter() =
             :> obj
 
         member this.ConvertBack(value: obj, targetTypes: Type [], parameter: obj, culture: Globalization.CultureInfo): obj [] =
-            raise (System.NotImplementedException()) 
+            raise (System.NotImplementedException())
+
+type FilesToTotalSizeConverter() =
+    static member Instance = FilesToTotalSizeConverter() :> IValueConverter
+
+    interface IValueConverter with
+        member this.Convert(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
+            match value with
+            | :? (FileInfo seq) as files ->
+                files |> Seq.sumBy (fun fi -> fi.Length) |> float |> Utilities.bytesToMegabytes
+            | _ -> 0.
+            :> obj
+
+        member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
+            raise (System.NotImplementedException())

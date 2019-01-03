@@ -1208,6 +1208,18 @@
                                                               DataType="viewModels:FeatureInstanceViewModel"
                                                               ItemsSource="{Binding Instances}">
                                         <CheckBox IsChecked="{Binding IsSelected}">
+                                            <CheckBox.Style>
+                                                <Style TargetType="CheckBox">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ElementName=MainWindowView,
+                                                                                       Path=DataContext.HasTouchInput}"
+                                                                     Value="True">
+                                                            <Setter Property="Margin" Value="0 10" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </CheckBox.Style>
+
                                             <TextBlock Foreground="{StaticResource MaterialDesignBody}">
                                                 <TextBlock.Text>
                                                     <MultiBinding StringFormat="{}{0}: {1}">

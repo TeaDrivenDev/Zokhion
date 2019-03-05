@@ -1,5 +1,5 @@
 source https://www.nuget.org/api/v2
-framework: net461
+framework: net472
 
 nuget Dragablz
 nuget FSharp.Control.Reactive
@@ -8,14 +8,15 @@ nuget FsXaml.Wpf
 nuget gong-wpf-dragdrop
 nuget MaterialDesignThemes
 nuget ReactiveProperty
-nuget ReactiveUI
+nuget ReactiveUI < 9
+nuget Splat < 7
 nuget System.Reactive.Compatibility
 
 nuget System.ValueTuple
 
 group Test
     source https://www.nuget.org/api/v2
-    framework: net461
+    framework: net472
 
     nuget xunit
     nuget xunit.runner.console

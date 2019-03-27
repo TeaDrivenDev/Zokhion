@@ -222,9 +222,11 @@ module Logic =
         let mainPart =
             if parameters.FixupNamesInMainPart
             then
-                (mainPart, namesToUse)
-                ||> List.fold (fun acc current ->
-                    Regex.Replace(acc, current, current, RegexOptions.IgnoreCase))
+                try
+                    (mainPart, namesToUse)
+                    ||> List.fold (fun acc current ->
+                        Regex.Replace(acc, current, current, RegexOptions.IgnoreCase))
+                with _ -> mainPart
             else mainPart
 
         let detectedFeatures =

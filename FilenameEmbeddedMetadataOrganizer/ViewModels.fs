@@ -673,7 +673,7 @@ type MainWindowViewModel() as this =
             this.NewNameToAdd.Value <- ""
 
     let updateNamesList detectedNames =
-        (detectedNames, allNames)
+        (detectedNames, allNames |> Seq.toList)
         ||> fullOuterJoin toUpper (fun vm -> vm.Name.Value |> toUpper)
         |> Seq.iter (function
             | LeftOnly vm -> vm.IsSelected <- false

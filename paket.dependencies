@@ -10,7 +10,6 @@ nuget MaterialDesignThemes
 nuget ReactiveProperty
 nuget ReactiveUI < 9
 nuget Splat < 7
-nuget System.Reactive.Compatibility
 
 nuget System.ValueTuple
 

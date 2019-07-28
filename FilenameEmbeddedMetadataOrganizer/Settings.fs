@@ -7,18 +7,18 @@ module Settings =
     open System.Text.RegularExpressions
 
     type Feature =
-        { Name : string; Code : string; Include : string option; Instances : FeatureInstance list }
-    and FeatureInstance = { Name : string; Code : string }
+        { Name: string; Code: string; Include: string option; Instances: FeatureInstance list }
+    and FeatureInstance = { Name: string; Code: string }
 
-    type Replacement = { ToReplace : string; ReplaceWith : string }
+    type Replacement = { ToReplace: string; ReplaceWith: string }
 
     type Settings =
         {
-            SourceDirectoryPrefixes : string
-            DestinationDirectoryPrefixes : string
-            Replacements : Replacement list
-            Names : string list
-            Features : Feature list
+            SourceDirectoryPrefixes: string
+            DestinationDirectoryPrefixes: string
+            Replacements: Replacement list
+            Names: string list
+            Features: Feature list
         }
 
     let prefixesFilePath directory = Path.Combine(directory, ".prefixes")
@@ -85,7 +85,7 @@ module Settings =
             |> Array.toList
         else []
 
-    let writeNames directory (names : _ list) =
+    let writeNames directory (names: _ list) =
         let namesFilePath = namesFilePath directory
 
         if not <| List.isEmpty names || File.Exists namesFilePath
@@ -102,7 +102,7 @@ module Settings =
         let serializeInstance featureCode instance =
             sprintf "\t%s%s|%s"featureCode instance.Code instance.Name
 
-        let serializeFeature (feature : Feature) =
+        let serializeFeature (feature: Feature) =
             [
                 yield
                     feature.Include
@@ -115,7 +115,7 @@ module Settings =
 
         features |> List.collect serializeFeature
 
-    let writeFeatures directory (features : Feature list) =
+    let writeFeatures directory (features: Feature list) =
         let featuresFilePath = featuresFilePath directory
 
         if not <| List.isEmpty features || File.Exists featuresFilePath

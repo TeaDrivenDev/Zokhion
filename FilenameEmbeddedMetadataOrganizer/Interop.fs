@@ -8,26 +8,26 @@ module Interop =
     [<StructLayout(LayoutKind.Sequential)>]
     [<Struct>]
     type SHELLEXECUTEINFO =
-        val mutable cbSize : int
-        val mutable fMask : uint32
-        val mutable hwnd : IntPtr
+        val mutable cbSize: int
+        val mutable fMask: uint32
+        val mutable hwnd: IntPtr
         [<MarshalAs(UnmanagedType.LPTStr)>]
-        val mutable lpVerb : string
+        val mutable lpVerb: string
         [<MarshalAs(UnmanagedType.LPTStr)>]
-        val mutable lpFile : string
+        val mutable lpFile: string
         [<MarshalAs(UnmanagedType.LPTStr)>]
-        val mutable lpParameters : string
+        val mutable lpParameters: string
         [<MarshalAs(UnmanagedType.LPTStr)>]
-        val mutable lpDirectory : string
-        val mutable nShow : int
-        val mutable hInstApp : IntPtr
-        val mutable lpIDList : IntPtr
+        val mutable lpDirectory: string
+        val mutable nShow: int
+        val mutable hInstApp: IntPtr
+        val mutable lpIDList: IntPtr
         [<MarshalAs(UnmanagedType.LPTStr)>]
-        val mutable lpClass : string
-        val mutable hkeyClass : IntPtr
-        val mutable dwHotKey : uint32
-        val mutable hIcon : IntPtr
-        val mutable hProcess : IntPtr
+        val mutable lpClass: string
+        val mutable hkeyClass: IntPtr
+        val mutable dwHotKey: uint32
+        val mutable hIcon: IntPtr
+        val mutable hProcess: IntPtr
 
     [<DllImport("shell32.dll", CharSet = CharSet.Auto)>]
     extern bool ShellExecuteEx(SHELLEXECUTEINFO& lpExecInfo)

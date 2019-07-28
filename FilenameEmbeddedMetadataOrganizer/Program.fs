@@ -11,9 +11,9 @@ open FsXaml
 
 open FilenameEmbeddedMetadataOrganizer.ViewModels
 
-type Win32Window(handle : IntPtr) =
+type Win32Window(handle: IntPtr) =
     interface System.Windows.Forms.IWin32Window with
-        member __.Handle : IntPtr = handle
+        member __.Handle: IntPtr = handle
 
 type MainWindowBase = XAML<"MainWindow.xaml">
 
@@ -23,14 +23,14 @@ type MainWindow() as this =
     let mutable dragStart = Unchecked.defaultof<Point>
     let draggedItems = ResizeArray<_>()
 
-    let onClosing (_ : CancelEventArgs) = this.ViewModel.Shutdown()
+    let onClosing (_: CancelEventArgs) = this.ViewModel.Shutdown()
 
     do
         this.Closing.Add onClosing
 
-    member __.ViewModel : MainWindowViewModel = __.DataContext :?> MainWindowViewModel
+    member __.ViewModel: MainWindowViewModel = __.DataContext :?> MainWindowViewModel
 
-    override __.SelectFolder_Click (_ : obj, e : RoutedEventArgs) =
+    override __.SelectFolder_Click (_: obj, e: RoutedEventArgs) =
         use folderBrowserDialog = new Forms.FolderBrowserDialog()
         folderBrowserDialog.ShowNewFolderButton <- false
 
@@ -46,26 +46,26 @@ type MainWindow() as this =
         then
             __.ViewModel.BaseDirectory.Value <- folderBrowserDialog.SelectedPath
 
-    member __.Features_SelectedItemChanged (_ : obj, e : RoutedPropertyChangedEventArgs<obj>) =
+    member __.Features_SelectedItemChanged (_: obj, e: RoutedPropertyChangedEventArgs<obj>) =
         match e.NewValue with
         | :? FeatureViewModel as item -> this.ViewModel.SelectedFeature.Value <- item
         | _ -> ()
 
-    override __.SearchString_KeyUp(sender : obj, e : Input.KeyEventArgs) =
+    override __.SearchString_KeyUp(sender: obj, e: Input.KeyEventArgs) =
         if e.Key = Input.Key.Escape
         then
             (sender :?> TextBox).Text <- ""
             e.Handled <- true
 
-    override __.OriginalFileName_SelectionChanged(sender : obj, e : RoutedEventArgs) =
+    override __.OriginalFileName_SelectionChanged(sender: obj, e: RoutedEventArgs) =
         __.ViewModel.OriginalFileNameSelectedText.Value <-
             (sender :?> TextBox).SelectedText.Trim()
 
-    override __.NewFileName_SelectionChanged(sender : obj, e : RoutedEventArgs) =
+    override __.NewFileName_SelectionChanged(sender: obj, e: RoutedEventArgs) =
         __.ViewModel.NewFileNameSelectedText.Value <-
             (sender :?> TextBox).SelectedText.Trim()
 
-    override __.NewNameToAdd_KeyUp(sender : obj, e : Input.KeyEventArgs) =
+    override __.NewNameToAdd_KeyUp(sender: obj, e: Input.KeyEventArgs) =
         let sender = sender :?> TextBox
 
         match e.Key with
@@ -78,7 +78,7 @@ type MainWindow() as this =
         | _ -> ()
 
     // see https://stackoverflow.com/a/29028817/236507
-    override __.InstanceName_KeyUp(sender : obj, e : Input.KeyEventArgs) =
+    override __.InstanceName_KeyUp(sender: obj, e: Input.KeyEventArgs) =
         let sender = sender :?> TextBox
 
         match e.Key with
@@ -110,19 +110,19 @@ type MainWindow() as this =
             e.Handled <- true
         | _ -> ()
 
-    override __.InstanceCode_KeyUp(sender : obj, e : Input.KeyEventArgs) =
+    override __.InstanceCode_KeyUp(sender: obj, e: Input.KeyEventArgs) =
         __.InstanceName_KeyUp(sender, e)
 
     // Drag and drop implementation from http://codebrewery.blogspot.de/2010/06/drag-and-drop-files-from-wpf-listviews.html
     // see also https://stackoverflow.com/a/25123410/236507
-    member __.FilesGrid_PreviewMouseLeftButtonDown(sender : obj, e: MouseButtonEventArgs) =
+    member __.FilesGrid_PreviewMouseLeftButtonDown(sender: obj, e: MouseButtonEventArgs) =
         let filesGrid = sender :?> DataGrid
 
         dragStart <- e.GetPosition null
         draggedItems.Clear()
         draggedItems.AddRange(filesGrid.SelectedItems |> Seq.cast<obj>)
 
-    member __.FilesGrid_MouseMove(sender : obj, e: MouseEventArgs) =
+    member __.FilesGrid_MouseMove(sender: obj, e: MouseEventArgs) =
         let position = e.GetPosition null
         let dragDifference = dragStart - position
         let filesGrid = sender :?> DataGrid
@@ -151,7 +151,7 @@ type MainWindow() as this =
 
             e.Handled <- true
 
-    override __.SearchResultDirectory_OnPreviewMouseLeftButtonUp(sender : obj, args : MouseButtonEventArgs) =
+    override __.SearchResultDirectory_OnPreviewMouseLeftButtonUp(sender: obj, args: MouseButtonEventArgs) =
         match sender with
         | :? TextBlock as textBlock ->
             match textBlock.DataContext with
@@ -165,7 +165,7 @@ type AppBase = XAML<"App.xaml">
 type App() =
     inherit AppBase()
 
-    member __.Application_Startup (_ : obj, _ : StartupEventArgs) =
+    member __.Application_Startup (_: obj, _: StartupEventArgs) =
         MainWindow().Show()
 
 module Program =

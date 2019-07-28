@@ -710,7 +710,7 @@ module SettingsTests =
             ]
 
         // Act
-        let result : string list = serializeFeatures values
+        let result: string list = serializeFeatures values
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -789,9 +789,9 @@ module GenerateCodeTests =
 
     type GenerateCodeParameters =
         {
-            CodeLength : int
-            PreferConsonants : FillupWithVowels option
-            KeepAdditionalCapitalLetters : bool
+            CodeLength: int
+            PreferConsonants: FillupWithVowels option
+            KeepAdditionalCapitalLetters: bool
         }
 
     let baseParameters =
@@ -801,7 +801,7 @@ module GenerateCodeTests =
             KeepAdditionalCapitalLetters = true
         }
 
-    let isVowel (c : char) = c |> string |> "aeiou".Contains
+    let isVowel (c: char) = c |> string |> "aeiou".Contains
 
     let splitLength parts codeLength =
         let min = codeLength / parts
@@ -813,8 +813,8 @@ module GenerateCodeTests =
         |]
         |> Array.filter ((<>) 0)
 
-    let generateCode parameters existingCodes (input : string) =
-        let encodeWord parameters (input : string) =
+    let generateCode parameters existingCodes (input: string) =
+        let encodeWord parameters (input: string) =
             match parameters.PreferConsonants with
             | Some fillupMode ->
                 [|

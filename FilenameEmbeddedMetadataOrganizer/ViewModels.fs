@@ -7,7 +7,6 @@ open System.Diagnostics
 open System.IO
 open System.Linq
 open System.Reactive.Concurrency
-open System.Reactive.Disposables
 open System.Reactive.Linq
 open System.Reactive.Subjects
 open System.Text.RegularExpressions
@@ -33,7 +32,7 @@ module Utility =
     open FSharp.Quotations
 
     // see https://stackoverflow.com/a/48311816/236507
-    let nameof (q : Expr<_>) =
+    let nameof (q: Expr<_>) =
         match q with
         | Patterns.Let(_, _, DerivedPatterns.Lambdas(_, Patterns.Call(_, mi, _))) -> mi.Name
         | Patterns.PropertyGet(_, mi, _) -> mi.Name
@@ -44,33 +43,34 @@ module Utility =
 
     // From http://stackoverflow.com/questions/2682475/converting-f-quotations-into-linq-expressions
     /// Converts a F# Expression to a LINQ Lambda
-    let toLambda (exp : Expr) =
-        let linq = FSharp.Linq.RuntimeHelpers.LeafExpressionConverter.QuotationToExpression exp :?> MethodCallExpression
+    let toLambda (exp: Expr) =
+        let linq =
+            FSharp.Linq.RuntimeHelpers.LeafExpressionConverter.QuotationToExpression exp :?> MethodCallExpression
         linq.Arguments.[0] :?> LambdaExpression
 
     /// Converts a Lambda quotation into a Linq Lambda Expression with 1 parameter
-    let toLinq (exp : Expr<'a -> 'b>) =
+    let toLinq (exp: Expr<'a -> 'b>) =
         let lambda = toLambda exp
         Expression.Lambda<Func<'a, 'b>>(lambda.Body, lambda.Parameters)
 
-    let withLatestFrom (observable2 : IObservable<'T2>) (observable1 : IObservable<'T1>) =
+    let withLatestFrom (observable2: IObservable<'T2>) (observable1: IObservable<'T1>) =
         observable1.WithLatestFrom(observable2, fun v1 v2 -> v1, v2)
 
-    let xwhen (observable2 : IObservable<_>) (observable1 : IObservable<_>) =
+    let xwhen (observable2: IObservable<_>) (observable1: IObservable<_>) =
         observable1 |> withLatestFrom observable2 |> Observable.filter snd |> Observable.map fst
 
-    let containsAll parts (s : string) = parts |> List.forall s.Contains
+    let containsAll parts (s: string) = parts |> List.forall s.Contains
 
-    let split (separators : string []) (s : string) =
+    let split (separators: string []) (s: string) =
         s.Split(separators, StringSplitOptions.RemoveEmptyEntries)
 
-    let toReadOnlyReactiveProperty (observable : IObservable<_>) =
+    let toReadOnlyReactiveProperty (observable: IObservable<_>) =
         observable.ToReadOnlyReactiveProperty()
 
-    let maxString maxLength (s : string) = s.Substring(0, Math.Min(s.Length, maxLength))
+    let maxString maxLength (s: string) = s.Substring(0, Math.Min(s.Length, maxLength))
 
 [<AllowNullLiteral>]
-type FeatureViewModel(feature : Feature) as this =
+type FeatureViewModel(feature: Feature) as this =
     inherit ReactiveObject()
 
     let instances = ReactiveList<FeatureInstanceViewModel>(ChangeTrackingEnabled = true)
@@ -112,7 +112,7 @@ type FeatureViewModel(feature : Feature) as this =
         __.IsExpanded.Value <- __.Instances |> Seq.exists (fun vm -> vm.IsSelected)
 
 and [<AllowNullLiteral>]
-    FeatureInstanceViewModel(feature : Feature, instance : FeatureInstance) =
+    FeatureInstanceViewModel(feature: Feature, instance: FeatureInstance) =
     inherit FeatureViewModel(feature)
 
     let mutable isSelected = false
@@ -134,9 +134,9 @@ and [<AllowNullLiteral>]
 //type FeatureInstanceOutgoingUpdate =
 //    | Change of NewFeatureInstanceViewModel * FeatureInstance
 
-//and NewFeatureInstanceViewModel(instanceName : string,
-//                                instanceCode : string,
-//                                incomingUpdates : IObservable<FeatureInstanceIncomingUpdate>) as this =
+//and NewFeatureInstanceViewModel(instanceName: string,
+//                                instanceCode: string,
+//                                incomingUpdates: IObservable<FeatureInstanceIncomingUpdate>) as this =
 
 //    let instanceName = new ReactiveProperty<_>(instanceName)
 //    let instanceCode = new ReactiveProperty<_>(instanceCode)
@@ -155,10 +155,10 @@ and [<AllowNullLiteral>]
 
 //    member __.Updates = outgoingUpdates
 
-//    new (incomingUpdates : IObservable<FeatureInstanceIncomingUpdate>) =
+//    new (incomingUpdates: IObservable<FeatureInstanceIncomingUpdate>) =
 //        NewFeatureInstanceViewModel("", "", incomingUpdates)
 
-type NewFeatureInstanceViewModel(instanceName : string, instanceCode : string) =
+type NewFeatureInstanceViewModel(instanceName: string, instanceCode: string) =
     let instanceName = new ReactiveProperty<_>(instanceName)
     let instanceCode = new ReactiveProperty<_>(instanceCode)
 
@@ -175,11 +175,11 @@ type NewFeatureInstanceViewModel(instanceName : string, instanceCode : string) =
 
     new () = NewFeatureInstanceViewModel("", "")
 
-    new (feature : FeatureInstance) =
+    new (feature: FeatureInstance) =
         NewFeatureInstanceViewModel(feature.Name, feature.Code)
 
 [<AllowNullLiteral>]
-type NameViewModel(name : string, isSelected : bool, isNewlyDetected : bool, isAdded : bool) =
+type NameViewModel(name: string, isSelected: bool, isNewlyDetected: bool, isAdded: bool) =
     inherit ReactiveObject()
 
     let mutable xIsSelected = isSelected
@@ -212,19 +212,19 @@ type WithFeatures = HasNoFeatures | HasFeatures | Both
 
 type SearchFilterParameters =
     {
-        BaseDirectory : string
-        SelectedDirectory : string option
-        SearchValues : string list
-        WithFeatures : WithFeatures
-        SearchFromBaseDirectory : bool
+        BaseDirectory: string
+        SelectedDirectory: string option
+        SearchValues: string list
+        WithFeatures: WithFeatures
+        SearchFromBaseDirectory: bool
     }
 
 type FilterMode = Search | CheckAffected
 
 type SearchFilter =
     {
-        Filter : FilterMode -> FileInfo -> bool
-        SearchDirectory : string option
+        Filter: FilterMode -> FileInfo -> bool
+        SearchDirectory: string option
     }
 
 type SearchFilterChange =
@@ -234,15 +234,15 @@ type SearchFilterChange =
     | SearchFromBaseDirectory of bool
     | WithFeatures of WithFeatures
 
-type RenamedFile = { OriginalFile : FileInfo; NewFilePath : string }
+type RenamedFile = { OriginalFile: FileInfo; NewFilePath: string }
 
 type FileChanges =
     {
-        RenamedFiles : Dictionary<string, RenamedFile>
-        DeletedFiles : Dictionary<string, FileInfo>
+        RenamedFiles: Dictionary<string, RenamedFile>
+        DeletedFiles: Dictionary<string, FileInfo>
     }
 
-type SearchViewModel(commands : IObservable<SearchViewModelCommand>) as this =
+type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
     inherit ReactiveObject()
 
     let mutable baseDirectory = ""
@@ -311,17 +311,17 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) as this =
                             [
                                 yield
                                     smaller
-                                    |> Option.map (fun smaller -> fun (fi : FileInfo) -> fi.Length < int64 smaller)
+                                    |> Option.map (fun smaller -> fun (fi: FileInfo) -> fi.Length < int64 smaller)
 
                                 yield
                                     larger
-                                    |> Option.map (fun larger -> fun (fi : FileInfo) -> fi.Length > int64 larger)
+                                    |> Option.map (fun larger -> fun (fi: FileInfo) -> fi.Length > int64 larger)
 
                                 yield
                                     match contains with
                                     | [] -> None
                                     | contains ->
-                                        (fun (fi : FileInfo) ->
+                                        (fun (fi: FileInfo) ->
                                             fi.Name
                                             |> Path.GetFileNameWithoutExtension
                                             |> toUpper
@@ -330,7 +330,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) as this =
                                             |> Some
                             ]
 
-                    let checkHasFeatures (fi : FileInfo) =
+                    let checkHasFeatures (fi: FileInfo) =
                         fi.FullName
                         |> Path.GetFileNameWithoutExtension
                         |> hasFeaturesRegex.IsMatch
@@ -343,15 +343,15 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) as this =
                 ]
                 |> List.choose id
 
-            fun (fi : FileInfo) -> filters |> Seq.forall (fun filter -> filter fi)
+            fun (fi: FileInfo) -> filters |> Seq.forall (fun filter -> filter fi)
 
         let filter =
             let checkFilter =
-                fun (fi : FileInfo) ->
+                fun (fi: FileInfo) ->
                     (toUpper fi.FullName).StartsWith(searchDirectory |> Option.defaultValue "" |> toUpper)
                     && searchFilters fi
 
-            fun filterMode (fi : FileInfo) ->
+            fun filterMode (fi: FileInfo) ->
                 match filterMode with
                 | Search -> searchFilters fi
                 | CheckAffected -> checkFilter fi
@@ -467,7 +467,7 @@ type SearchViewModel(commands : IObservable<SearchViewModelCommand>) as this =
         |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.subscribe (fun newFiles ->
             (newFiles, (files |> Seq.toList))
-            ||> fullOuterJoin (fun fi -> fi.FullName) (fun (fi : FileInfo) -> fi.FullName)
+            ||> fullOuterJoin (fun fi -> fi.FullName) (fun (fi: FileInfo) -> fi.FullName)
             |> Seq.iter (function
                 | LeftOnly fi -> files.Remove fi |> ignore
                 | RightOnly fi -> files.Add fi
@@ -627,8 +627,8 @@ type MainWindowViewModel() as this =
         |> Seq.sortWith (fun x y -> Interop.StrCmpLogicalW(x.Name, y.Name))
         |> Seq.iter directories.Add
 
-    let updateDestinationDirectories (prefixes : string) (currentFilePath : string) =
-        let startsWithAny parts (s : string) =
+    let updateDestinationDirectories (prefixes: string) (currentFilePath: string) =
+        let startsWithAny parts (s: string) =
             parts |> Seq.toList |> List.exists (string >> s.StartsWith)
 
         let currentFileDirectory = Path.GetDirectoryName currentFilePath
@@ -651,7 +651,7 @@ type MainWindowViewModel() as this =
 
         this.SelectedDestinationDirectory.Value <-
             destinationDirectories
-            |> Seq.find (fun (d : DirectoryInfo) -> d.FullName = currentFileDirectory)
+            |> Seq.find (fun (d: DirectoryInfo) -> d.FullName = currentFileDirectory)
 
     let clearNewNameToAdd () = this.NewNameToAdd.Value <- ""
 
@@ -700,7 +700,7 @@ type MainWindowViewModel() as this =
 
     let updateSelectedFeatures isInitial selectedFeatures =
         (selectedFeatures, featureInstances)
-        ||> fullOuterJoin id (fun (vm : FeatureInstanceViewModel) -> vm.CompositeInstanceCode)
+        ||> fullOuterJoin id (fun (vm: FeatureInstanceViewModel) -> vm.CompositeInstanceCode)
         |> Seq.iter (fun result ->
             match result with
             | LeftOnly vm -> vm.IsSelected <- false
@@ -712,7 +712,7 @@ type MainWindowViewModel() as this =
             let anyFeaturesSelected = featureInstances |> Seq.exists (fun vm -> vm.IsSelected)
 
             features
-            |> Seq.iter (fun (vm : FeatureViewModel) ->
+            |> Seq.iter (fun (vm: FeatureViewModel) ->
                 if anyFeaturesSelected
                 then vm.ResetExpanded()
                 else vm.IsExpanded.Value <- true)
@@ -830,11 +830,11 @@ type MainWindowViewModel() as this =
 
         openCommand <-
             ReactiveCommand.Create(
-                (fun (fi : FileInfo) -> Process.Start fi.FullName |> ignore),
+                (fun (fi: FileInfo) -> Process.Start fi.FullName |> ignore),
                 this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists))
 
         openFromSearchCommand <-
-            ReactiveCommand.Create(fun (fi : FileInfo) ->
+            ReactiveCommand.Create(fun (fi: FileInfo) ->
                 if fi.Exists then Process.Start fi.FullName |> ignore)
 
         openExplorerCommand <-
@@ -853,11 +853,11 @@ type MainWindowViewModel() as this =
                 |> Option.iter (asSnd "explorer.exe" >> Process.Start >> ignore))
 
         showFilePropertiesCommand <-
-            ReactiveCommand.Create(fun (fi : FileInfo) ->
+            ReactiveCommand.Create(fun (fi: FileInfo) ->
                 if fi.Exists then Interop.showFileProperties fi.FullName |> ignore)
 
         deleteFileCommand <-
-            ReactiveCommand.Create(fun (fi : FileInfo) ->
+            ReactiveCommand.Create(fun (fi: FileInfo) ->
                 if fi.Exists
                 then
                     MessageBox.Show(sprintf "Delete file %s?" fi.FullName,
@@ -899,7 +899,7 @@ type MainWindowViewModel() as this =
                 sprintf ".%s." name |> Some |> createSearchTab None |> searches.Add)
 
         deleteNameCommand <-
-            ReactiveCommand.Create(fun (vm : NameViewModel) ->
+            ReactiveCommand.Create(fun (vm: NameViewModel) ->
                 MessageBox.Show(sprintf "Delete name '%s'?" vm.Name.Value,
                                 "Delete Name",
                                 MessageBoxButton.OKCancel,
@@ -965,7 +965,7 @@ type MainWindowViewModel() as this =
                     |> Seq.iter (fun feature -> this.FeatureInstances.AddRange feature.Instances))
 
         removeFeatureInstanceRowCommand <-
-            ReactiveCommand.Create(fun (vm : NewFeatureInstanceViewModel) ->
+            ReactiveCommand.Create(fun (vm: NewFeatureInstanceViewModel) ->
                 this.EditingFeatureInstances.Remove vm |> ignore)
 
         addFeatureInstanceRowCommand <-
@@ -1283,40 +1283,40 @@ type MainWindowViewModel() as this =
 
     member __.HasTouchInput = hasTouchInput
 
-    member __.BaseDirectory : ReactiveProperty<string> = baseDirectory
-    member __.FilterBySourceDirectoryPrefixes : ReactiveProperty<_> = filterBySourceDirectoryPrefixes
-    member __.SourceDirectoryPrefixes : ReactiveProperty<_> = sourceDirectoryPrefixes
+    member __.BaseDirectory: ReactiveProperty<string> = baseDirectory
+    member __.FilterBySourceDirectoryPrefixes: ReactiveProperty<_> = filterBySourceDirectoryPrefixes
+    member __.SourceDirectoryPrefixes: ReactiveProperty<_> = sourceDirectoryPrefixes
     member __.RefreshDirectoriesCommand = refreshDirectoriesCommand
 
-    member __.SelectedDirectory : ReactiveProperty<DirectoryInfo> = selectedDirectory
+    member __.SelectedDirectory: ReactiveProperty<DirectoryInfo> = selectedDirectory
 
     member __.Directories = directories
 
     member __.Searches = searches
     member __.CreateSearchTab = Func<_>(fun () -> createSearchTab None None)
-    member __.CreateSearchTabForDirectory(directory : string) =
+    member __.CreateSearchTabForDirectory(directory: string) =
         createSearchTab (Some directory) None |> searches.Add
-    member __.ActiveSearchTab : ReactiveProperty<SearchViewModel> = activeSearchTab
-    member __.IsBaseDirectoryValid : ReadOnlyReactiveProperty<_> = isBaseDirectoryValid
+    member __.ActiveSearchTab: ReactiveProperty<SearchViewModel> = activeSearchTab
+    member __.IsBaseDirectoryValid: ReadOnlyReactiveProperty<_> = isBaseDirectoryValid
     member __.CloseSearchTabCallback =
-        ItemActionCallback(fun (args : ItemActionCallbackArgs<TabablzControl>) ->
+        ItemActionCallback(fun (args: ItemActionCallbackArgs<TabablzControl>) ->
             if args.Owner.Items.Count < 2 then args.Cancel())
 
-    member __.SelectedFile : ReadOnlyReactiveProperty<FileInfo> = selectedFile
+    member __.SelectedFile: ReadOnlyReactiveProperty<FileInfo> = selectedFile
 
     member __.ShowSettings = showSettings
     member __.SaveSettingsCommand = saveSettingsCommand
 
-    member __.OriginalFileName : ReactiveProperty<string> = originalFileName
-    member __.OriginalFileNameSelectedText : ReactiveProperty<_> = originalFileNameSelectedText
-    member __.NewFileName : ReactiveProperty<string> = newFileName
-    member __.NewFileNameSelectedText : ReactiveProperty<_> = newFileNameSelectedText
+    member __.OriginalFileName: ReactiveProperty<string> = originalFileName
+    member __.OriginalFileNameSelectedText: ReactiveProperty<_> = originalFileNameSelectedText
+    member __.NewFileName: ReactiveProperty<string> = newFileName
+    member __.NewFileNameSelectedText: ReactiveProperty<_> = newFileNameSelectedText
 
-    member __.TreatParenthesizedPartAsNames : ReactiveProperty<_> = treatParenthesizedPartAsNames
-    member __.FixupNamesInMainPart : ReactiveProperty<_> = fixupNamesInMainPart
-    member __.ReplaceUnderscores : ReactiveProperty<_> = replaceUnderscores
-    member __.DetectNamesInMainAndNamesParts : ReactiveProperty<_> = detectNamesInMainAndNamesParts
-    member __.RecapitalizeNames : ReactiveProperty<_> = recapitalizeNames
+    member __.TreatParenthesizedPartAsNames: ReactiveProperty<_> = treatParenthesizedPartAsNames
+    member __.FixupNamesInMainPart: ReactiveProperty<_> = fixupNamesInMainPart
+    member __.ReplaceUnderscores: ReactiveProperty<_> = replaceUnderscores
+    member __.DetectNamesInMainAndNamesParts: ReactiveProperty<_> = detectNamesInMainAndNamesParts
+    member __.RecapitalizeNames: ReactiveProperty<_> = recapitalizeNames
 
     member __.OpenCommand = openCommand
     member __.OpenFromSearchCommand = openFromSearchCommand
@@ -1326,29 +1326,29 @@ type MainWindowViewModel() as this =
 
     member __.FileChanges = fileChanges
 
-    member __.SelectedDestinationDirectory : ReactiveProperty<_> = selectedDestinationDirectory
-    member __.DestinationDirectoryPrefixes : ReactiveProperty<_> = destinationDirectoryPrefixes
+    member __.SelectedDestinationDirectory: ReactiveProperty<_> = selectedDestinationDirectory
+    member __.DestinationDirectoryPrefixes: ReactiveProperty<_> = destinationDirectoryPrefixes
     member __.DestinationDirectories = destinationDirectories
 
-    member __.ToReplaceToAdd : ReactiveProperty<_> = toReplaceToAdd
-    member __.ReplaceWithToAdd : ReactiveProperty<_> = replaceWithToAdd
+    member __.ToReplaceToAdd: ReactiveProperty<_> = toReplaceToAdd
+    member __.ReplaceWithToAdd: ReactiveProperty<_> = replaceWithToAdd
     member __.AddReplacementCommand = addReplacementCommand
-    member __.Replacements : ObservableCollection<_> = replacements
+    member __.Replacements: ObservableCollection<_> = replacements
 
-    member __.NewNameToAdd : ReactiveProperty<string> = newNameToAdd
+    member __.NewNameToAdd: ReactiveProperty<string> = newNameToAdd
     member __.ClearNewNameToAdd() = clearNewNameToAdd ()
     member __.ClearNewNameToAddCommand = clearNewNameToAddCommand
-    member __.AddName(name : string) = addName name
+    member __.AddName(name: string) = addName name
     member __.AddNameCommand = addNameCommand
 
-    member __.Names : ObservableCollection<NameViewModel> = names
+    member __.Names: ObservableCollection<NameViewModel> = names
 
-    member __.ResetNameSelectionCommand : ReactiveCommand = resetNameSelectionCommand
+    member __.ResetNameSelectionCommand: ReactiveCommand = resetNameSelectionCommand
     member __.SearchForTextCommand = searchForTextCommand
     member __.SearchForNameCommand = searchForNameCommand
     member __.DeleteNameCommand = deleteNameCommand
 
-    member __.EditingFeatureInstances : ObservableCollection<NewFeatureInstanceViewModel> = editingFeatureInstances
+    member __.EditingFeatureInstances: ObservableCollection<NewFeatureInstanceViewModel> = editingFeatureInstances
     member __.RemoveFeatureInstanceRowCommand = removeFeatureInstanceRowCommand
     member __.AddFeatureInstanceRowCommand = addFeatureInstanceRowCommand
     member __.ClearSelectedFeatureCommand = clearSelectedFeatureCommand
@@ -1357,25 +1357,25 @@ type MainWindowViewModel() as this =
     member __.ExpandAllFeaturesCommand = expandAllFeaturesCommand
     member __.CollapseAllFeaturesCommand = collapseAllFeaturesCommand
 
-    member __.EditingFeatureName : ReactiveProperty<string> = editingFeatureName
-    member __.EditingFeatureCode : ReactiveProperty<string> = editingFeatureCode
-    member __.EditingFeatureToInclude : ReactiveProperty<string> = editingFeatureToInclude
+    member __.EditingFeatureName: ReactiveProperty<string> = editingFeatureName
+    member __.EditingFeatureCode: ReactiveProperty<string> = editingFeatureCode
+    member __.EditingFeatureToInclude: ReactiveProperty<string> = editingFeatureToInclude
 
     member __.ConfirmEditingFeatureCommand = confirmEditingFeatureCommand
 
-    member __.SelectedFeature : ReactiveProperty<FeatureViewModel> = selectedFeature
+    member __.SelectedFeature: ReactiveProperty<FeatureViewModel> = selectedFeature
 
     member __.SelectedFeatureInstances =
         this.FeatureInstances
         |> Seq.filter (fun vm -> vm.IsSelected)
         |> Seq.map (fun vm -> vm.FeatureCode + vm.InstanceCode)
 
-    member __.Features : ReactiveList<FeatureViewModel> = features
+    member __.Features: ReactiveList<FeatureViewModel> = features
 
-    member __.FeatureInstances : ReactiveList<FeatureInstanceViewModel> = featureInstances
+    member __.FeatureInstances: ReactiveList<FeatureInstanceViewModel> = featureInstances
 
-    member __.IsFeatureDragDropReorderingEnabled : ReactiveProperty<bool> = isFeatureDragDropReorderingEnabled
+    member __.IsFeatureDragDropReorderingEnabled: ReactiveProperty<bool> = isFeatureDragDropReorderingEnabled
 
-    member __.ResultingFilePath : ReactiveProperty<string> = resultingFilePath
+    member __.ResultingFilePath: ReactiveProperty<string> = resultingFilePath
 
     member __.ApplyCommand = applyCommand

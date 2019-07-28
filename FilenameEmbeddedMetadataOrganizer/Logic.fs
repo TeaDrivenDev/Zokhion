@@ -7,21 +7,21 @@ module Logic =
     open System.Text.RegularExpressions
 
     let inline (<||>) f g x = f x || g x
-    let trim (s : string) = s.Trim()
-    let toUpper (s : string) = s.ToUpper()
+    let trim (s: string) = s.Trim()
+    let toUpper (s: string) = s.ToUpper()
     let toTitleCase s = CultureInfo.CurrentCulture.TextInfo.ToTitleCase s
 
     type RenameParameters =
         {
-            SelectedFeatures : string list option
-            AllNames : string list
-            SelectedNames : string list option
-            TreatParenthesizedPartAsNames : bool
-            DetectNamesInMainAndNamesParts : bool
-            FixupNamesInMainPart : bool
-            RecapitalizeNames : bool
-            ReplaceUnderscores : bool
-            Replacements : (string * string) list
+            SelectedFeatures: string list option
+            AllNames: string list
+            SelectedNames: string list option
+            TreatParenthesizedPartAsNames: bool
+            DetectNamesInMainAndNamesParts: bool
+            FixupNamesInMainPart: bool
+            RecapitalizeNames: bool
+            ReplaceUnderscores: bool
+            Replacements: (string * string) list
         }
 
     type OptionChange =
@@ -77,21 +77,21 @@ module Logic =
 
     type RenameResult =
         {
-            NewFileName : string
-            DetectedFeatures : string list
-            DetectedNames : string list
+            NewFileName: string
+            DetectedFeatures: string list
+            DetectedNames: string list
         }
 
     type NameSource = Selected | NamesPart | MainPart
 
     type MatchedName =
         {
-            Name : string
-            Normalized : string
-            Source : NameSource
+            Name: string
+            Normalized: string
+            Source: NameSource
         }
 
-    let splitFileName preserveSeparateNamesPart (fileName : string) =
+    let splitFileName preserveSeparateNamesPart (fileName: string) =
         let regex =
             if preserveSeparateNamesPart
             then @"^(?<main>.+?)\s*(?<names>\([^\)]+\))?\s*(?<features>\[\..+\.\])?$"
@@ -104,8 +104,8 @@ module Logic =
         then (m.Groups.["main"].Value, m.Groups.["names"].Value, m.Groups.["features"].Value)
         else "", "", ""
 
-    let evaluateNamesPart (names : string) =
-        let splitBy separator (``match`` : Match) =
+    let evaluateNamesPart (names: string) =
+        let splitBy separator (``match``: Match) =
             ``match``.Groups.["names"].Value.Split separator
             |> Array.map trim
             |> Array.toList
@@ -127,14 +127,14 @@ module Logic =
             then Some (splitBy [| ',' |] m)
             else None
 
-    let evaluateFeaturesPart (names : string) =
+    let evaluateFeaturesPart (names: string) =
         let m = Regex.Match(names, @"^\[\.(?<features>.+)\.\]$")
 
         if m.Success
         then Some (m.Groups.["features"].Value.Split('.') |> Array.map trim |> Array.toList)
         else None
 
-    let detectListedNames (allNames : string list) source (part : string) =
+    let detectListedNames (allNames: string list) source (part: string) =
         let part = part.ToUpper()
 
         allNames
@@ -147,7 +147,7 @@ module Logic =
                 Source = source
             })
 
-    let rename parameters (originalFileName : string) : RenameResult =
+    let rename parameters (originalFileName: string): RenameResult =
         let originalFileName = string originalFileName
 
         let originalFileName =

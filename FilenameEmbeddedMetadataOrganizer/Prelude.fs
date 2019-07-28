@@ -16,10 +16,10 @@ module Prelude =
         | JoinMatch of 'TLeft * 'TRight
 
     [<AllowNullLiteral>]
-    type JoinWrapper<'a>(value : 'a) =
+    type JoinWrapper<'a>(value: 'a) =
         member __.Value = value
 
-    let (|JoinWrapped|) (wrapper : JoinWrapper<_>) = wrapper.Value
+    let (|JoinWrapped|) (wrapper: JoinWrapper<_>) = wrapper.Value
 
     let asFst second first = first, second
     let asSnd first second = first, second
@@ -28,10 +28,10 @@ module Prelude =
 
     let uncurry fn (a, b) = fn a b
 
-    let join innerKeySelector outerKeySelector (inner : seq<'TInner>) (outer : seq<'TOuter>) =
+    let join innerKeySelector outerKeySelector (inner: seq<'TInner>) (outer: seq<'TOuter>) =
         outer.Join(inner, Func<_, _> outerKeySelector, Func<_, _> innerKeySelector, fun outer inner -> outer, inner)
 
-    let leftJoin innerKeySelector outerKeySelector (inner : seq<'TInner>) (outer : seq<'TOuter>) =
+    let leftJoin innerKeySelector outerKeySelector (inner: seq<'TInner>) (outer: seq<'TOuter>) =
         query {
             for o in outer do
             leftOuterJoin i in inner on
@@ -40,7 +40,7 @@ module Prelude =
             select (o, joined |> Option.ofObj)
         }
 
-    let fullOuterJoin innerKeySelector outerKeySelector (right : 'TRight seq) (left : 'TLeft seq) =
+    let fullOuterJoin innerKeySelector outerKeySelector (right: 'TRight seq) (left: 'TLeft seq) =
         let optionizeFirst (a, b) = Some a, b
 
         let valueInOuter =
@@ -61,7 +61,7 @@ module Prelude =
 
     let (|OfNull|) value = if isNull value then None else Some value
 
-    let (|KeyValuePair|) (kvp : KeyValuePair<_, _>) = kvp.Key, kvp.Value
+    let (|KeyValuePair|) (kvp: KeyValuePair<_, _>) = kvp.Key, kvp.Value
 
     let (|IsSome|) values = List.choose id values
 
@@ -69,7 +69,7 @@ module Prelude =
 
     let inline (<&&>) f g x = f x && g x
 
-    type SelectiveBehaviorSubject<'T>(selector : 'T -> bool) =
+    type SelectiveBehaviorSubject<'T>(selector: 'T -> bool) =
         let compositeDisposable = new CompositeDisposable()
 
         let innerSubject = new System.Reactive.Subjects.Subject<'T>()

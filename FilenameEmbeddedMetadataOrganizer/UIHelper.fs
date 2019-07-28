@@ -10,12 +10,12 @@ open System.Windows.Data
 open FilenameEmbeddedMetadataOrganizer.ViewModels
 
 module Utilities =
-    let bytesToMegabytes (value : float) = value / (1024. * 1024.)
+    let bytesToMegabytes (value: float) = value / (1024. * 1024.)
 
 type FeaturesTreeViewItemTemplateSelector() =
     inherit DataTemplateSelector()
 
-    override __.SelectTemplate(item : obj, container : DependencyObject) =
+    override __.SelectTemplate(item: obj, container: DependencyObject) =
         match item with
         | :? FeatureInstanceViewModel -> __.FeatureInstanceTemplate
         | :? FeatureViewModel -> __.FeatureRootTemplate
@@ -33,9 +33,12 @@ type InvertableBooleanToVisibilityConverter() =
             if value = DependencyProperty.UnsetValue
             then Visibility.Visible
             else
-                match System.Convert.ToBoolean value, System.Convert.ToBoolean parameter with
-                | true, false | false, true -> Visibility.Visible
-                | true, true | false, false -> Visibility.Collapsed
+                let show = System.Convert.ToBoolean value
+                let invert = System.Convert.ToBoolean parameter
+
+                if show <> invert
+                then Visibility.Visible
+                else Visibility.Collapsed
             :> obj
 
         member this.ConvertBack(value: obj, targetType: System.Type, parameter: obj, culture: System.Globalization.CultureInfo): obj =

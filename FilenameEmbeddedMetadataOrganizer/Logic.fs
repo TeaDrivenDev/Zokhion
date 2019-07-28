@@ -11,6 +11,8 @@ module Logic =
     let toUpper (s: string) = s.ToUpper()
     let toTitleCase s = CultureInfo.CurrentCulture.TextInfo.ToTitleCase s
 
+    type UnderscoreHandling = Replace | TrimSuffix | Ignore
+
     type RenameParameters =
         {
             SelectedFeatures: string list option
@@ -20,7 +22,7 @@ module Logic =
             DetectNamesInMainAndNamesParts: bool
             FixupNamesInMainPart: bool
             RecapitalizeNames: bool
-            ReplaceUnderscores: bool
+            UnderscoreHandling: UnderscoreHandling
             Replacements: (string * string) list
         }
 
@@ -28,7 +30,7 @@ module Logic =
         | TreatParenthesizedPartAsNames of bool
         | FixupNamesInMainPart of bool
         | RecapitalizeNames of bool
-        | ReplaceUnderscores of bool
+        | UnderscoreHandling of UnderscoreHandling
         | DetectNamesInMainAndNamesParts of bool
         | SelectedNames of string list option
         | SelectedFeatures of string list option
@@ -56,8 +58,8 @@ module Logic =
             { parameters with FixupNamesInMainPart = value }
         | RecapitalizeNames value ->
             { parameters with RecapitalizeNames = value }
-        | ReplaceUnderscores value ->
-            { parameters with ReplaceUnderscores = value }
+        | UnderscoreHandling value ->
+            { parameters with UnderscoreHandling = value }
         | DetectNamesInMainAndNamesParts value ->
             {
                 parameters with
@@ -152,9 +154,14 @@ module Logic =
 
         let originalFileName =
             let originalFileName =
-                if parameters.ReplaceUnderscores
-                then originalFileName.Replace("_", " ")
-                else originalFileName
+                match parameters.UnderscoreHandling with
+                | Replace -> originalFileName.Replace("_", " ")
+                | TrimSuffix ->
+                    let underscoreIndex = originalFileName.LastIndexOf '_'
+                    if underscoreIndex >= 0
+                    then originalFileName.[..underscoreIndex - 1]
+                    else originalFileName
+                | Ignore -> originalFileName
 
             match parameters.Replacements with
             | [] -> originalFileName

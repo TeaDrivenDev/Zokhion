@@ -525,6 +525,8 @@ type FileOperation =
     | AddDelete of FileInfo
     | RemoveDelete of string list
 
+type UnderscoreHandling = Ignore = 0 | Replace = 1 | TrimSuffix = 2
+
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
@@ -563,7 +565,7 @@ type MainWindowViewModel() as this =
 
     let treatParenthesizedPartAsNames = new ReactiveProperty<_>(true)
     let fixupNamesInMainPart = new ReactiveProperty<_>(true)
-    let replaceUnderscores = new ReactiveProperty<_>(true)
+    let underscoreHandling = new ReactiveProperty<_>(UnderscoreHandling.TrimSuffix)
     let detectNamesInMainAndNamesParts = new ReactiveProperty<_>(false)
     let recapitalizeNames = new ReactiveProperty<_>(false)
 
@@ -810,6 +812,13 @@ type MainWindowViewModel() as this =
             search.SearchString.Value <- text)
 
         search
+
+    let toUnderscoreHandling underscoreHandlingEnum =
+        match underscoreHandlingEnum with
+        | UnderscoreHandling.Ignore -> Ignore
+        | UnderscoreHandling.Replace -> Replace
+        | UnderscoreHandling.TrimSuffix -> TrimSuffix
+        | _ -> failwith "Invalid underscore handling value"
 
     do
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
@@ -1171,7 +1180,9 @@ type MainWindowViewModel() as this =
         [
             this.TreatParenthesizedPartAsNames |> Observable.map TreatParenthesizedPartAsNames
             this.FixupNamesInMainPart |> Observable.map FixupNamesInMainPart
-            this.ReplaceUnderscores |> Observable.map ReplaceUnderscores
+            this.UnderscoreHandling
+            |> Observable.map (toUnderscoreHandling >> Logic.UnderscoreHandling)
+
             this.DetectNamesInMainAndNamesParts |> Observable.map DetectNamesInMainAndNamesParts
             this.RecapitalizeNames |> Observable.map RecapitalizeNames
 
@@ -1225,7 +1236,7 @@ type MainWindowViewModel() as this =
                 TreatParenthesizedPartAsNames = this.TreatParenthesizedPartAsNames.Value
                 FixupNamesInMainPart = this.FixupNamesInMainPart.Value
                 RecapitalizeNames = this.RecapitalizeNames.Value
-                ReplaceUnderscores = this.ReplaceUnderscores.Value
+                UnderscoreHandling = this.UnderscoreHandling.Value |> toUnderscoreHandling
                 DetectNamesInMainAndNamesParts = this.DetectNamesInMainAndNamesParts.Value
                 SelectedNames = None
                 SelectedFeatures = None
@@ -1314,7 +1325,7 @@ type MainWindowViewModel() as this =
 
     member __.TreatParenthesizedPartAsNames: ReactiveProperty<_> = treatParenthesizedPartAsNames
     member __.FixupNamesInMainPart: ReactiveProperty<_> = fixupNamesInMainPart
-    member __.ReplaceUnderscores: ReactiveProperty<_> = replaceUnderscores
+    member __.UnderscoreHandling: ReactiveProperty<_> = underscoreHandling
     member __.DetectNamesInMainAndNamesParts: ReactiveProperty<_> = detectNamesInMainAndNamesParts
     member __.RecapitalizeNames: ReactiveProperty<_> = recapitalizeNames
 

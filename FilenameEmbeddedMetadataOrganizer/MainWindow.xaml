@@ -650,11 +650,23 @@
                                   Content="Fix up names in main part"
                                   IsChecked="{Binding FixupNamesInMainPart.Value}" />
 
-                        <CheckBox Height="23"
+                        <ComboBox Width="145"
                                   Margin="0 0 20 0"
                                   VerticalAlignment="Center"
-                                  Content="Replace underscores"
-                                  IsChecked="{Binding ReplaceUnderscores.Value}" />
+                                  VerticalContentAlignment="Center"
+                                  FontSize="12"
+                                  SelectedValue="{Binding UnderscoreHandling.Value}"
+                                  SelectedValuePath="Tag">
+                            <ComboBoxItem Tag="Ignore">
+                                Ignore underscores
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="Replace">
+                                Replace underscores
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="TrimSuffix">
+                                Trim underscore suffix
+                            </ComboBoxItem>
+                        </ComboBox>
 
                         <CheckBox Height="23"
                                   Margin="0 0 20 0"

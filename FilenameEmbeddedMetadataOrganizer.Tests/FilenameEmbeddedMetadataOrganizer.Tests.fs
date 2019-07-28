@@ -66,7 +66,7 @@ module RenameTests =
             TreatParenthesizedPartAsNames = true
             DetectNamesInMainAndNamesParts = false
             FixupNamesInMainPart = false
-            ReplaceUnderscores = false
+            UnderscoreHandling = Ignore
             RecapitalizeNames = false
             Replacements = []
         }
@@ -652,12 +652,36 @@ module RenameTests =
         let parameters =
             {
                 baseParameters with
-                    ReplaceUnderscores = true
+                    UnderscoreHandling = Replace
             }
 
         let expectedResult =
             {
                 NewFileName = "Here is the thing"
+                DetectedNames = []
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Trimming an underscore suffix works`` () =
+        // Arrange
+        let originalName = "Here is a name_with suffix"
+
+        let parameters =
+            {
+                baseParameters with
+                    UnderscoreHandling = TrimSuffix
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "Here is a name"
                 DetectedNames = []
                 DetectedFeatures = []
             }

@@ -184,6 +184,17 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
       <ItemGroup>
+        <Reference Include="Microsoft.Xaml.Behaviors">
+          <HintPath>..\packages\Microsoft.Xaml.Behaviors.Wpf\lib\net45\Microsoft.Xaml.Behaviors.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
+      <ItemGroup>
         <Reference Include="ReactiveProperty">
           <HintPath>..\packages\ReactiveProperty\lib\net461\ReactiveProperty.dll</HintPath>
           <Private>True</Private>
@@ -213,20 +224,6 @@
       <ItemGroup>
         <Reference Include="Splat">
           <HintPath>..\packages\Splat\lib\net461\Splat.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
-      <ItemGroup>
-        <Reference Include="System.ComponentModel.DataAnnotations">
-          <Paket>True</Paket>
-        </Reference>
-        <Reference Include="System.ComponentModel.Annotations">
-          <HintPath>..\packages\System.ComponentModel.Annotations\lib\net461\System.ComponentModel.Annotations.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

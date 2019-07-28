@@ -607,7 +607,7 @@ type MainWindowViewModel() as this =
         new ReactiveProperty<_>(Unchecked.defaultof<FeatureViewModel>, ReactivePropertyMode.None)
     let features = ReactiveList()
     let featureInstances = ReactiveList(ChangeTrackingEnabled = true)
-    let isFeatureDragDropReorderingEnabled = new ReactiveProperty<_>()
+    let enableFeatureEditing = new ReactiveProperty<_>()
     let mutable removeFeatureInstanceRowCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable addFeatureInstanceRowCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable clearSelectedFeatureCommand = Unchecked.defaultof<ReactiveCommand>
@@ -1385,7 +1385,7 @@ type MainWindowViewModel() as this =
 
     member __.FeatureInstances: ReactiveList<FeatureInstanceViewModel> = featureInstances
 
-    member __.IsFeatureDragDropReorderingEnabled: ReactiveProperty<bool> = isFeatureDragDropReorderingEnabled
+    member __.EnableFeatureEditing: ReactiveProperty<bool> = enableFeatureEditing
 
     member __.ResultingFilePath: ReactiveProperty<string> = resultingFilePath
 

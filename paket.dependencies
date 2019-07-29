@@ -2,6 +2,7 @@ source https://www.nuget.org/api/v2
 framework: net472
 
 nuget Dragablz
+nuget DynamicData
 nuget FSharp.Control.Reactive
 nuget FSharp.Core
 nuget FsXaml.Wpf

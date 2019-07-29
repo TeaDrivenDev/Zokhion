@@ -2,6 +2,8 @@ RESTRICTION: == net472
 NUGET
   remote: https://www.nuget.org/api/v2
     Dragablz (0.0.3.203)
+    DynamicData (6.12.9)
+      System.Reactive (>= 4.1.5)
     FSharp.Control.Reactive (4.2)
       FSharp.Core (>= 4.2.3)
       System.Reactive (>= 4.0)

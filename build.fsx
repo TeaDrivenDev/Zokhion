@@ -18,11 +18,11 @@ open Fake.DotNet.Testing
 open Fake.IO
 open Fake.IO.Globbing.Operators
 
-let solutionFile  = "FilenameEmbeddedMetadataOrganizer.sln"
+let solutionFile  = "Zokhion.sln"
 
 let gitOwner = "TeaDrivenDev"
 let gitHome = "https://github.com/" + gitOwner
-let gitName = "FilenameEmbeddedMetadataOrganizer"
+let gitName = "Zokhion"
 let gitRaw = Environment.environVarOrDefault "gitRaw" ("https://raw.github.com/" + gitOwner)
 
 let outputDirectory = "bin"

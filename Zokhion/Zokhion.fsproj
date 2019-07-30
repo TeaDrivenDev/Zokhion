@@ -7,13 +7,13 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>20343dc6-232b-4241-a2cd-770b3e819dc1</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>FilenameEmbeddedMetadataOrganizer</RootNamespace>
-    <AssemblyName>FilenameEmbeddedMetadataOrganizer</AssemblyName>
+    <RootNamespace>TeaDriven.Zokhion</RootNamespace>
+    <AssemblyName>Zokhion</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <UseStandardResourceNames>true</UseStandardResourceNames>
     <TargetFSharpCoreVersion>4.4.1.0</TargetFSharpCoreVersion>
-    <Name>FilenameEmbeddedMetadataOrganizer</Name>
+    <Name>Zokhion</Name>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -55,7 +55,7 @@
     </Otherwise>
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

@@ -1,4 +1,4 @@
-﻿namespace FilenameEmbeddedMetadataOrganizer
+﻿namespace TeaDriven.Zokhion
 
 module Interop =
     open System

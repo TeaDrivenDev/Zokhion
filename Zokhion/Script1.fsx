@@ -3,7 +3,7 @@
 open System.IO
 open System.Text.RegularExpressions
 
-open FilenameEmbeddedMetadataOrganizer
+open TeaDriven.Zokhion
 
 let path = @""
 
@@ -53,4 +53,3 @@ let processFile featureInstances filePath =
 Directory.GetFiles(path, "*.*", SearchOption.AllDirectories)
 |> Seq.choose (processFile features)
 |> Seq.iter File.Move
-

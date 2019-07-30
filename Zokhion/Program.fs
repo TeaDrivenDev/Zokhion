@@ -1,4 +1,4 @@
-﻿namespace FilenameEmbeddedMetadataOrganizer
+﻿namespace TeaDriven.Zokhion
 
 open System
 open System.ComponentModel
@@ -9,7 +9,7 @@ open System.Windows.Threading
 
 open FsXaml
 
-open FilenameEmbeddedMetadataOrganizer.ViewModels
+open TeaDriven.Zokhion.ViewModels
 
 type Win32Window(handle: IntPtr) =
     interface System.Windows.Forms.IWin32Window with

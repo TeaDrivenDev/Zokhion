@@ -1,4 +1,4 @@
-﻿namespace FilenameEmbeddedMetadataOrganizer.UIHelper
+﻿namespace TeaDriven.Zokhion.UIHelper
 
 open System
 open System.IO
@@ -7,7 +7,7 @@ open System.Windows
 open System.Windows.Controls
 open System.Windows.Data
 
-open FilenameEmbeddedMetadataOrganizer.ViewModels
+open TeaDriven.Zokhion.ViewModels
 
 module Utilities =
     let bytesToMegabytes (value: float) = value / (1024. * 1024.)

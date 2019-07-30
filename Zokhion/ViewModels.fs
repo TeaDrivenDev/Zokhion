@@ -1,4 +1,4 @@
-﻿namespace FilenameEmbeddedMetadataOrganizer.ViewModels
+﻿namespace TeaDriven.Zokhion.ViewModels
 
 open System
 open System.Collections.Generic
@@ -25,7 +25,7 @@ open ReactiveUI
 open Reactive.Bindings
 open Reactive.Bindings.Notifiers
 
-open FilenameEmbeddedMetadataOrganizer
+open TeaDriven.Zokhion
 
 type ReactiveCommand = ReactiveUI.ReactiveCommand
 

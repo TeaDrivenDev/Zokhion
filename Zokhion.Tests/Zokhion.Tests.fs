@@ -1,8 +1,8 @@
-namespace FilenameEmbeddedMetadataOrganizer.Tests
+namespace TeaDriven.Zokhion.Tests
 
 open Xunit
 
-open FilenameEmbeddedMetadataOrganizer
+open TeaDriven.Zokhion
 
 module SplitFileNameTests =
     [<Theory>]

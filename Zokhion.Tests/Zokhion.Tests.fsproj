@@ -7,13 +7,13 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="FilenameEmbeddedMetadataOrganizer.Tests.fs" />
+    <Compile Include="Zokhion.Tests.fs" />
     <None Include="App.config" />
     <None Include="paket.references" />
     <None Include="Script.fsx" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\FilenameEmbeddedMetadataOrganizer\FilenameEmbeddedMetadataOrganizer.fsproj" />
+    <ProjectReference Include="..\Zokhion\Zokhion.fsproj" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

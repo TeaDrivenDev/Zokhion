@@ -991,6 +991,10 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </StackPanel.Resources>
+                                                    <materialDesign:PackIcon VerticalAlignment="Center"
+                                                                             Kind="Pin"
+                                                                             Visibility="{Binding IsPinned,
+                                                                                                  Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
                                                     <Button x:Name="ActionsButton"
                                                             Content="…">
                                                         <Button.ContextMenu>
@@ -1005,6 +1009,23 @@
                                                                           CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
                                                                                                      Path=Data.Name.Value}"
                                                                           Header="Search as Name" />
+                                                                <MenuItem Command="{Binding Source={StaticResource NameViewModelBindingProxy},
+                                                                                            Path=Data.PinCommand}">
+                                                                    <MenuItem.Style>
+                                                                        <Style BasedOn="{StaticResource MaterialDesignMenuItem}"
+                                                                               TargetType="{x:Type MenuItem}">
+                                                                            <Setter Property="Header" Value="Pin" />
+
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding Source={StaticResource NameViewModelBindingProxy},
+                                                                                                               Path=Data.IsPinned}"
+                                                                                             Value="True">
+                                                                                    <Setter Property="Header" Value="Unpin" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </MenuItem.Style>
+                                                                </MenuItem>
                                                                 <Separator />
                                                                 <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
                                                                                             Path=Data.DataContext.DeleteNameCommand}"

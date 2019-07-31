@@ -187,11 +187,17 @@ type NameViewModel(name: string, isSelected: bool, isNewlyDetected: bool, isAdde
 
     let mutable xIsSelected = isSelected
 
+    let mutable isPinned = false
+
     member val Name = new ReactiveProperty<_>(name)
 
     member __.IsSelected
         with get () = xIsSelected
         and set value = __.SetAndRaise(&xIsSelected, value, nameof <@ __.IsSelected @>)
+
+    member __.IsPinned
+        with get () = isPinned
+        and set value = __.SetAndRaise(&isPinned, value, nameof <@ __.IsPinned @>)
 
     member val IsNewlyDetected = new ReactiveProperty<_>(isNewlyDetected)
 
@@ -201,6 +207,9 @@ type NameViewModel(name: string, isSelected: bool, isNewlyDetected: bool, isAdde
         ReactiveCommand.Create(fun () ->
             __.IsNewlyDetected.Value <- false
             __.IsAdded.Value <- true)
+
+    member __.PinCommand =
+        ReactiveCommand.Create(fun () -> __.IsPinned <- not __.IsPinned)
 
 type NameViewModelComparer() =
     interface IComparer<NameViewModel> with
@@ -214,7 +223,9 @@ type NameViewModelComparer() =
             byFlag a.IsSelected b.IsSelected
             |> Option.defaultWith (fun () ->
                 byFlag a.IsNewlyDetected.Value b.IsNewlyDetected.Value
-                |> Option.defaultWith (fun () -> a.Name.Value.CompareTo b.Name.Value))
+                |> Option.defaultWith (fun () ->
+                    byFlag a.IsPinned b.IsPinned
+                    |> Option.defaultWith (fun () -> a.Name.Value.CompareTo b.Name.Value)))
 
 type SearchViewModelCommand =
     | Directories of (DirectoryInfo option * string)

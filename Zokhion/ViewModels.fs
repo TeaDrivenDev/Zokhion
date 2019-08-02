@@ -203,6 +203,8 @@ type NameViewModel(name: string, isSelected: bool, isNewlyDetected: bool, isAdde
 
     member val IsAdded = new ReactiveProperty<_>(isAdded)
 
+    member val Count = new ReactiveProperty<_>(0)
+
     member __.ClearNewFlagCommand =
         ReactiveCommand.Create(fun () ->
             __.IsNewlyDetected.Value <- false
@@ -555,6 +557,8 @@ type FileOperation =
 
 type UnderscoreHandling = Ignore = 0 | Replace = 1 | TrimSuffix = 2
 
+type FileChange = Added | Removed
+
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
@@ -645,6 +649,8 @@ type MainWindowViewModel() as this =
 
     let resultingFilePath = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let mutable applyCommand = Unchecked.defaultof<ReactiveCommand<_, _>>
+
+    let watcher = new FileSystemWatcher(EnableRaisingEvents = false, IncludeSubdirectories = true)
 
     let updateDirectoriesList baseDirectory prefixes filterByPrefixes =
         directories.Clear()
@@ -832,6 +838,13 @@ type MainWindowViewModel() as this =
         | UnderscoreHandling.Replace -> Replace
         | UnderscoreHandling.TrimSuffix -> TrimSuffix
         | _ -> failwith "Invalid underscore handling value"
+
+    let parseNames fileName =
+        let m = Regex.Match(fileName, @"\(\.(?<names>.+)\.\)")
+
+        if m.Success
+        then m.Groups.["names"].Value.Split([| '.' |]) |> Array.toList
+        else []
 
     do
         RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
@@ -1134,6 +1147,55 @@ type MainWindowViewModel() as this =
             |> Observable.combineLatest validBaseDirectory
             |> Observable.map (fun (``base``, validBase) -> ``base`` = validBase)
             |> toReadOnlyReactiveProperty
+
+        validBaseDirectory
+        |> Observable.map (fun directory ->
+            let scanned =
+                Directory.EnumerateFiles(directory,"*.*", SearchOption.AllDirectories)
+                |> Seq.map (asFst Added >> List.singleton)
+                |> Observable.ofSeq
+
+            let watched =
+                Observable.Create(fun observer ->
+                    watcher.Path <- directory
+                    watcher.EnableRaisingEvents <- true
+
+                    [
+                        watcher.Created |> Observable.map (fun e -> [ e.FullPath, Added ])
+                        watcher.Deleted |> Observable.map (fun e -> [ e.FullPath, Removed ])
+                        watcher.Renamed
+                        |> Observable.map (fun e -> [ e.OldFullPath, Removed; e.FullPath, Added ])
+                    ]
+                    |> Observable.mergeSeq
+                    |> Observable.subscribeObserver observer)
+
+            scanned
+            |> Observable.concat watched
+            |> Observable.map (fun changes ->
+                changes
+                |> List.collect (fun (filePath, change) ->
+                    Path.GetFileNameWithoutExtension filePath
+                    |> parseNames
+                    |> List.map (asFst change)))
+            |> Observable.scanInit (Map.empty, []) (fun (acc, _) current ->
+                let updates =
+                    current
+                    |> List.map (fun (name, change) ->
+                        acc
+                        |> Map.tryFind name
+                        |> Option.map (fun count ->
+                            name, (if change = Added then count + 1 else count - 1))
+                        |> Option.defaultValue (name, 1))
+
+                (acc, updates) ||> List.fold (fun map (name, count) -> map |> Map.add name count), updates))
+        |> Observable.switch
+        |> Observable.subscribe (fun (_, updates) ->
+            updates
+            |> List.iter (fun (name, count) ->
+                match allNames.Items |> Seq.tryFind (fun vm -> vm.Name.Value = name) with
+                | Some vm -> vm.Count.Value <- count
+                | None -> ()))
+        |> ignore
 
         this.SourceDirectoryPrefixes
         |> Observable.throttle (TimeSpan.FromMilliseconds 500.)

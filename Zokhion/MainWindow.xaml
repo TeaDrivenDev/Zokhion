@@ -946,26 +946,51 @@
                                                     </Style>
                                                 </Grid.Style>
 
-                                                <TextBlock Grid.Column="0"
-                                                           Margin="5 0 15 0"
-                                                           HorizontalAlignment="Stretch"
-                                                           VerticalAlignment="Center"
-                                                           Text="{Binding Name.Value}">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsSelected}"
-                                                                             Value="True">
-                                                                    <Setter Property="Foreground">
-                                                                        <Setter.Value>
-                                                                            <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
+                                                <StackPanel VerticalAlignment="Center"
+                                                            Orientation="Horizontal">
+                                                    <TextBlock Grid.Column="0"
+                                                               Margin="5 0 0 0"
+                                                               HorizontalAlignment="Stretch"
+                                                               VerticalAlignment="Center"
+                                                               Text="{Binding Name.Value}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsSelected}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Foreground">
+                                                                            <Setter.Value>
+                                                                                <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                    <TextBlock Grid.Column="0"
+                                                               Margin="5 0 15 0"
+                                                               HorizontalAlignment="Stretch"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="10"
+                                                               Text="{Binding Count.Value}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsSelected}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Foreground">
+                                                                            <Setter.Value>
+                                                                                <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+
                                                 <StackPanel Grid.Column="1"
                                                             Orientation="Horizontal">
                                                     <StackPanel.Resources>

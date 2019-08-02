@@ -991,7 +991,8 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </StackPanel.Resources>
-                                                    <materialDesign:PackIcon VerticalAlignment="Center"
+                                                    <materialDesign:PackIcon Margin="0 0 7 0"
+                                                                             VerticalAlignment="Center"
                                                                              Kind="Pin"
                                                                              Visibility="{Binding IsPinned,
                                                                                                   Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />

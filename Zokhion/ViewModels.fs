@@ -501,7 +501,12 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             |> Seq.iter (function
                 | LeftOnly fi -> files.Remove fi |> ignore
                 | RightOnly fi -> files.Add fi
-                | JoinMatch _ -> ())
+                | JoinMatch (old, ``new``) ->
+                    if (``new``.Length, ``new``.LastWriteTimeUtc)
+                       <> (old.Length, old.LastWriteTimeUtc)
+                    then
+                        files.Remove old |> ignore
+                        files.Add ``new``)
 
             isUpdatingNotifier.TurnOff()
 

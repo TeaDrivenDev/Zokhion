@@ -627,6 +627,7 @@ type MainWindowViewModel() as this =
     let newNameToAdd = new ReactiveProperty<_>("", ReactivePropertyMode.RaiseLatestValueOnSubscribe)
     let mutable clearNewNameToAddCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable addNameCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable setNameFilterCommand = Unchecked.defaultof<ReactiveCommand>
     let allNames = new SourceCache<NameViewModel, string>(fun vm -> vm.Name.Value)
 
     let mutable names = Unchecked.defaultof<ReadOnlyObservableCollection<_>>
@@ -927,7 +928,22 @@ type MainWindowViewModel() as this =
 
         clearNewNameToAddCommand <- ReactiveCommand.Create clearNewNameToAdd
 
-        addNameCommand <- ReactiveCommand.Create addName
+        addNameCommand <-
+            ReactiveCommand.Create(
+                addName,
+                this.NewNameToAdd
+                |> Observable.map (fun name ->
+                    not <| String.IsNullOrWhiteSpace name
+                    && not <| name.Contains("|")))
+
+        setNameFilterCommand <-
+            ReactiveCommand.Create(
+                (fun () ->
+                    this.NewNameToAdd.Value <-
+                        this.OriginalFileName.Value.Split([| ' '; '_'; '.' |])
+                        |> String.concat " | "),
+                this.OriginalFileName
+                |> Observable.map (String.IsNullOrWhiteSpace >> not))
 
         resetNameSelectionCommand <- ReactiveCommand.Create(fun () -> ignore ())
 
@@ -1334,6 +1350,13 @@ type MainWindowViewModel() as this =
             |> Observable.map (fun name ->
                 if String.IsNullOrWhiteSpace name
                 then Func<_, _> (fun _ -> true)
+                elif name.Contains "|"
+                then
+                    let parts = (toUpper name).Split [| '|' |] |> Seq.map trim |> Set.ofSeq
+
+                    Func<_, _> (fun (n: NameViewModel) ->
+                        let nameParts = n.Name.Value.ToUpper().Split [| ' ' |] |> Set.ofSeq
+                        parts |> Set.intersect nameParts |> (<>) Set.empty)
                 else
                     let up = toUpper name
 
@@ -1443,6 +1466,7 @@ type MainWindowViewModel() as this =
     member __.ClearNewNameToAddCommand = clearNewNameToAddCommand
     member __.AddName(name: string) = addName name
     member __.AddNameCommand = addNameCommand
+    member __.SetNameFilterCommand = setNameFilterCommand
 
     member __.Names: ReadOnlyObservableCollection<NameViewModel> = names
 

@@ -482,23 +482,23 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <materialDesign:MaterialDataGridTextColumn Width="150"
-                                                                               Binding="{Binding LastWriteTime,
-                                                                                                 StringFormat=s}"
-                                                                               Header="Date"
-                                                                               IsReadOnly="True" />
-                                    <materialDesign:MaterialDataGridTextColumn Width="75"
-                                                                               Binding="{Binding Length,
-                                                                                                 Converter={x:Static ui:BytesToMegabytesConverter.Instance},
-                                                                                                 StringFormat={}{0:###0.0} MB}"
-                                                                               Header="Size"
-                                                                               IsReadOnly="True">
+                                    <materialDesign:DataGridTextColumn Width="150"
+                                                                       Binding="{Binding LastWriteTime,
+                                                                                         StringFormat=s}"
+                                                                       Header="Date"
+                                                                       IsReadOnly="True" />
+                                    <materialDesign:DataGridTextColumn Width="75"
+                                                                       Binding="{Binding Length,
+                                                                                         Converter={x:Static ui:BytesToMegabytesConverter.Instance},
+                                                                                         StringFormat={}{0:###0.0} MB}"
+                                                                       Header="Size"
+                                                                       IsReadOnly="True">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="{x:Type TextBlock}">
                                                 <Setter Property="HorizontalAlignment" Value="Right" />
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
-                                    </materialDesign:MaterialDataGridTextColumn>
+                                    </materialDesign:DataGridTextColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
 

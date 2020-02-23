@@ -68,7 +68,10 @@
     <Compile Include="Interop.fs" />
     <Compile Include="Settings.fs" />
     <Compile Include="Logic.fs" />
-    <Compile Include="ViewModels.fs" />
+    <Compile Include="ViewModelUtility.fs" />
+    <Compile Include="SearchViewModel.fs" />
+    <Compile Include="DetailViewModels.fs" />
+    <Compile Include="MainWindowViewModel.fs" />
     <Compile Include="UIHelper.fs" />
     <Compile Include="Program.fs" />
     <None Include="Script1.fsx" />

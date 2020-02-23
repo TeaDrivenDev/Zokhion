@@ -808,6 +808,26 @@
                                     <StackPanel Grid.Column="1"
                                                 Orientation="Horizontal">
                                         <Button Margin="0 0 5 0"
+                                                Command="{Binding ElementName=MainWindowView,
+                                                                  Path=DataContext.ReviveFileSystemWatcherCommand}">
+                                            <Button.Style>
+                                                <Style BasedOn="{StaticResource {x:Type Button}}"
+                                                       TargetType="{x:Type Button}">
+                                                    <Setter Property="Background" Value="DarkRed" />
+                                                    <Setter Property="ToolTip" Value="FileSystemWatcher is dead." />
+
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ElementName=MainWindowView,
+                                                                                       Path=DataContext.IsFileSystemWatcherAlive.Value}"
+                                                                     Value="True">
+                                                            <Setter Property="Background" Value="DarkGreen" />
+                                                            <Setter Property="ToolTip" Value="FileSystemWatcher is alive." />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Button Margin="0 0 5 0"
                                                 Padding="0 -10"
                                                 Command="{Binding ElementName=MainWindowView,
                                                                   Path=DataContext.SetNameFilterCommand}"

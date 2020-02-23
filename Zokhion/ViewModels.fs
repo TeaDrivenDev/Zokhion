@@ -657,6 +657,8 @@ type MainWindowViewModel() as this =
     let mutable applyCommand = Unchecked.defaultof<ReactiveCommand<_, _>>
 
     let watcher = new FileSystemWatcher(EnableRaisingEvents = false, IncludeSubdirectories = true)
+    let mutable reviveFileSystemWatcherCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable isFileSystemWatcherAlive = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     let updateDirectoriesList baseDirectory prefixes filterByPrefixes =
         directories.Clear()
@@ -1063,6 +1065,9 @@ type MainWindowViewModel() as this =
                 |> Observable.combineLatestSeq
                 |> Observable.map (Seq.toList >> List.forall id))
 
+        reviveFileSystemWatcherCommand <-
+            ReactiveCommand.Create<_, _>(fun () -> watcher.EnableRaisingEvents <- true)
+
         let removeFilesToChangeSubject = new System.Reactive.Subjects.Subject<_>()
 
         let fileChangesSubject = new System.Reactive.Subjects.Subject<_>()
@@ -1405,6 +1410,12 @@ type MainWindowViewModel() as this =
             |> List.iter this.EditingFeatureInstances.Add)
         |> ignore
 
+        isFileSystemWatcherAlive <-
+            Observable.interval (TimeSpan.FromSeconds 1.)
+            |> Observable.map (fun _ -> watcher.EnableRaisingEvents)
+            |> Observable.distinctUntilChanged
+            |> toReadOnlyReactiveProperty
+
     member __.Shutdown () = saveSettings __.BaseDirectory.Value
 
     member __.HasTouchInput = hasTouchInput
@@ -1506,3 +1517,6 @@ type MainWindowViewModel() as this =
     member __.ResultingFilePath: ReactiveProperty<string> = resultingFilePath
 
     member __.ApplyCommand = applyCommand
+
+    member __.ReviveFileSystemWatcherCommand = reviveFileSystemWatcherCommand
+    member __.IsFileSystemWatcherAlive = isFileSystemWatcherAlive

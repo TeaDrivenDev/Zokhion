@@ -17,6 +17,15 @@ open ReactiveUI
 
 open TeaDriven.Zokhion
 
+[<AllowNullLiteral>]
+type FileViewModel(fileInfo: FileInfo) =
+    member __.FileInfo = fileInfo
+    member __.Name = fileInfo.Name
+    member __.DirectoryName = fileInfo.DirectoryName
+    member __.LastWriteTime = fileInfo.LastWriteTime
+    member __.Length = fileInfo.Length
+    member __.CreationTime = fileInfo.CreationTime
+
 type SearchViewModelCommand =
     | Directories of (DirectoryInfo option * string)
     | Refresh of FileInfo list
@@ -52,20 +61,39 @@ type SearchFilter =
         SearchDirectory: string option
     }
 
+type FeatureCode =
+    {
+        Code: string
+        FeatureName: string
+    }
+
+type DisplayParameters =
+    {
+        FeatureToGroupBy: string option
+        SearchFilter: SearchFilter
+    }
+
+type DisplayParameterChange =
+    | FeatureToGroupBy of string option
+    | SearchFilter of SearchFilter
+
 type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
     inherit ReactiveObject()
 
     let mutable baseDirectory = ""
     let selectedDirectory = new BehaviorSubject<DirectoryInfo option>(None)
 
+    let isGroupByFeatureValue = new ReactiveProperty<bool>()
+    let selectedFeatureCode = new ReactiveProperty<FeatureCode>()
+
     let searchString = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let searchFromBaseDirectory = new ReactiveProperty<_>(true)
     let mutable canToggleSearchFromBaseDirectory =
         Unchecked.defaultof<ReadOnlyReactiveProperty<bool>>
     let isActive = new ReactiveProperty<_>(true)
-    let files = ObservableCollection()
+    let files = ObservableCollection<FileViewModel>()
     let mutable header = Unchecked.defaultof<ReadOnlyReactiveProperty<string>>
-    let selectedFile = new ReactiveProperty<FileInfo>()
+    let selectedFile = new ReactiveProperty<FileViewModel>()
     let mutable selectedFileWhenActive = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
     let mutable refreshCommand = Unchecked.defaultof<ReactiveCommand<_, _>>
     let mutable clearSearchStringCommand = Unchecked.defaultof<ReactiveCommand>
@@ -271,22 +299,29 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             |> toReadOnlyReactiveProperty
 
         filter
+        |> Observable.map (fun filter ->
+            {
+                FeatureToGroupBy = None
+                SearchFilter = filter
+            })
         |> Observable.iter (fun _ -> isUpdatingNotifier.TurnOn())
         |> Observable.observeOn ThreadPoolScheduler.Instance
-        |> Observable.choose getFiles
+        |> Observable.choose (fun parameters ->
+            getFiles parameters.SearchFilter
+            |> Option.map (asSnd parameters.FeatureToGroupBy))
         |> Observable.observeOn RxApp.MainThreadScheduler
-        |> Observable.subscribe (fun newFiles ->
-            (newFiles, (files |> Seq.toList))
-            ||> fullOuterJoin (fun fi -> fi.FullName) (fun (fi: FileInfo) -> fi.FullName)
+        |> Observable.subscribe (fun (_, newFiles) ->
+            (newFiles, Seq.toList files)
+            ||> fullOuterJoin (fun fi -> fi.FullName) (fun vm -> vm.FileInfo.FullName)
             |> Seq.iter (function
-                | LeftOnly fi -> files.Remove fi |> ignore
-                | RightOnly fi -> files.Add fi
+                | LeftOnly vm -> files.Remove vm |> ignore
+                | RightOnly fi -> files.Add (FileViewModel fi)
                 | JoinMatch (old, ``new``) ->
                     if (``new``.Length, ``new``.LastWriteTimeUtc)
-                       <> (old.Length, old.LastWriteTimeUtc)
+                       <> (old.FileInfo.Length, old.FileInfo.LastWriteTimeUtc)
                     then
                         files.Remove old |> ignore
-                        files.Add ``new``)
+                        files.Add (FileViewModel ``new``))
 
             isUpdatingNotifier.TurnOff()
 
@@ -319,8 +354,11 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
         selectedFileWhenActive <-
             selectedFile
             |> Observable.filter (fun _ -> isActive.Value)
+            |> Observable.map (fun vm -> if isNull vm then null else vm.FileInfo)
             |> toReadOnlyReactivePropertyWithMode ReactivePropertyMode.RaiseLatestValueOnSubscribe
 
+    member __.IsGroupByFeatureValue = isGroupByFeatureValue
+    member __.SelectedFeatureCode = selectedFeatureCode
     member __.SearchString = searchString
     member __.SearchFromBaseDirectory = searchFromBaseDirectory
     member __.CanToggleSearchFromBaseDirectory = canToggleSearchFromBaseDirectory

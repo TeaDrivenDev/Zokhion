@@ -290,7 +290,7 @@
                                                         ToolTip="File Actions">
                                                     <Button.Resources>
                                                         <ui:BindingProxy x:Key="FileInfoBindingProxy"
-                                                                         Data="{Binding .}" />
+                                                                         Data="{Binding}" />
                                                     </Button.Resources>
 
                                                     <Button.ContextMenu>
@@ -298,23 +298,23 @@
                                                             <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
                                                                                         Path=Data.DataContext.OpenFromSearchCommand}"
                                                                       CommandParameter="{Binding Source={StaticResource FileInfoBindingProxy},
-                                                                                                 Path=Data}"
+                                                                                                 Path=Data.FileInfo}"
                                                                       Header="Open File" />
                                                             <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
                                                                                         Path=Data.DataContext.OpenExplorerCommand}"
                                                                       CommandParameter="{Binding Source={StaticResource FileInfoBindingProxy},
-                                                                                                 Path=Data}"
+                                                                                                 Path=Data.FileInfo}"
                                                                       Header="Show in Explorer" />
                                                             <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
                                                                                         Path=Data.DataContext.ShowFilePropertiesCommand}"
                                                                       CommandParameter="{Binding Source={StaticResource FileInfoBindingProxy},
-                                                                                                 Path=Data}"
+                                                                                                 Path=Data.FileInfo}"
                                                                       Header="Show File Properties" />
                                                             <Separator />
                                                             <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
                                                                                         Path=Data.DataContext.DeleteFileCommand}"
                                                                       CommandParameter="{Binding Source={StaticResource FileInfoBindingProxy},
-                                                                                                 Path=Data}"
+                                                                                                 Path=Data.FileInfo}"
                                                                       Header="Delete File" />
                                                         </ContextMenu>
                                                     </Button.ContextMenu>
@@ -383,7 +383,7 @@
                                                         <ui:BindingProxy x:Key="FileChangeBindingProxy">
                                                             <ui:BindingProxy.Data>
                                                                 <MultiBinding Converter="{x:Static ui:FileChangesToEnumConverter.Instance}">
-                                                                    <Binding />
+                                                                    <Binding Path="FileInfo" />
                                                                     <Binding ElementName="MainWindowView"
                                                                              Path="DataContext.FileChanges.Value" />
                                                                 </MultiBinding>
@@ -403,14 +403,9 @@
                                                                     <Setter Property="Visibility" Value="Collapsed" />
 
                                                                     <Style.Triggers>
-                                                                        <DataTrigger Value="Renamed">
-                                                                            <DataTrigger.Binding>
-                                                                                <MultiBinding Converter="{x:Static ui:FileChangesToEnumConverter.Instance}">
-                                                                                    <Binding />
-                                                                                    <Binding ElementName="MainWindowView"
-                                                                                             Path="DataContext.FileChanges.Value" />
-                                                                                </MultiBinding>
-                                                                            </DataTrigger.Binding>
+                                                                        <DataTrigger Binding="{Binding Source={StaticResource FileChangeBindingProxy},
+                                                                                                       Path=Data}"
+                                                                                     Value="Renamed">
                                                                             <Setter Property="Visibility" Value="Visible" />
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
@@ -423,14 +418,9 @@
                                                                     <Setter Property="Visibility" Value="Collapsed" />
 
                                                                     <Style.Triggers>
-                                                                        <DataTrigger Value="Moved">
-                                                                            <DataTrigger.Binding>
-                                                                                <MultiBinding Converter="{x:Static ui:FileChangesToEnumConverter.Instance}">
-                                                                                    <Binding />
-                                                                                    <Binding ElementName="MainWindowView"
-                                                                                             Path="DataContext.FileChanges.Value" />
-                                                                                </MultiBinding>
-                                                                            </DataTrigger.Binding>
+                                                                        <DataTrigger Binding="{Binding Source={StaticResource FileChangeBindingProxy},
+                                                                                                       Path=Data}"
+                                                                                     Value="Moved">
                                                                             <Setter Property="Visibility" Value="Visible" />
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
@@ -443,14 +433,9 @@
                                                                     <Setter Property="Visibility" Value="Collapsed" />
 
                                                                     <Style.Triggers>
-                                                                        <DataTrigger Value="Deleted">
-                                                                            <DataTrigger.Binding>
-                                                                                <MultiBinding Converter="{x:Static ui:FileChangesToEnumConverter.Instance}">
-                                                                                    <Binding />
-                                                                                    <Binding ElementName="MainWindowView"
-                                                                                             Path="DataContext.FileChanges.Value" />
-                                                                                </MultiBinding>
-                                                                            </DataTrigger.Binding>
+                                                                        <DataTrigger Binding="{Binding Source={StaticResource FileChangeBindingProxy},
+                                                                                                       Path=Data}"
+                                                                                     Value="Deleted">
                                                                             <Setter Property="Visibility" Value="Visible" />
                                                                         </DataTrigger>
                                                                     </Style.Triggers>

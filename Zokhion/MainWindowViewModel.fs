@@ -218,15 +218,15 @@ type MainWindowViewModel() as this =
             | RightOnly _ -> ()
             | JoinMatch (vm, _) -> vm.IsSelected <- true)
 
-        if isInitial
-        then
-            let anyFeaturesSelected = featureInstances |> Seq.exists (fun vm -> vm.IsSelected)
+        //if isInitial
+        //then
+        //    let anyFeaturesSelected = featureInstances |> Seq.exists (fun vm -> vm.IsSelected)
 
-            features
-            |> Seq.iter (fun (vm: FeatureViewModel) ->
-                if anyFeaturesSelected
-                then vm.ResetExpanded()
-                else vm.IsExpanded.Value <- true)
+        //    features
+        //    |> Seq.iter (fun (vm: FeatureViewModel) ->
+        //        if anyFeaturesSelected
+        //        then vm.ResetExpanded()
+        //        else vm.IsExpanded.Value <- true)
 
     let getAllNames () =
         allNames.Items
@@ -698,9 +698,9 @@ type MainWindowViewModel() as this =
         |> Observable.subscribe (fun (_, updates) ->
             updates
             |> List.iter (fun (name, count) ->
-                match allNames.Items |> Seq.tryFind (fun vm -> vm.Name.Value = name) with
-                | Some vm -> vm.Count.Value <- count
-                | None -> ()))
+                allNames.Items
+                |> Seq.tryFind (fun vm -> vm.Name.Value = name)
+                |> Option.iter (fun vm -> vm.Count.Value <- count)))
         |> ignore
 
         this.SourceDirectoryPrefixes
@@ -730,7 +730,7 @@ type MainWindowViewModel() as this =
             allNames.Items
             |> Seq.filter (fun vm -> vm.IsNewlyDetected.Value)
             |> Seq.toList
-            |> List.iter (allNames.Remove >> ignore)
+            |> List.iter allNames.Remove
 
             this.OriginalFileName.Value <-
                 string fi.Name |> Path.GetFileNameWithoutExtension

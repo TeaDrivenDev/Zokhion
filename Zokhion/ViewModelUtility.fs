@@ -46,4 +46,7 @@ module Utility =
     let toReadOnlyReactiveProperty (observable: IObservable<_>) =
         observable.ToReadOnlyReactiveProperty()
 
+    let toReadOnlyReactivePropertyWithMode (mode: ReactivePropertyMode) (observable: IObservable<_>) =
+        observable.ToReadOnlyReactiveProperty(mode=mode)
+
     let maxString maxLength (s: string) = s.Substring(0, Math.Min(s.Length, maxLength))

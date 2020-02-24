@@ -50,8 +50,8 @@ type FeatureViewModel(feature: Feature) as this =
 
     member val IsExpanded = new ReactiveProperty<_>(true)
 
-    member __.ResetExpanded () = ()
-        // __.IsExpanded.Value <- __.Instances |> Seq.exists (fun vm -> vm.IsSelected)
+    member __.ResetExpanded () =
+        __.IsExpanded.Value <- __.Instances |> Seq.exists (fun vm -> vm.IsSelected)
 
 and [<AllowNullLiteral>]
     FeatureInstanceViewModel(feature: Feature, instance: FeatureInstance) =

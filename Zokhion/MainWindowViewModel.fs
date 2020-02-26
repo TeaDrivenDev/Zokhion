@@ -82,7 +82,7 @@ type MainWindowViewModel() as this =
 
     let treatParenthesizedPartAsNames = new ReactiveProperty<_>(true)
     let fixupNamesInMainPart = new ReactiveProperty<_>(true)
-    let underscoreHandling = new ReactiveProperty<_>(UnderscoreHandling.TrimSuffix)
+    let underscoreHandling = new ReactiveProperty<_>(UnderscoreHandling.Ignore)
     let detectNamesInMainAndNamesParts = new ReactiveProperty<_>(false)
     let recapitalizeNames = new ReactiveProperty<_>(false)
 

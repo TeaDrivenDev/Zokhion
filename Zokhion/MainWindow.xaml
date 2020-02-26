@@ -572,7 +572,8 @@
                             <StackPanel Grid.Row="2"
                                         Orientation="Horizontal">
                                 <TextBlock Margin="5 3 5 5"
-                                           Text="{Binding Files.Count,
+                                           Text="{Binding Files,
+                                                          Converter={x:Static ui:FilesToUniqueCountConverter.Instance},
                                                           StringFormat={}{0} items}" />
                                 <TextBlock Margin="5 3 5 5"
                                            Text="{Binding Files,

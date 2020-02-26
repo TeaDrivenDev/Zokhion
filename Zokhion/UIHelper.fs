@@ -42,7 +42,7 @@ type InvertableBooleanToVisibilityConverter() =
             :> obj
 
         member this.ConvertBack(value: obj, targetType: System.Type, parameter: obj, culture: System.Globalization.CultureInfo): obj =
-            raise (System.NotImplementedException())
+            raise (System.NotSupportedException())
 
 // see https://weblog.west-wind.com/posts/2010/Dec/20/Finding-a-Relative-Path-in-NET
 type RelativePathConverter() =
@@ -61,7 +61,7 @@ type RelativePathConverter() =
             :> obj
 
         member this.ConvertBack(value: obj, targetTypes: System.Type [], parameter: obj, culture: System.Globalization.CultureInfo): obj [] =
-            raise (System.NotImplementedException())
+            raise (System.NotSupportedException())
 
 type BytesToMegabytesConverter() =
     static member Instance = BytesToMegabytesConverter() :> IValueConverter
@@ -74,7 +74,7 @@ type BytesToMegabytesConverter() =
             :> obj
 
         member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
-            raise (System.NotImplementedException())
+            raise (System.NotSupportedException())
 
 // see https://stackoverflow.com/a/7290188/236507
 type IndexOfConverter() =
@@ -112,7 +112,7 @@ type AllItemsEqualConverter() =
             :> obj
 
         member this.ConvertBack(value: obj, targetTypes: Type [], parameter: obj, culture: Globalization.CultureInfo): obj [] =
-            raise (System.NotImplementedException())
+            raise (System.NotSupportedException())
 
 type NameHasFeaturesConverter() =
     static member private FeatureRegex = Regex(@"\[\.(?<features>.+)\.\]$", RegexOptions.Compiled)
@@ -130,7 +130,7 @@ type NameHasFeaturesConverter() =
             :> obj
 
         member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
-            raise (System.NotImplementedException())
+            raise (System.NotSupportedException())
 
 type FeatureToDisplayStringConverter() =
     static member Instance = FeatureToDisplayStringConverter() :> IValueConverter
@@ -146,7 +146,7 @@ type FeatureToDisplayStringConverter() =
             :> obj
 
         member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
-            raise (System.NotImplementedException())
+            raise (System.NotSupportedException())
 
 type BindingProxy() =
     inherit Freezable()
@@ -186,7 +186,23 @@ type FileChangesToEnumConverter() =
             :> obj
 
         member this.ConvertBack(value: obj, targetTypes: Type [], parameter: obj, culture: Globalization.CultureInfo): obj [] =
-            raise (System.NotImplementedException())
+            raise (System.NotSupportedException())
+
+type FilesToUniqueCountConverter() =
+    static member Instance = FilesToUniqueCountConverter() :> IValueConverter
+
+    interface IValueConverter with
+        member this.Convert(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
+            match value with
+            | :? (FileViewModel seq) as files ->
+                files
+                |> Seq.distinctBy (fun vm -> vm.FileInfo.FullName)
+                |> Seq.length
+            | _ -> 0
+            :> obj
+
+        member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
+            raise (System.NotSupportedException())
 
 type FilesToTotalSizeConverter() =
     static member Instance = FilesToTotalSizeConverter() :> IValueConverter
@@ -194,10 +210,13 @@ type FilesToTotalSizeConverter() =
     interface IValueConverter with
         member this.Convert(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
             match value with
-            | :? (FileInfo seq) as files ->
-                files |> Seq.sumBy (fun fi -> fi.Length) |> float |> Utilities.bytesToMegabytes
+            | :? (FileViewModel seq) as files ->
+                files
+                |> Seq.distinctBy (fun vm -> vm.FileInfo.FullName)
+                |> Seq.sumBy (fun fi -> fi.Length)
+                |> float |> Utilities.bytesToMegabytes
             | _ -> 0.
             :> obj
 
         member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
-            raise (System.NotImplementedException())
+            raise (System.NotSupportedException())

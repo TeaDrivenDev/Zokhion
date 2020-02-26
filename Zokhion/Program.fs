@@ -138,8 +138,8 @@ type MainWindow() as this =
 
             let files =
                 draggedItems
-                |> Seq.cast<System.IO.FileInfo>
-                |> Seq.map (fun fileInfo -> fileInfo.FullName)
+                |> Seq.cast<FileViewModel>
+                |> Seq.map (fun fileViewModel -> fileViewModel.FileInfo.FullName)
                 |> Seq.toArray
 
             let dataObject = DataObject(DataFormats.FileDrop, files)
@@ -155,7 +155,7 @@ type MainWindow() as this =
         match sender with
         | :? TextBlock as textBlock ->
             match textBlock.DataContext with
-            | :? System.IO.FileInfo as fileInfo -> Some fileInfo.DirectoryName
+            | :? FileViewModel as fileViewModel-> Some fileViewModel.DirectoryName
             | _ -> None
         | _ -> None
         |> Option.iter __.ViewModel.CreateSearchTabForDirectory

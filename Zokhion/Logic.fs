@@ -282,3 +282,28 @@ module Logic =
             DetectedNames = namesToUse
             DetectedFeatures = featuresToUse |> Option.defaultValue []
         }
+
+    let groupByFeatureInstances feature (files: System.IO.FileInfo list) =
+        let featureInstanceCodes =
+            feature.Instances
+            |> List.map (fun instance -> feature.Code + instance.Code)
+            |> Set.ofList
+
+        let files =
+            files 
+            |> List.map (fun file ->
+                file, System.IO.Path.GetFileNameWithoutExtension file.Name)
+
+        files
+        |> List.collect (fun (fileInfo, fileName) ->
+            let _, _, features = splitFileName false fileName
+            let fileFeatures = 
+                evaluateFeaturesPart features
+                |> Option.defaultValue []
+                |> Set.ofList
+                |> Set.intersect featureInstanceCodes
+                |> Set.toList
+
+            match fileFeatures with
+            | [] -> [ "", fileInfo ]
+            | features -> features |> List.map (asFst fileInfo))

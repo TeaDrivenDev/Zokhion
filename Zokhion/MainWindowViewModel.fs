@@ -126,6 +126,8 @@ type MainWindowViewModel() as this =
         new ReactiveProperty<_>(Unchecked.defaultof<FeatureViewModel>, ReactivePropertyMode.None)
     let features = ReactiveList()
     let featureInstances = ReactiveList(ChangeTrackingEnabled = true)
+    let mutable featureCodes = Unchecked.defaultof<IReactiveDerivedList<_>>
+
     let enableFeatureEditing = new ReactiveProperty<_>()
     let mutable removeFeatureInstanceRowCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable addFeatureInstanceRowCommand = Unchecked.defaultof<ReactiveCommand>
@@ -890,6 +892,8 @@ type MainWindowViewModel() as this =
             |> List.iter this.EditingFeatureInstances.Add)
         |> ignore
 
+        featureCodes <- features.CreateDerivedCollection<_, _, _>(fun vm -> vm.Feature)
+
         isFileSystemWatcherAlive <-
             Observable.interval (TimeSpan.FromSeconds 1.)
             |> Observable.map (fun _ -> watcher.EnableRaisingEvents)
@@ -989,8 +993,8 @@ type MainWindowViewModel() as this =
         |> Seq.map (fun vm -> vm.FeatureCode + vm.InstanceCode)
 
     member __.Features: ReactiveList<FeatureViewModel> = features
-
     member __.FeatureInstances: ReactiveList<FeatureInstanceViewModel> = featureInstances
+    member __.FeatureCodes: IReactiveDerivedList<Feature> = featureCodes
 
     member __.EnableFeatureEditing: ReactiveProperty<bool> = enableFeatureEditing
 

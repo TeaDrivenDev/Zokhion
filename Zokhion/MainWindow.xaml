@@ -161,6 +161,18 @@
                                                                         PropertyName="CreationTime" />
                                     </CollectionViewSource.SortDescriptions>
                                 </CollectionViewSource>
+                                <CollectionViewSource x:Key="SortedAndGroupedFiles"
+                                                      IsLiveGroupingRequested="True"
+                                                      IsLiveSortingRequested="True"
+                                                      Source="{Binding Files}">
+                                    <CollectionViewSource.SortDescriptions>
+                                        <componentModel:SortDescription Direction="Ascending"
+                                                                        PropertyName="CreationTime" />
+                                    </CollectionViewSource.SortDescriptions>
+                                    <CollectionViewSource.GroupDescriptions>
+                                        <PropertyGroupDescription PropertyName="Group" />
+                                    </CollectionViewSource.GroupDescriptions>
+                                </CollectionViewSource>
                             </Grid.Resources>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -169,12 +181,29 @@
                             </Grid.RowDefinitions>
                             <Grid Grid.Row="0">
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox x:Name="GroupByFeatureValue"
+                                              Margin="5 0 0 0"
+                                              IsChecked="{Binding IsGroupByFeatureValue.Value}"
+                                              ToolTip="Group by feature value" />
+                                    <ComboBox x:Name="SelectedFeature"
+                                              Width="100"
+                                              Margin="5 0"
+                                              DisplayMemberPath="Name"
+                                              IsEnabled="{Binding ElementName=GroupByFeatureValue,
+                                                                  Path=IsChecked}"
+                                              ItemsSource="{Binding ElementName=MainWindowView,
+                                                                    Path=DataContext.FeatureCodes}"
+                                              SelectedItem="{Binding FeatureToGroupBy.Value}" />
+                                </StackPanel>
+
                                 <TextBox x:Name="SearchString"
-                                         Grid.Column="0"
+                                         Grid.Column="1"
                                          Height="25"
                                          Margin="5"
                                          materialDesign:HintAssist.Hint="Search"
@@ -183,7 +212,7 @@
                                                         UpdateSourceTrigger=PropertyChanged}"
                                          TextWrapping="NoWrap" />
 
-                                <Button Grid.Column="0"
+                                <Button Grid.Column="1"
                                         Margin="5 0"
                                         Padding="0 -1 -1 0"
                                         HorizontalAlignment="Right"
@@ -208,7 +237,7 @@
                                     </Button.Style>
                                 </Button>
 
-                                <StackPanel Grid.Column="1"
+                                <StackPanel Grid.Column="2"
                                             Orientation="Horizontal">
                                     <CheckBox Margin="0 0 5 0"
                                               Content="From base"
@@ -240,11 +269,25 @@
                                       materialDesign:DataGridAssist.CellPadding="4 2 2 2"
                                       materialDesign:DataGridAssist.ColumnHeaderPadding="4 2 2 2"
                                       AutoGenerateColumns="False"
-                                      ItemsSource="{Binding Source={StaticResource SortedFiles}}"
+                                      ItemsSource="{Binding Source={StaticResource SortedAndGroupedFiles}}"
                                       MouseMove="FilesGrid_MouseMove"
                                       PreviewMouseLeftButtonDown="FilesGrid_PreviewMouseLeftButtonDown"
                                       SelectedItem="{Binding SelectedFile.Value}"
                                       SelectionMode="Extended">
+                                <DataGrid.Style>
+                                    <Style BasedOn="{StaticResource {x:Type DataGrid}}"
+                                           TargetType="{x:Type DataGrid}">
+                                        <!--<Setter Property="ItemsSource" Value="{Binding Source={StaticResource SortedFiles}}" />-->
+
+                                        <!--<Style.Triggers>
+                                            <DataTrigger Binding="{Binding ElementName=GroupByFeatureValue,
+                                                                           Path=IsChecked}"
+                                                         Value="True">-->
+                                        <!--<Setter Property="ItemsSource" Value="{Binding Source={StaticResource SortedAndGroupedFiles}}" />-->
+                                        <!--</DataTrigger>
+                                        </Style.Triggers>-->
+                                    </Style>
+                                </DataGrid.Style>
                                 <DataGrid.Resources>
                                     <Style TargetType="{x:Type ContentPresenter}">
                                         <Setter Property="VerticalAlignment" Value="Center" />
@@ -268,6 +311,39 @@
                                         </Setter>
                                     </Style>
                                 </DataGrid.Resources>
+                                <DataGrid.GroupStyle>
+                                    <GroupStyle>
+                                        <GroupStyle.ContainerStyle>
+                                            <Style TargetType="{x:Type GroupItem}">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="{x:Type GroupItem}">
+                                                            <StackPanel>
+                                                                <TextBlock Margin="3">
+                                                                    <TextBlock.Text>
+                                                                        <MultiBinding StringFormat="{}{0} ({1})">
+                                                                            <MultiBinding.Bindings>
+                                                                                <Binding Path="Name" />
+                                                                                <Binding Path="ItemCount" />
+                                                                            </MultiBinding.Bindings>
+                                                                        </MultiBinding>
+                                                                    </TextBlock.Text>
+                                                                </TextBlock>
+
+                                                                <ItemsPresenter Margin="3" />
+                                                            </StackPanel>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </GroupStyle.ContainerStyle>
+                                        <GroupStyle.Panel>
+                                            <ItemsPanelTemplate>
+                                                <DataGridRowsPresenter />
+                                            </ItemsPanelTemplate>
+                                        </GroupStyle.Panel>
+                                    </GroupStyle>
+                                </DataGrid.GroupStyle>
                                 <DataGrid.RowStyle>
                                     <Style BasedOn="{StaticResource MaterialDesignDataGridRow}"
                                            TargetType="DataGridRow">

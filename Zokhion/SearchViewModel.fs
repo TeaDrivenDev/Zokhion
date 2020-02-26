@@ -18,7 +18,8 @@ open ReactiveUI
 open TeaDriven.Zokhion
 
 [<AllowNullLiteral>]
-type FileViewModel(fileInfo: FileInfo) =
+type FileViewModel(group: string, fileInfo: FileInfo) =
+    member __.Group = group
     member __.FileInfo = fileInfo
     member __.Name = fileInfo.Name
     member __.DirectoryName = fileInfo.DirectoryName
@@ -61,20 +62,14 @@ type SearchFilter =
         SearchDirectory: string option
     }
 
-type FeatureCode =
-    {
-        Code: string
-        FeatureName: string
-    }
-
 type DisplayParameters =
     {
-        FeatureToGroupBy: string option
+        FeatureToGroupBy: Feature option
         SearchFilter: SearchFilter
     }
 
 type DisplayParameterChange =
-    | FeatureToGroupBy of string option
+    | FeatureToGroupBy of Feature option
     | SearchFilter of SearchFilter
 
 type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
@@ -84,7 +79,7 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
     let selectedDirectory = new BehaviorSubject<DirectoryInfo option>(None)
 
     let isGroupByFeatureValue = new ReactiveProperty<bool>()
-    let selectedFeatureCode = new ReactiveProperty<FeatureCode>()
+    let featureToGroupBy = new ReactiveProperty<Feature>()
 
     let searchString = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let searchFromBaseDirectory = new ReactiveProperty<_>(true)
@@ -298,30 +293,57 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             |> Observable.map createFilter
             |> toReadOnlyReactiveProperty
 
-        filter
-        |> Observable.map (fun filter ->
+        [
+            isGroupByFeatureValue
+            |> Observable.combineLatest featureToGroupBy
+            |> Observable.map (fun (feature, flag) ->
+                if flag && not (isNull (box feature)) then Some feature else None
+                |> FeatureToGroupBy)
+
+            filter
+            |> Observable.map SearchFilter
+        ]
+        |> Observable.mergeSeq
+        |> Observable.scanInit
             {
                 FeatureToGroupBy = None
-                SearchFilter = filter
-            })
+                SearchFilter =
+                    {
+                        Filter = fun mode fi -> true
+                        SearchDirectory = None
+                    }
+            }
+            (fun parameters (change: DisplayParameterChange) ->
+                match change with
+                | FeatureToGroupBy feature -> { parameters with FeatureToGroupBy = feature}
+                | SearchFilter filter -> { parameters with SearchFilter = filter})
         |> Observable.iter (fun _ -> isUpdatingNotifier.TurnOn())
         |> Observable.observeOn ThreadPoolScheduler.Instance
         |> Observable.choose (fun parameters ->
             getFiles parameters.SearchFilter
-            |> Option.map (asSnd parameters.FeatureToGroupBy))
+            |> Option.map (Seq.toList >> asSnd parameters.FeatureToGroupBy))
         |> Observable.observeOn RxApp.MainThreadScheduler
-        |> Observable.subscribe (fun (_, newFiles) ->
-            (newFiles, Seq.toList files)
-            ||> fullOuterJoin (fun fi -> fi.FullName) (fun vm -> vm.FileInfo.FullName)
+        |> Observable.subscribe (fun (featureToGroupBy, newFiles) ->
+            let newFiles =
+                featureToGroupBy
+                |> Option.map (fun feature -> Logic.groupByFeatureInstances feature newFiles)
+                |> Option.defaultWith (fun () -> newFiles |> List.map (asSnd ""))
+
+            (newFiles |> List.map JoinWrapper, Seq.toList files)
+            ||> fullOuterJoin
+                (fun newFile ->
+                    let group, fi = newFile.Value
+                    group, fi.Name)
+                (fun vm -> vm.Group, vm.FileInfo.FullName)
             |> Seq.iter (function
                 | LeftOnly vm -> files.Remove vm |> ignore
-                | RightOnly fi -> files.Add (FileViewModel fi)
-                | JoinMatch (old, ``new``) ->
-                    if (``new``.Length, ``new``.LastWriteTimeUtc)
-                       <> (old.FileInfo.Length, old.FileInfo.LastWriteTimeUtc)
+                | RightOnly (JoinWrapped (group, fi)) -> files.Add (FileViewModel(group, fi))
+                | JoinMatch (oldViewModel, JoinWrapped(newGroup, newFileInfo)) ->
+                    if (newFileInfo.Length, newFileInfo.LastWriteTimeUtc)
+                       <> (oldViewModel.FileInfo.Length, oldViewModel.FileInfo.LastWriteTimeUtc)
                     then
-                        files.Remove old |> ignore
-                        files.Add (FileViewModel ``new``))
+                        files.Remove oldViewModel |> ignore
+                        files.Add (FileViewModel(newGroup, newFileInfo)))
 
             isUpdatingNotifier.TurnOff()
 
@@ -358,7 +380,7 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             |> toReadOnlyReactivePropertyWithMode ReactivePropertyMode.RaiseLatestValueOnSubscribe
 
     member __.IsGroupByFeatureValue = isGroupByFeatureValue
-    member __.SelectedFeatureCode = selectedFeatureCode
+    member __.FeatureToGroupBy = featureToGroupBy
     member __.SearchString = searchString
     member __.SearchFromBaseDirectory = searchFromBaseDirectory
     member __.CanToggleSearchFromBaseDirectory = canToggleSearchFromBaseDirectory

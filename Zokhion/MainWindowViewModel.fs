@@ -26,6 +26,12 @@ open ReactiveUI
 
 open TeaDriven.Zokhion
 
+type GroupCategoryEntry =
+    {
+        Name: string
+        GroupCategory: GroupCategory
+    }
+
 type RenamedFile = { OriginalFile: FileInfo; NewFilePath: string }
 
 type FileChanges =
@@ -126,7 +132,7 @@ type MainWindowViewModel() as this =
         new ReactiveProperty<_>(Unchecked.defaultof<FeatureViewModel>, ReactivePropertyMode.None)
     let features = ReactiveList()
     let featureInstances = ReactiveList(ChangeTrackingEnabled = true)
-    let mutable featureCodes = Unchecked.defaultof<IReactiveDerivedList<_>>
+    let mutable groupCategories = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     let enableFeatureEditing = new ReactiveProperty<_>()
     let mutable removeFeatureInstanceRowCommand = Unchecked.defaultof<ReactiveCommand>
@@ -892,7 +898,20 @@ type MainWindowViewModel() as this =
             |> List.iter this.EditingFeatureInstances.Add)
         |> ignore
 
-        featureCodes <- features.CreateDerivedCollection<_, _, _>(fun vm -> vm.Feature)
+        groupCategories <-
+            features.Changed
+            |> Observable.map (fun _ ->
+                [
+                    { Name = "No grouping"; GroupCategory = NoGrouping }
+                    { Name = "Individual names"; GroupCategory = ByNameIndividually }
+                    { Name = "Co-ocurring names"; GroupCategory = ByNameConjunctions }
+
+                    yield!
+                        features
+                        |> Seq.map (fun vm -> { Name = "> " + vm.Feature.Name; GroupCategory = ByFeature vm.Feature })
+                        |> Seq.toList
+                ])
+            |> toReadOnlyReactiveProperty
 
         isFileSystemWatcherAlive <-
             Observable.interval (TimeSpan.FromSeconds 1.)
@@ -994,7 +1013,7 @@ type MainWindowViewModel() as this =
 
     member __.Features: ReactiveList<FeatureViewModel> = features
     member __.FeatureInstances: ReactiveList<FeatureInstanceViewModel> = featureInstances
-    member __.FeatureCodes: IReactiveDerivedList<Feature> = featureCodes
+    member __.GroupCategories = groupCategories
 
     member __.EnableFeatureEditing: ReactiveProperty<bool> = enableFeatureEditing
 

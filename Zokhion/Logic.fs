@@ -291,19 +291,67 @@ module Logic =
             FileInfo: FileInfo
         }
 
+    type GroupCategory =
+        | NoGrouping
+        | ByNameIndividually
+        | ByNameConjunctions
+        | ByFeature of Feature
+
+    let groupByIndividualNames (files: FileInfo list) =
+        files 
+        |> List.collect (fun fileInfo ->
+            let fileName = Path.GetFileNameWithoutExtension fileInfo.Name
+
+            let _, names, _= splitFileName true fileName
+            let names =
+                let m = Regex.Match(names, @"^\(\.(?<names>.+)\.\)$")
+
+                if m.Success
+                then m.Groups.["names"].Value.Split [| '.' |] |> Array.map trim |> Array.toList
+                else []
+
+            match names with
+            | [] -> [ { Group = ""; NumberOfInstances = 1; FileInfo = fileInfo } ]
+            | names ->
+                names
+                |> List.map (fun name ->
+                    {
+                        Group = name
+                        NumberOfInstances = names.Length
+                        FileInfo = fileInfo
+                    }))
+
+    let groupByCooccurringNames (files: FileInfo list) =
+        files 
+        |> List.collect (fun fileInfo ->
+            let fileName = Path.GetFileNameWithoutExtension fileInfo.Name
+
+            let _, names, _= splitFileName true fileName
+            let names =
+                let m = Regex.Match(names, @"^\(\.(?<names>.+)\.\)$")
+
+                if m.Success
+                then m.Groups.["names"].Value.Split [| '.' |] |> Array.map trim |> String.concat ", "
+                else ""
+
+            [
+                {
+                    Group = names
+                    NumberOfInstances = 1
+                    FileInfo = fileInfo
+                }
+            ])
+
     let groupByFeatureInstances feature (files: FileInfo list) =
         let featureInstanceCodes =
             feature.Instances
             |> List.map (fun instance -> feature.Code + instance.Code)
             |> Set.ofList
 
-        let files =
-            files 
-            |> List.map (fun file ->
-                file, Path.GetFileNameWithoutExtension file.Name)
+        files 
+        |> List.collect (fun fileInfo ->
+            let fileName = Path.GetFileNameWithoutExtension fileInfo.Name
 
-        files
-        |> List.collect (fun (fileInfo, fileName) ->
             let _, _, features = splitFileName false fileName
             let fileFeatures = 
                 evaluateFeaturesPart features
@@ -322,3 +370,11 @@ module Logic =
                         NumberOfInstances = features.Length
                         FileInfo = fileInfo
                     }))
+
+    let groupFilesByCategory groupCategory (files: FileInfo list) =
+        match groupCategory with
+        | NoGrouping ->
+            files |> List.map (fun file -> { Group = ""; NumberOfInstances = 1; FileInfo = file})
+        | ByNameIndividually -> groupByIndividualNames files
+        | ByNameConjunctions -> groupByCooccurringNames files
+        | ByFeature feature -> groupByFeatureInstances feature files

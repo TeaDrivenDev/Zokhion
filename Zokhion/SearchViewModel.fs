@@ -65,12 +65,12 @@ type SearchFilter =
 
 type DisplayParameters =
     {
-        FeatureToGroupBy: Feature option
+        GroupCategory: GroupCategory
         SearchFilter: SearchFilter
     }
 
 type DisplayParameterChange =
-    | FeatureToGroupBy of Feature option
+    | GroupCategory of GroupCategory
     | SearchFilter of SearchFilter
 
 type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
@@ -80,7 +80,7 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
     let selectedDirectory = new BehaviorSubject<DirectoryInfo option>(None)
 
     let isGroupByFeatureValue = new ReactiveProperty<bool>()
-    let featureToGroupBy = new ReactiveProperty<Feature>()
+    let groupCategory = new ReactiveProperty<GroupCategory>(NoGrouping)
 
     let searchString = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let searchFromBaseDirectory = new ReactiveProperty<_>(true)
@@ -295,19 +295,14 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             |> toReadOnlyReactiveProperty
 
         [
-            isGroupByFeatureValue
-            |> Observable.combineLatest featureToGroupBy
-            |> Observable.map (fun (feature, flag) ->
-                if flag && not (isNull (box feature)) then Some feature else None
-                |> FeatureToGroupBy)
+            groupCategory |> Observable.map GroupCategory
 
-            filter
-            |> Observable.map SearchFilter
+            filter |> Observable.map SearchFilter
         ]
         |> Observable.mergeSeq
         |> Observable.scanInit
             {
-                FeatureToGroupBy = None
+                GroupCategory = NoGrouping
                 SearchFilter =
                     {
                         Filter = fun mode fi -> true
@@ -316,21 +311,16 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             }
             (fun parameters (change: DisplayParameterChange) ->
                 match change with
-                | FeatureToGroupBy feature -> { parameters with FeatureToGroupBy = feature}
+                | GroupCategory feature -> { parameters with GroupCategory = feature}
                 | SearchFilter filter -> { parameters with SearchFilter = filter})
         |> Observable.iter (fun _ -> isUpdatingNotifier.TurnOn())
         |> Observable.observeOn ThreadPoolScheduler.Instance
         |> Observable.choose (fun parameters ->
             getFiles parameters.SearchFilter
-            |> Option.map (Seq.toList >> asSnd parameters.FeatureToGroupBy))
+            |> Option.map (Seq.toList >> asSnd parameters.GroupCategory))
         |> Observable.observeOn RxApp.MainThreadScheduler
-        |> Observable.subscribe (fun (featureToGroupBy, newFiles) ->
-            let newFiles =
-                featureToGroupBy
-                |> Option.map (fun feature -> Logic.groupByFeatureInstances feature newFiles)
-                |> Option.defaultWith (fun () ->
-                    newFiles
-                    |> List.map (fun file -> { Group = ""; NumberOfInstances = 1; FileInfo = file }))
+        |> Observable.subscribe (fun (groupCategory, newFiles) ->
+            let newFiles = Logic.groupFilesByCategory groupCategory newFiles
 
             (newFiles |> List.map JoinWrapper, Seq.toList files)
             ||> fullOuterJoin
@@ -383,7 +373,7 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             |> toReadOnlyReactivePropertyWithMode ReactivePropertyMode.RaiseLatestValueOnSubscribe
 
     member __.IsGroupByFeatureValue = isGroupByFeatureValue
-    member __.FeatureToGroupBy = featureToGroupBy
+    member __.FeatureToGroupBy = groupCategory
     member __.SearchString = searchString
     member __.SearchFromBaseDirectory = searchFromBaseDirectory
     member __.CanToggleSearchFromBaseDirectory = canToggleSearchFromBaseDirectory

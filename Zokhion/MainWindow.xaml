@@ -187,19 +187,14 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Orientation="Horizontal">
-                                    <CheckBox x:Name="GroupByFeatureValue"
-                                              Margin="5 0 0 0"
-                                              IsChecked="{Binding IsGroupByFeatureValue.Value}"
-                                              ToolTip="Group by feature value" />
                                     <ComboBox x:Name="SelectedFeature"
-                                              Width="100"
+                                              Width="140"
                                               Margin="5 0"
                                               DisplayMemberPath="Name"
-                                              IsEnabled="{Binding ElementName=GroupByFeatureValue,
-                                                                  Path=IsChecked}"
                                               ItemsSource="{Binding ElementName=MainWindowView,
-                                                                    Path=DataContext.FeatureCodes}"
-                                              SelectedItem="{Binding FeatureToGroupBy.Value}" />
+                                                                    Path=DataContext.GroupCategories.Value}"
+                                              SelectedValue="{Binding FeatureToGroupBy.Value}"
+                                              SelectedValuePath="GroupCategory" />
                                 </StackPanel>
 
                                 <TextBox x:Name="SearchString"

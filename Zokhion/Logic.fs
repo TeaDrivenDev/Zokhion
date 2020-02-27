@@ -7,7 +7,7 @@ module Logic =
     open System.IO
     open System.Text.RegularExpressions
 
-    let inline (<||>) f g x = f x || g x
+    let inline ( <||> ) f g x = f x || g x
     let trim (s: string) = s.Trim()
     let toUpper (s: string) = s.ToUpper()
     let toTitleCase s = CultureInfo.CurrentCulture.TextInfo.ToTitleCase s
@@ -297,50 +297,48 @@ module Logic =
         | ByNameConjunctions
         | ByFeature of Feature
 
-    let groupByIndividualNames (files: FileInfo list) =
-        files 
-        |> List.collect (fun fileInfo ->
-            let fileName = Path.GetFileNameWithoutExtension fileInfo.Name
+    let singleInstanceWithGroup group fileInfo =
+        { Group = group; NumberOfInstances = 1; FileInfo = fileInfo }
 
-            let _, names, _= splitFileName true fileName
-            let names =
-                let m = Regex.Match(names, @"^\(\.(?<names>.+)\.\)$")
+    let multiplexByGroups fileInfo groups =
+        match groups with
+        | [] -> [ singleInstanceWithGroup "" fileInfo ]
+        | groups ->
+            groups
+            |> List.map (fun group ->
+                {
+                    Group = group
+                    NumberOfInstances = groups.Length
+                    FileInfo = fileInfo
+                })
 
-                if m.Success
-                then m.Groups.["names"].Value.Split [| '.' |] |> Array.map trim |> Array.toList
-                else []
+    let extractNames fileName =
+        let _, names, _=
+            Path.GetFileNameWithoutExtension fileName
+            |> splitFileName true
 
-            match names with
-            | [] -> [ { Group = ""; NumberOfInstances = 1; FileInfo = fileInfo } ]
-            | names ->
-                names
-                |> List.map (fun name ->
-                    {
-                        Group = name
-                        NumberOfInstances = names.Length
-                        FileInfo = fileInfo
-                    }))
+        let m = Regex.Match(names, @"^\(\.(?<names>.+)\.\)$")
+
+        if m.Success
+        then m.Groups.["names"].Value.Split [| '.' |] |> Array.map trim |> Array.toList
+        else []
 
     let groupByCooccurringNames (files: FileInfo list) =
-        files 
+        files
         |> List.collect (fun fileInfo ->
-            let fileName = Path.GetFileNameWithoutExtension fileInfo.Name
-
-            let _, names, _= splitFileName true fileName
             let names =
-                let m = Regex.Match(names, @"^\(\.(?<names>.+)\.\)$")
+                fileInfo.Name
+                |> extractNames
+                |> String.concat ", "
 
-                if m.Success
-                then m.Groups.["names"].Value.Split [| '.' |] |> Array.map trim |> String.concat ", "
-                else ""
+            [ singleInstanceWithGroup names fileInfo])
 
-            [
-                {
-                    Group = names
-                    NumberOfInstances = 1
-                    FileInfo = fileInfo
-                }
-            ])
+    let groupByIndividualNames (files: FileInfo list) =
+        files
+        |> List.collect (fun fileInfo ->
+            fileInfo.Name
+            |> extractNames
+            |> multiplexByGroups fileInfo)
 
     let groupByFeatureInstances feature (files: FileInfo list) =
         let featureInstanceCodes =
@@ -348,33 +346,22 @@ module Logic =
             |> List.map (fun instance -> feature.Code + instance.Code)
             |> Set.ofList
 
-        files 
+        files
         |> List.collect (fun fileInfo ->
-            let fileName = Path.GetFileNameWithoutExtension fileInfo.Name
+            let _, _, features =
+                Path.GetFileNameWithoutExtension fileInfo.Name
+                |> splitFileName false
 
-            let _, _, features = splitFileName false fileName
-            let fileFeatures = 
-                evaluateFeaturesPart features
-                |> Option.defaultValue []
-                |> Set.ofList
-                |> Set.intersect featureInstanceCodes
-                |> Set.toList
-
-            match fileFeatures with
-            | [] -> [ { Group = ""; NumberOfInstances = 1; FileInfo = fileInfo } ]
-            | features ->
-                features
-                |> List.map (fun feature ->
-                    {
-                        Group = feature
-                        NumberOfInstances = features.Length
-                        FileInfo = fileInfo
-                    }))
+            evaluateFeaturesPart features
+            |> Option.defaultValue []
+            |> Set.ofList
+            |> Set.intersect featureInstanceCodes
+            |> Set.toList
+            |> multiplexByGroups fileInfo)
 
     let groupFilesByCategory groupCategory (files: FileInfo list) =
         match groupCategory with
-        | NoGrouping ->
-            files |> List.map (fun file -> { Group = ""; NumberOfInstances = 1; FileInfo = file})
+        | NoGrouping -> files |> List.map (singleInstanceWithGroup "")
         | ByNameIndividually -> groupByIndividualNames files
         | ByNameConjunctions -> groupByCooccurringNames files
         | ByFeature feature -> groupByFeatureInstances feature files

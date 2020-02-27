@@ -320,14 +320,25 @@
                                                         <ControlTemplate TargetType="{x:Type GroupItem}">
                                                             <StackPanel>
                                                                 <TextBlock Margin="3">
-                                                                    <TextBlock.Text>
-                                                                        <MultiBinding StringFormat="{}{0} ({1})">
-                                                                            <MultiBinding.Bindings>
-                                                                                <Binding Path="Name" />
-                                                                                <Binding Path="ItemCount" />
-                                                                            </MultiBinding.Bindings>
-                                                                        </MultiBinding>
-                                                                    </TextBlock.Text>
+                                                                    <Run>
+                                                                        <Run.Style>
+                                                                            <Style TargetType="{x:Type Run}">
+                                                                                <Setter Property="Text" Value="{Binding Name, Mode=OneWay}" />
+
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding Name,
+                                                                                                                   Mode=OneWay}"
+                                                                                                 Value="">
+                                                                                        <Setter Property="Text" Value="&lt;None&gt;" />
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Run.Style>
+                                                                    </Run>
+
+                                                                    <Run Text="{Binding ItemCount,
+                                                                                        StringFormat=({0}),
+                                                                                        Mode=OneWay}" />
                                                                 </TextBlock>
 
                                                                 <ItemsPresenter Margin="3" />

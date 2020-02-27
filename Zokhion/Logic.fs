@@ -4,6 +4,7 @@
 module Logic =
     open System
     open System.Globalization
+    open System.IO
     open System.Text.RegularExpressions
 
     let inline (<||>) f g x = f x || g x
@@ -283,7 +284,14 @@ module Logic =
             DetectedFeatures = featuresToUse |> Option.defaultValue []
         }
 
-    let groupByFeatureInstances feature (files: System.IO.FileInfo list) =
+    type FileInstance =
+        {
+            Group: string
+            NumberOfInstances: int
+            FileInfo: FileInfo
+        }
+
+    let groupByFeatureInstances feature (files: FileInfo list) =
         let featureInstanceCodes =
             feature.Instances
             |> List.map (fun instance -> feature.Code + instance.Code)
@@ -292,7 +300,7 @@ module Logic =
         let files =
             files 
             |> List.map (fun file ->
-                file, System.IO.Path.GetFileNameWithoutExtension file.Name)
+                file, Path.GetFileNameWithoutExtension file.Name)
 
         files
         |> List.collect (fun (fileInfo, fileName) ->
@@ -305,5 +313,12 @@ module Logic =
                 |> Set.toList
 
             match fileFeatures with
-            | [] -> [ "", fileInfo ]
-            | features -> features |> List.map (asFst fileInfo))
+            | [] -> [ { Group = ""; NumberOfInstances = 1; FileInfo = fileInfo } ]
+            | features ->
+                features
+                |> List.map (fun feature ->
+                    {
+                        Group = feature
+                        NumberOfInstances = features.Length
+                        FileInfo = fileInfo
+                    }))

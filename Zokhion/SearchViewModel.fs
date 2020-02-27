@@ -18,14 +18,15 @@ open ReactiveUI
 open TeaDriven.Zokhion
 
 [<AllowNullLiteral>]
-type FileViewModel(group: string, fileInfo: FileInfo) =
-    member __.Group = group
-    member __.FileInfo = fileInfo
-    member __.Name = fileInfo.Name
-    member __.DirectoryName = fileInfo.DirectoryName
-    member __.LastWriteTime = fileInfo.LastWriteTime
-    member __.Length = fileInfo.Length
-    member __.CreationTime = fileInfo.CreationTime
+type FileViewModel(fileInstance: FileInstance) =
+    member __.Group = fileInstance.Group
+    member __.FileInfo = fileInstance.FileInfo
+    member __.Name = fileInstance.FileInfo.Name
+    member __.DirectoryName = fileInstance.FileInfo.DirectoryName
+    member __.LastWriteTime = fileInstance.FileInfo.LastWriteTime
+    member __.Length = fileInstance.FileInfo.Length
+    member __.CreationTime = fileInstance.FileInfo.CreationTime
+    member __.NumberOfInstances = fileInstance.NumberOfInstances
 
 type SearchViewModelCommand =
     | Directories of (DirectoryInfo option * string)
@@ -327,23 +328,25 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             let newFiles =
                 featureToGroupBy
                 |> Option.map (fun feature -> Logic.groupByFeatureInstances feature newFiles)
-                |> Option.defaultWith (fun () -> newFiles |> List.map (asSnd ""))
+                |> Option.defaultWith (fun () ->
+                    newFiles
+                    |> List.map (fun file -> { Group = ""; NumberOfInstances = 1; FileInfo = file }))
 
             (newFiles |> List.map JoinWrapper, Seq.toList files)
             ||> fullOuterJoin
                 (fun newFile ->
-                    let group, fi = newFile.Value
-                    group, fi.Name)
-                (fun vm -> vm.Group, vm.FileInfo.FullName)
+                    let { Group = group; FileInfo = fileInfo } = newFile.Value
+                    group, fileInfo.FullName)
+                (fun viewModel -> viewModel.Group, viewModel.FileInfo.FullName)
             |> Seq.iter (function
                 | LeftOnly vm -> files.Remove vm |> ignore
-                | RightOnly (JoinWrapped (group, fi)) -> files.Add (FileViewModel(group, fi))
-                | JoinMatch (oldViewModel, JoinWrapped(newGroup, newFileInfo)) ->
-                    if (newFileInfo.Length, newFileInfo.LastWriteTimeUtc)
-                       <> (oldViewModel.FileInfo.Length, oldViewModel.FileInfo.LastWriteTimeUtc)
+                | RightOnly (JoinWrapped fileInstance) -> files.Add (FileViewModel fileInstance)
+                | JoinMatch (oldViewModel, JoinWrapped newFileInstance) ->
+                    if (newFileInstance.FileInfo.Length, newFileInstance.FileInfo.LastWriteTimeUtc, newFileInstance.NumberOfInstances)
+                       <> (oldViewModel.FileInfo.Length, oldViewModel.FileInfo.LastWriteTimeUtc, oldViewModel.NumberOfInstances)
                     then
                         files.Remove oldViewModel |> ignore
-                        files.Add (FileViewModel(newGroup, newFileInfo)))
+                        files.Add (FileViewModel newFileInstance))
 
             isUpdatingNotifier.TurnOff()
 

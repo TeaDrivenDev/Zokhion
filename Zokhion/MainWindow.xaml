@@ -448,9 +448,10 @@
                                                             IsReadOnly="True"
                                                             SortMemberPath="Name">
                                         <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
+                                            <DataTemplate DataType="{x:Type viewModels:FileViewModel}">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition />
                                                         <ColumnDefinition Width="Auto" />
                                                     </Grid.ColumnDefinitions>
@@ -468,11 +469,29 @@
                                                     </Grid.Resources>
 
                                                     <TextBlock Grid.Column="0"
+                                                               Margin="0 0 5 0"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="8"
+                                                               Text="{Binding NumberOfInstances}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="{x:Type TextBlock}">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding NumberOfInstances}"
+                                                                                 Value="1">
+                                                                        <Setter Property="Visibility" Value="Hidden" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+
+                                                    <TextBlock Grid.Column="1"
                                                                Text="{Binding Name}"
                                                                TextTrimming="CharacterEllipsis"
                                                                ToolTip="{Binding RelativeSource={RelativeSource Self},
                                                                                  Path=Text}" />
-                                                    <StackPanel Grid.Column="1">
+
+                                                    <StackPanel Grid.Column="2">
                                                         <materialDesign:PackIcon Kind="Edit">
                                                             <materialDesign:PackIcon.Style>
                                                                 <Style TargetType="materialDesign:PackIcon">

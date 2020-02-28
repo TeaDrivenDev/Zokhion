@@ -990,33 +990,16 @@
                                         Content="+" />
                             </Grid>
 
-                            <ItemsControl x:Name="Names"
-                                          Grid.Row="1"
-                                          Background="Transparent"
-                                          ItemsSource="{Binding Names}"
-                                          ScrollViewer.CanContentScroll="True"
-                                          VirtualizingStackPanel.IsVirtualizing="True">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <VirtualizingStackPanel />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.Template>
-                                    <ControlTemplate>
-                                        <Border Padding="{TemplateBinding Control.Padding}"
-                                                Background="{TemplateBinding Panel.Background}"
-                                                BorderBrush="{TemplateBinding Border.BorderBrush}"
-                                                BorderThickness="{TemplateBinding Border.BorderThickness}"
-                                                SnapsToDevicePixels="True">
-                                            <ScrollViewer Padding="{TemplateBinding Control.Padding}"
-                                                          Focusable="False"
-                                                          VerticalScrollBarVisibility="Auto">
-                                                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}" />
-                                            </ScrollViewer>
-                                        </Border>
-                                    </ControlTemplate>
-                                </ItemsControl.Template>
-                                <ItemsControl.ItemTemplate>
+                            <ListBox x:Name="Names"
+                                     Grid.Row="1"
+                                     HorizontalContentAlignment="Stretch"
+                                     ItemsSource="{Binding Names}">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="{x:Type ListBoxItem}">
+                                        <Setter Property="Focusable" Value="False" />
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
                                     <DataTemplate DataType="viewModels:NameViewModel">
                                         <CheckBox Margin="0 3"
                                                   HorizontalContentAlignment="Stretch"
@@ -1225,8 +1208,8 @@
                                             </Grid>
                                         </CheckBox>
                                     </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                             <!--</ScrollViewer>-->
                         </Grid>
                     </GroupBox>

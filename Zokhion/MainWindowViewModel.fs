@@ -903,8 +903,8 @@ type MainWindowViewModel() as this =
             |> Observable.map (fun _ ->
                 [
                     { Name = "No grouping"; GroupCategory = NoGrouping }
-                    { Name = "Individual names"; GroupCategory = ByNameIndividually }
-                    { Name = "Co-ocurring names"; GroupCategory = ByNameConjunctions }
+                    { Name = "Individual names"; GroupCategory = ByIndividualNames }
+                    { Name = "Co-occurring names"; GroupCategory = ByCoOccurringNames }
 
                     yield!
                         features

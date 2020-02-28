@@ -293,8 +293,8 @@ module Logic =
 
     type GroupCategory =
         | NoGrouping
-        | ByNameIndividually
-        | ByNameConjunctions
+        | ByIndividualNames
+        | ByCoOccurringNames
         | ByFeature of Feature
 
     let singleInstanceWithGroup group fileInfo =
@@ -362,6 +362,6 @@ module Logic =
     let groupFilesByCategory groupCategory (files: FileInfo list) =
         match groupCategory with
         | NoGrouping -> files |> List.map (singleInstanceWithGroup "")
-        | ByNameIndividually -> groupByIndividualNames files
-        | ByNameConjunctions -> groupByCooccurringNames files
+        | ByIndividualNames -> groupByIndividualNames files
+        | ByCoOccurringNames -> groupByCooccurringNames files
         | ByFeature feature -> groupByFeatureInstances feature files

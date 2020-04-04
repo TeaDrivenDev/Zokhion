@@ -186,6 +186,7 @@ docs/content/release-notes.md
 
 .fake/
 !.fake/build.fsx/intellisense.fsx
+.ionide
 
 build.fsx.lock
 

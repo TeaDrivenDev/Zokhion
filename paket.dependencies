@@ -4,7 +4,7 @@ framework: net472
 nuget Dragablz
 nuget DynamicData
 nuget FSharp.Control.Reactive
-nuget FSharp.Core < 4.7
+nuget FSharp.Core
 nuget FsXaml.Wpf
 nuget gong-wpf-dragdrop
 nuget MaterialDesignThemes
@@ -13,12 +13,12 @@ nuget ReactiveUI < 9
 nuget Splat < 7
 
 nuget System.ValueTuple
-
+ 
 group Test
     source https://www.nuget.org/api/v2
     framework: net472
 
-    nuget FSharp.Core < 4.7
+    nuget FSharp.Core
     nuget xunit
     nuget xunit.runner.console
     nuget xunit.runner.visualstudio

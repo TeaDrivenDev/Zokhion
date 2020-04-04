@@ -324,7 +324,7 @@
                                                                                     <DataTrigger Binding="{Binding Name,
                                                                                                                    Mode=OneWay}"
                                                                                                  Value="">
-                                                                                        <Setter Property="Text" Value="&lt;None&gt;" />
+                                                                                        <Setter Property="Text" Value="(None)" />
                                                                                     </DataTrigger>
                                                                                 </Style.Triggers>
                                                                             </Style>

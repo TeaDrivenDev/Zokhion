@@ -1,6 +1,6 @@
-RESTRICTION: == net472
+RESTRICTION: == net48
 NUGET
-  remote: https://www.nuget.org/api/v2
+  remote: https://api.nuget.org/v3/index.json
     Dragablz (0.0.3.203)
     DynamicData (6.14.10)
       System.Reactive (>= 4.3.2)
@@ -35,9 +35,9 @@ NUGET
     System.ValueTuple (4.5)
 
 GROUP Test
-RESTRICTION: == net472
+RESTRICTION: == net48
 NUGET
-  remote: https://www.nuget.org/api/v2
+  remote: https://api.nuget.org/v3/index.json
     FSharp.Core (4.7.1)
     Unquote (5.0)
       FSharp.Core (>= 4.6.2)

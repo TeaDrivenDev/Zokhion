@@ -1,5 +1,5 @@
-source https://www.nuget.org/api/v2
-framework: net472
+source https://api.nuget.org/v3/index.json
+framework: net48
 
 nuget Dragablz
 nuget DynamicData
@@ -15,8 +15,8 @@ nuget Splat < 7
 nuget System.ValueTuple
  
 group Test
-    source https://www.nuget.org/api/v2
-    framework: net472
+    source https://api.nuget.org/v3/index.json
+    framework: net48
 
     nuget FSharp.Core
     nuget xunit

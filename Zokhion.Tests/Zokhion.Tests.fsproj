@@ -2,15 +2,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <DebugType>portable</DebugType>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Zokhion.Tests.fs" />
-    <None Include="App.config" />
     <None Include="paket.references" />
-    <None Include="Script.fsx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Zokhion\Zokhion.fsproj" />

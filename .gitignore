@@ -191,3 +191,5 @@ docs/content/release-notes.md
 build.fsx.lock
 
 keys.txt
+
+*.branchdocuments

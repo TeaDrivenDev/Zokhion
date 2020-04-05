@@ -188,8 +188,6 @@ docs/content/release-notes.md
 !.fake/build.fsx/intellisense.fsx
 .ionide
 
-build.fsx.lock
-
 keys.txt
 
 *.branchdocuments

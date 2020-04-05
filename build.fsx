@@ -1,3 +1,5 @@
+#nowarn "52"
+
 System.IO.Directory.SetCurrentDirectory __SOURCE_DIRECTORY__
 
 #r "paket:

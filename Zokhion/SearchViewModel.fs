@@ -79,6 +79,8 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
     let mutable baseDirectory = ""
     let selectedDirectory = new BehaviorSubject<DirectoryInfo option>(None)
 
+    let isEnabled = BooleanNotifier()
+
     let isGroupByFeatureValue = new ReactiveProperty<bool>()
     let groupCategory = new ReactiveProperty<GroupCategory>(NoGrouping)
 
@@ -271,6 +273,8 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                     |> List.singleton)
 
                 refreshSubject |> Observable.map (fun () -> [])
+
+                isEnabled |> Observable.map (fun _ -> [])
             ]
             |> Observable.mergeSeq
             |> Observable.scanInit
@@ -300,6 +304,7 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             filter |> Observable.map SearchFilter
         ]
         |> Observable.mergeSeq
+        |> Observable.filter (fun _ -> isEnabled.Value)
         |> Observable.scanInit
             {
                 GroupCategory = NoGrouping
@@ -387,3 +392,6 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
     member __.IsUpdating = isUpdating
     member __.FilterHasNoFeatures = filterHasNoFeatures
     member __.FilterHasFeatures = filterHasFeatures
+
+    member __.Enable() = isEnabled.TurnOn()
+        

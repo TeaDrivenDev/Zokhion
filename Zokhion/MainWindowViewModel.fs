@@ -326,6 +326,8 @@ type MainWindowViewModel() as this =
             search.SearchFromBaseDirectory.Value <- true
             search.SearchString.Value <- text)
 
+        search.Enable()
+
         search
 
     let toUnderscoreHandling underscoreHandlingEnum =

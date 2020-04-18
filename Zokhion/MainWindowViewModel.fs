@@ -323,10 +323,11 @@ type MainWindowViewModel() as this =
 
         searchString
         |> Option.iter (fun text ->
+            InitialSearchString text |> searchCommands.OnNext
             search.SearchFromBaseDirectory.Value <- true
             search.SearchString.Value <- text)
 
-        search.Enable()
+        searchCommands.OnNext EnableTab
 
         search
 

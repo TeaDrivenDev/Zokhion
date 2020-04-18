@@ -31,6 +31,8 @@ type FileViewModel(fileInstance: FileInstance) =
 type SearchViewModelCommand =
     | Directories of (DirectoryInfo option * string)
     | Refresh of FileInfo list
+    | InitialSearchString of string
+    | EnableTab
 
 type WithFeatures = HasNoFeatures | HasFeatures | Both
 
@@ -40,6 +42,7 @@ type SearchFilterChange =
     | SearchValues of string list
     | SearchFromBaseDirectory of bool
     | WithFeatures of WithFeatures
+    | Enable
 
 type SearchFilterParameters =
     {
@@ -48,6 +51,7 @@ type SearchFilterParameters =
         SearchValues: string list
         WithFeatures: WithFeatures
         SearchFromBaseDirectory: bool
+        IsEnabled: bool
     }
 
 type SearchCriterion =
@@ -78,8 +82,6 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
 
     let mutable baseDirectory = ""
     let selectedDirectory = new BehaviorSubject<DirectoryInfo option>(None)
-
-    let isEnabled = BooleanNotifier()
 
     let isGroupByFeatureValue = new ReactiveProperty<bool>()
     let groupCategory = new ReactiveProperty<GroupCategory>(NoGrouping)
@@ -236,6 +238,13 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             |> Observable.mergeSeq
             |> toReadOnlyReactiveProperty
 
+        let splitSearchString =
+            toUpper
+            >> split [| "&&" |]
+            >> Array.map trim
+            >> Array.toList
+            >> SearchValues
+
         filter <-
             [
                 commands
@@ -248,22 +257,24 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                             Some (BaseDirectory ``base``)
                         ]
                         |> List.choose id
-                    | Refresh _ -> [])
+                    | Refresh _ -> []
+                    | InitialSearchString searchString -> 
+                        [
+                            splitSearchString searchString
+                            SearchFromBaseDirectory true
+                        ]
+                    | EnableTab -> [ Enable ])
 
                 searchString
                 |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
-                |> Observable.map
-                    (toUpper
-                     >> split [| "&&" |]
-                     >> Array.map trim
-                     >> Array.toList
-                     >> SearchValues
-                     >> List.singleton)
+                |> Observable.map (splitSearchString >> List.singleton)
                 |> Observable.distinctUntilChanged
 
-                searchFromBaseDirectory |> Observable.map (SearchFromBaseDirectory >> List.singleton)
+                searchFromBaseDirectory
+                |> Observable.map (SearchFromBaseDirectory >> List.singleton)
 
-                Observable.combineLatest filterHasNoFeatures filterHasFeatures
+                (filterHasNoFeatures, filterHasFeatures)
+                ||> Observable.combineLatest 
                 |> Observable.map (fun flags ->
                     match flags with
                     | true, false -> HasNoFeatures
@@ -273,8 +284,6 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                     |> List.singleton)
 
                 refreshSubject |> Observable.map (fun () -> [])
-
-                isEnabled |> Observable.map (fun _ -> [])
             ]
             |> Observable.mergeSeq
             |> Observable.scanInit
@@ -284,6 +293,7 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                     SearchValues = []
                     WithFeatures = Both
                     SearchFromBaseDirectory = searchFromBaseDirectory.Value
+                    IsEnabled = false
                 }
                 (fun parameters changes ->
                     (parameters, changes)
@@ -294,9 +304,11 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                         | SearchValues searchValues -> { current with SearchValues = searchValues }
                         | WithFeatures withFeatures -> { current with WithFeatures = withFeatures }
                         | SearchFromBaseDirectory fromBase ->
-                            { current with SearchFromBaseDirectory = fromBase }))
+                            { current with SearchFromBaseDirectory = fromBase }
+                        | Enable -> { current with IsEnabled = true }))
+            |> Observable.filter (fun filter -> filter.IsEnabled)
             |> Observable.map createFilter
-            |> toReadOnlyReactiveProperty
+            |> toReadOnlyReactivePropertyWithMode ReactivePropertyMode.None
 
         [
             groupCategory |> Observable.map GroupCategory
@@ -304,7 +316,6 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             filter |> Observable.map SearchFilter
         ]
         |> Observable.mergeSeq
-        |> Observable.filter (fun _ -> isEnabled.Value)
         |> Observable.scanInit
             {
                 GroupCategory = NoGrouping
@@ -363,7 +374,9 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                 match files with
                 | [] -> isActive.Value
                 | _ -> files |> List.exists (filter.Value.Filter CheckAffected)
-                |> fun refresh -> if refresh then refreshSubject.OnNext ())
+                |> fun refresh -> if refresh then refreshSubject.OnNext ()
+            | InitialSearchString _
+            | EnableTab -> ())
         |> ignore
 
         isActive
@@ -392,6 +405,3 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
     member __.IsUpdating = isUpdating
     member __.FilterHasNoFeatures = filterHasNoFeatures
     member __.FilterHasFeatures = filterHasFeatures
-
-    member __.Enable() = isEnabled.TurnOn()
-        

@@ -36,8 +36,8 @@ type RenamedFile = { OriginalFile: FileInfo; NewFilePath: string }
 
 type FileChanges =
     {
-        RenamedFiles: Dictionary<string, RenamedFile>
-        DeletedFiles: Dictionary<string, FileInfo>
+        RenamedFiles: IDictionary<string, RenamedFile>
+        DeletedFiles: IDictionary<string, FileInfo>
     }
 
 type FileOperation =
@@ -146,6 +146,8 @@ type MainWindowViewModel() as this =
     let watcher = new FileSystemWatcher(EnableRaisingEvents = false, IncludeSubdirectories = true)
     let mutable reviveFileSystemWatcherCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable isFileSystemWatcherAlive = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
+
+    let mutable activityLog = ObservableCollection()
 
     let updateDirectoriesList baseDirectory prefixes filterByPrefixes =
         directories.Clear()
@@ -1051,3 +1053,5 @@ type MainWindowViewModel() as this =
 
     member __.ReviveFileSystemWatcherCommand = reviveFileSystemWatcherCommand
     member __.IsFileSystemWatcherAlive = isFileSystemWatcherAlive
+
+    member __.ActivityLog = activityLog

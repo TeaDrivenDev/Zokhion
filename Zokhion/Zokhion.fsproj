@@ -198,16 +198,8 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.8'">
       <ItemGroup>
-        <Reference Include="System.XML">
-          <Paket>True</Paket>
-        </Reference>
-        <Reference Include="Microsoft.Xaml.Behaviors">
-          <HintPath>..\packages\Microsoft.Xaml.Behaviors.Wpf\lib\net45\Microsoft.Xaml.Behaviors.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-        <Reference Include="Microsoft.Xaml.Behaviors.Design">
-          <HintPath>..\packages\Microsoft.Xaml.Behaviors.Wpf\lib\net45\Design\Microsoft.Xaml.Behaviors.Design.dll</HintPath>
+        <Reference Include="ReactiveProperty">
+          <HintPath>..\packages\ReactiveProperty\lib\netstandard2.0\ReactiveProperty.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -217,13 +209,8 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.8'">
       <ItemGroup>
-        <Reference Include="ReactiveProperty">
-          <HintPath>..\packages\ReactiveProperty\lib\net461\ReactiveProperty.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-        <Reference Include="ReactiveProperty.NET46">
-          <HintPath>..\packages\ReactiveProperty\lib\net461\ReactiveProperty.NET46.dll</HintPath>
+        <Reference Include="ReactiveProperty.Core">
+          <HintPath>..\packages\ReactiveProperty.Core\lib\netstandard2.0\ReactiveProperty.Core.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -234,7 +221,7 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.8'">
       <ItemGroup>
         <Reference Include="ReactiveUI">
-          <HintPath>..\packages\reactiveui\lib\net461\ReactiveUI.dll</HintPath>
+          <HintPath>..\packages\ReactiveUI\lib\net461\ReactiveUI.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

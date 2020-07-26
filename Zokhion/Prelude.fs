@@ -3,7 +3,6 @@
 [<AutoOpen>]
 module Prelude =
     open System
-    open System.Collections.Generic
     open System.Linq
     open System.Reactive.Disposables
     open System.Reactive.Subjects
@@ -29,7 +28,11 @@ module Prelude =
     let uncurry fn (a, b) = fn a b
 
     let join innerKeySelector outerKeySelector (inner: seq<'TInner>) (outer: seq<'TOuter>) =
-        outer.Join(inner, Func<_, _> outerKeySelector, Func<_, _> innerKeySelector, fun outer inner -> outer, inner)
+        outer.Join(
+            inner,
+            Func<_, _> outerKeySelector,
+            Func<_, _> innerKeySelector,
+            fun outerItem innerItem -> outerItem, innerItem)
 
     let leftJoin innerKeySelector outerKeySelector (inner: seq<'TInner>) (outer: seq<'TOuter>) =
         query {
@@ -63,10 +66,12 @@ module Prelude =
 
     let (|IsSome|) values = List.choose id values
 
-    let nonEmptyString value = if String.IsNullOrWhiteSpace value then None else Some value
+    let nonEmptyString value =
+        if String.IsNullOrWhiteSpace value then None else Some value
 
-    let inline (<&&>) f g x = f x && g x
+    let inline ( <&&> ) f g x = f x && g x
 
+    /// A BehaviorSubject that only keeps a value fulfilling a certain condition
     type SelectiveBehaviorSubject<'T>(selector: 'T -> bool) =
         let compositeDisposable = new CompositeDisposable()
 
@@ -76,7 +81,8 @@ module Prelude =
 
         do
             innerSubject
-            |> Observable.subscribe (fun value -> if selector value then lastValue <- Some value)
+            |> Observable.subscribe (fun value ->
+                if selector value then lastValue <- Some value)
             |> compositeDisposable.Add
 
             compositeDisposable.Add innerSubject

@@ -15,9 +15,11 @@ open TeaDriven.Zokhion
 type FeatureViewModel(feature: Feature) as this =
     inherit ReactiveObject()
 
-    let instances = ReactiveList<FeatureInstanceViewModel>(ChangeTrackingEnabled = true)
+    let instances =
+        ReactiveList<FeatureInstanceViewModel>(ChangeTrackingEnabled = true)
 
-    let mutable hasSelectedInstances = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
+    let mutable hasSelectedInstances =
+        Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     do
         match this with
@@ -67,7 +69,8 @@ and [<AllowNullLiteral>]
 
     member __.IsSelected
         with get () = isSelected
-        and set value = __.RaiseAndSetIfChanged(&isSelected, value, nameof <@ __.IsSelected @>) |> ignore
+        and set value =
+            __.RaiseAndSetIfChanged(&isSelected, value, nameof <@ __.IsSelected @>) |> ignore
 
     member __.Instance = instance
 

@@ -173,11 +173,15 @@ type MainWindowViewModel() as this =
             then fun _ -> true
             else startsWithAny prefixes
 
-        currentFileDirectory ::
-        (Directory.GetDirectories this.BaseDirectory.Value
-        |> Array.filter (Path.GetFileName >> filter)
-        |> Array.sortWith (fun x y -> Interop.StrCmpLogicalW(x, y))
-        |> Array.toList)
+        [
+            currentFileDirectory
+
+            yield!
+                Directory.GetDirectories this.BaseDirectory.Value
+                |> Array.filter (Path.GetFileName >> filter)
+                |> Array.sortWith (fun x y -> Interop.StrCmpLogicalW(x, y))
+                |> Array.toList
+        ]
         |> List.distinct
         |> List.map DirectoryInfo
         |> List.iter destinationDirectories.Add
@@ -197,7 +201,13 @@ type MainWindowViewModel() as this =
                 allNames.Items
                 |> Seq.tryFind (fun vm -> vm.Name.Value = name)
                 |> Option.defaultWith (fun () ->
-                    let vm = NameViewModel(trim name, false, false, true)
+                    let vm =
+                        NameViewModel(
+                            trim name,
+                            isSelected=false,
+                            isNewlyDetected=false,
+                            isAdded=true)
+
                     allNames.AddOrUpdate vm
                     vm)
 
@@ -226,16 +236,6 @@ type MainWindowViewModel() as this =
             | RightOnly _ -> ()
             | JoinMatch (vm, _) -> vm.IsSelected <- true)
 
-        //if isInitial
-        //then
-        //    let anyFeaturesSelected = featureInstances |> Seq.exists (fun vm -> vm.IsSelected)
-
-        //    features
-        //    |> Seq.iter (fun (vm: FeatureViewModel) ->
-        //        if anyFeaturesSelected
-        //        then vm.ResetExpanded()
-        //        else vm.IsExpanded.Value <- true)
-
     let getAllNames () =
         allNames.Items
         |> Seq.filter (fun vm -> not vm.IsNewlyDetected.Value)
@@ -259,8 +259,9 @@ type MainWindowViewModel() as this =
             |> Option.ofObj
             |> Option.iter (fun selectedFile ->
                 this.ResultingFilePath.Value <-
-                    Path.Combine(this.SelectedDestinationDirectory.Value.FullName,
-                                 this.NewFileName.Value + Path.GetExtension(selectedFile.Name)))
+                    Path.Combine(
+                        this.SelectedDestinationDirectory.Value.FullName,
+                        this.NewFileName.Value + Path.GetExtension(selectedFile.Name)))
 
     let saveSettings baseDirectory =
         if Directory.Exists baseDirectory
@@ -297,7 +298,13 @@ type MainWindowViewModel() as this =
         allNames.Clear()
 
         settings.Names
-        |> List.iter (fun name -> NameViewModel(name, false, false, false) |> allNames.AddOrUpdate)
+        |> List.iter (fun name ->
+            NameViewModel(
+                name,
+                isSelected=false,
+                isNewlyDetected=false,
+                isAdded=false)
+            |> allNames.AddOrUpdate)
 
         features.Clear()
         featureInstances.Clear()
@@ -346,7 +353,8 @@ type MainWindowViewModel() as this =
         else []
 
     do
-        RxApp.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
+        RxApp.MainThreadScheduler <-
+            DispatcherScheduler(Application.Current.Dispatcher)
 
         refreshDirectoriesCommand <-
             ReactiveCommand.Create(fun () ->
@@ -360,22 +368,24 @@ type MainWindowViewModel() as this =
             |> Observable.flatmap id
             |> toReadOnlyReactiveProperty
 
-        saveSettingsCommand <- ReactiveCommand.Create(fun () -> saveSettings this.BaseDirectory.Value)
+        saveSettingsCommand <-
+            ReactiveCommand.Create(fun () -> saveSettings this.BaseDirectory.Value)
 
         openCommand <-
             ReactiveCommand.Create(
-                (fun (fi: FileInfo) -> Process.Start fi.FullName |> ignore),
-                this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists))
+                (fun (file: FileInfo) -> Process.Start file.FullName |> ignore),
+                this.SelectedFile
+                |> Observable.map (fun file -> not <| isNull file && file.Exists))
 
         openFromSearchCommand <-
-            ReactiveCommand.Create(fun (fi: FileInfo) ->
-                if fi.Exists then Process.Start fi.FullName |> ignore)
+            ReactiveCommand.Create(fun (file: FileInfo) ->
+                if file.Exists then Process.Start file.FullName |> ignore)
 
         openExplorerCommand <-
-            ReactiveCommand.Create(fun (fi: FileInfo) ->
-                if not <| isNull fi
+            ReactiveCommand.Create(fun (file: FileInfo) ->
+                if not <| isNull file
                 then
-                    fi.FullName
+                    file.FullName
                     |> sprintf "/select, \"%s\""
                     |> Some
                 elif not <| isNull this.SelectedDirectory.Value
@@ -387,32 +397,36 @@ type MainWindowViewModel() as this =
                 |> Option.iter (asSnd "explorer.exe" >> Process.Start >> ignore))
 
         showFilePropertiesCommand <-
-            ReactiveCommand.Create(fun (fi: FileInfo) ->
-                if fi.Exists then Interop.showFileProperties fi.FullName |> ignore)
+            ReactiveCommand.Create(fun (file: FileInfo) ->
+                if file.Exists then Interop.showFileProperties file.FullName |> ignore)
 
         deleteFileCommand <-
-            ReactiveCommand.Create(fun (fi: FileInfo) ->
-                if fi.Exists
+            ReactiveCommand.Create(fun (file: FileInfo) ->
+                if file.Exists
                 then
-                    MessageBox.Show(sprintf "Delete file %s?" fi.FullName,
-                                        "Delete File",
-                                        MessageBoxButton.OKCancel,
-                                        MessageBoxImage.Question)
+                    MessageBox.Show(
+                        sprintf "Delete file %s?" file.FullName,
+                        "Delete File",
+                        MessageBoxButton.OKCancel,
+                        MessageBoxImage.Question)
                     |> function
                         | MessageBoxResult.OK ->
                             try
-                                File.Delete fi.FullName
-                                searchCommands.OnNext (Refresh [ fi ])
+                                File.Delete file.FullName
+                                searchCommands.OnNext (Refresh [ file ])
 
                                 None
-                            with _ -> Some [ AddDelete fi ]
+                            with _ -> Some [ AddDelete file ]
                         | _ -> None
                 else None)
 
         addReplacementCommand <-
             ReactiveCommand.Create(
                 (fun () ->
-                    { ToReplace = this.ToReplaceToAdd.Value; ReplaceWith = this.ReplaceWithToAdd.Value }
+                    {
+                        ToReplace = this.ToReplaceToAdd.Value
+                        ReplaceWith = this.ReplaceWithToAdd.Value
+                    }
                     |> this.Replacements.Add
 
                     this.ToReplaceToAdd.Value <- ""
@@ -477,11 +491,12 @@ type MainWindowViewModel() as this =
                         && not <| String.IsNullOrWhiteSpace vm.InstanceCode.Value)
                     |> Seq.iter (fun vm ->
                         let instance =
-                            FeatureInstanceViewModel(feature.Feature,
-                                                     {
-                                                        Name = vm.InstanceName.Value
-                                                        Code = vm.InstanceCode.Value
-                                                     })
+                            FeatureInstanceViewModel(
+                                feature.Feature,
+                                {
+                                    Name = vm.InstanceName.Value
+                                    Code = vm.InstanceCode.Value
+                                })
 
                         feature.Instances.Add instance)
 
@@ -544,7 +559,8 @@ type MainWindowViewModel() as this =
                         None
                     with _ -> [ AddRename (oldFile, newName) ] |> Some),
                 [
-                    this.SelectedFile |> Observable.map (fun fi -> not <| isNull fi && fi.Exists)
+                    this.SelectedFile
+                    |> Observable.map (fun file -> not <| isNull file && file.Exists)
 
                     this.ResultingFilePath
                     |> Observable.map (fun path ->
@@ -579,12 +595,19 @@ type MainWindowViewModel() as this =
                 ||> List.fold (fun { RenamedFiles = toRename; DeletedFiles = toDelete } change ->
                     match change with
                     | AddRename (oldFile, newName) ->
-                        toRename.[oldFile.FullName] <- { OriginalFile = oldFile; NewFilePath = newName }
+                        toRename.[oldFile.FullName] <-
+                            {
+                                OriginalFile = oldFile
+                                NewFilePath = newName
+                            }
                     | RemoveRename oldNames -> oldNames |> Seq.iter (toRename.Remove >> ignore)
                     | AddDelete file -> toDelete.[file.FullName] <- file
                     | RemoveDelete fileNames -> fileNames |> Seq.iter (toDelete.Remove >> ignore)
 
-                    { RenamedFiles = toRename; DeletedFiles = toDelete }))
+                    {
+                        RenamedFiles = toRename
+                        DeletedFiles = toDelete
+                    }))
         |> Observable.subscribeObserver fileChangesSubject
         |> ignore
 
@@ -617,8 +640,8 @@ type MainWindowViewModel() as this =
                 |> Seq.toList
 
             [
-                renamedFiles |> List.map (fun fi -> fi.FullName) |> RemoveRename
-                deletedFiles |> List.map (fun fi -> fi.FullName) |> RemoveDelete
+                renamedFiles |> List.map (fun file -> file.FullName) |> RemoveRename
+                deletedFiles |> List.map (fun file -> file.FullName) |> RemoveDelete
             ]
             |> removeFilesToChangeSubject.OnNext
 
@@ -728,7 +751,7 @@ type MainWindowViewModel() as this =
         let existingSelectedFile = this.SelectedFile |> Observable.filter (isNull >> not)
 
         existingSelectedFile
-        |> Observable.map (fun fi -> fi.FullName)
+        |> Observable.map (fun file -> file.FullName)
         |> Observable.combineLatest
             (this.DestinationDirectoryPrefixes
              |> Observable.throttle (TimeSpan.FromMilliseconds 500.)
@@ -737,14 +760,14 @@ type MainWindowViewModel() as this =
         |> ignore
 
         existingSelectedFile
-        |> Observable.subscribe (fun fi ->
+        |> Observable.subscribe (fun file ->
             allNames.Items
             |> Seq.filter (fun vm -> vm.IsNewlyDetected.Value)
             |> Seq.toList
             |> List.iter allNames.Remove
 
             this.OriginalFileName.Value <-
-                string fi.Name |> Path.GetFileNameWithoutExtension
+                string file.Name |> Path.GetFileNameWithoutExtension
 
             this.NewNameToAdd.Value <- "")
         |> ignore
@@ -911,7 +934,11 @@ type MainWindowViewModel() as this =
 
                     yield!
                         features
-                        |> Seq.map (fun vm -> { Name = "> " + vm.Feature.Name; GroupCategory = ByFeature vm.Feature })
+                        |> Seq.map (fun vm ->
+                            {
+                                Name = "> " + vm.Feature.Name
+                                GroupCategory = ByFeature vm.Feature
+                            })
                         |> Seq.toList
                 ])
             |> toReadOnlyReactiveProperty

@@ -93,7 +93,8 @@ type IndexOfConverter() =
             else
                 if oneBasedIndex then 1 else 0
                 + itemsControl.ItemContainerGenerator.IndexFromContainer itemContainer
-                |> string :> obj
+                |> string
+                :> obj
 
         member this.ConvertBack(value: obj, targetTypes: Type [], parameter: obj, culture: Globalization.CultureInfo): obj [] =
             targetTypes |> Array.map (fun _ -> Binding.DoNothing)

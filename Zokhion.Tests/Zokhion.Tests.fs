@@ -842,7 +842,7 @@ module GenerateCodeTests =
             match parameters.PreferConsonants with
             | Some fillupMode ->
                 [|
-                    yield 0, input.[0]
+                    0, input.[0]
 
                     let vowels, notVowels =
                         input.[1..]

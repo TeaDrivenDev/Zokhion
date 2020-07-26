@@ -132,12 +132,20 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                                     let m = smallerThanRegex.Match part
 
                                     if m.Success
-                                    then m.Groups.["size"].Value |> Int32.Parse |> (*) (1024 * 1024) |> SmallerThan
+                                    then
+                                        m.Groups.["size"].Value
+                                        |> Int32.Parse
+                                        |> (*) (1024 * 1024)
+                                        |> SmallerThan
                                     else
                                         let m = largerThanRegex.Match part
 
                                         if m.Success
-                                        then m.Groups.["size"].Value |> Int32.Parse |> (*) (1024 * 1024) |> LargerThan
+                                        then
+                                            m.Groups.["size"].Value
+                                            |> Int32.Parse
+                                            |> (*) (1024 * 1024)
+                                            |> LargerThan
                                         else Contains [ toUpper part ])
                                 |> asSnd (None, [], None)
                                 ||> List.fold (fun (smaller, contains, larger) current ->
@@ -147,52 +155,51 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                                     | LargerThan larger -> smaller, contains, Some larger)
 
                             [
-                                yield
-                                    smaller
-                                    |> Option.map (fun smaller -> fun (fi: FileInfo) -> fi.Length < int64 smaller)
+                                smaller
+                                |> Option.map (fun smaller ->
+                                    fun (file: FileInfo) -> file.Length < int64 smaller)
 
-                                yield
-                                    larger
-                                    |> Option.map (fun larger -> fun (fi: FileInfo) -> fi.Length > int64 larger)
+                                larger
+                                |> Option.map (fun larger ->
+                                    fun (file: FileInfo) -> file.Length > int64 larger)
 
-                                yield
-                                    match contains with
-                                    | [] -> None
-                                    | contains ->
-                                        (fun (fi: FileInfo) ->
-                                            fi.Name
-                                            |> Path.GetFileNameWithoutExtension
-                                            |> toUpper
-                                            |> (fun s -> [ s; s.Replace("_", " ") ])
-                                            |> Seq.exists (containsAll contains))
-                                            |> Some
+                                match contains with
+                                | [] -> None
+                                | contains ->
+                                    (fun (file: FileInfo) ->
+                                        file.Name
+                                        |> Path.GetFileNameWithoutExtension
+                                        |> toUpper
+                                        |> (fun s -> [ s; s.Replace("_", " ") ])
+                                        |> Seq.exists (containsAll contains))
+                                        |> Some
                             ]
 
-                    let checkHasFeatures (fi: FileInfo) =
-                        fi.FullName
+                    let checkHasFeatures (file: FileInfo) =
+                        file.FullName
                         |> Path.GetFileNameWithoutExtension
                         |> hasFeaturesRegex.IsMatch
 
-                    yield
-                        match searchFilterParameters.WithFeatures with
-                        | HasNoFeatures -> Some (checkHasFeatures >> not)
-                        | HasFeatures -> Some checkHasFeatures
-                        | Both -> None
+                    match searchFilterParameters.WithFeatures with
+                    | HasNoFeatures -> Some (checkHasFeatures >> not)
+                    | HasFeatures -> Some checkHasFeatures
+                    | Both -> None
                 ]
                 |> List.choose id
 
-            fun (fi: FileInfo) -> filters |> Seq.forall (fun filter -> filter fi)
+            fun (file: FileInfo) -> filters |> Seq.forall (fun filter -> filter file)
 
         let filter =
             let checkFilter =
-                fun (fi: FileInfo) ->
-                    (toUpper fi.FullName).StartsWith(searchDirectory |> Option.defaultValue "" |> toUpper)
-                    && searchFilters fi
+                fun (file: FileInfo) ->
+                    (toUpper file.FullName)
+                        .StartsWith(searchDirectory |> Option.defaultValue "" |> toUpper)
+                    && searchFilters file
 
-            fun filterMode (fi: FileInfo) ->
+            fun filterMode (file: FileInfo) ->
                 match filterMode with
-                | Search -> searchFilters fi
-                | CheckAffected -> checkFilter fi
+                | Search -> searchFilters file
+                | CheckAffected -> checkFilter file
 
         {
             Filter = filter
@@ -225,7 +232,8 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             |> Observable.map Option.isSome
             |> toReadOnlyReactiveProperty
 
-        clearSearchStringCommand <- ReactiveCommand.Create(fun () -> searchString.Value <- "")
+        clearSearchStringCommand <-
+            ReactiveCommand.Create(fun () -> searchString.Value <- "")
 
         refreshCommand <- ReactiveCommand.Create<_>(fun () -> Refresh [])
 
@@ -253,12 +261,11 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                     | Directories (dir, ``base``) ->
                         [
                             dir |> Option.map (fun di -> SelectedDirectory di.FullName)
-
                             Some (BaseDirectory ``base``)
                         ]
                         |> List.choose id
                     | Refresh _ -> []
-                    | InitialSearchString searchString -> 
+                    | InitialSearchString searchString ->
                         [
                             splitSearchString searchString
                             SearchFromBaseDirectory true
@@ -274,7 +281,7 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                 |> Observable.map (SearchFromBaseDirectory >> List.singleton)
 
                 (filterHasNoFeatures, filterHasFeatures)
-                ||> Observable.combineLatest 
+                ||> Observable.combineLatest
                 |> Observable.map (fun flags ->
                     match flags with
                     | true, false -> HasNoFeatures
@@ -299,10 +306,14 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                     (parameters, changes)
                     ||> List.fold (fun current change ->
                         match change with
-                        | BaseDirectory ``base`` -> { current with BaseDirectory = ``base`` }
-                        | SelectedDirectory dir -> { current with SelectedDirectory = Some dir }
-                        | SearchValues searchValues -> { current with SearchValues = searchValues }
-                        | WithFeatures withFeatures -> { current with WithFeatures = withFeatures }
+                        | BaseDirectory ``base`` ->
+                            { current with BaseDirectory = ``base`` }
+                        | SelectedDirectory dir ->
+                            { current with SelectedDirectory = Some dir }
+                        | SearchValues searchValues ->
+                            { current with SearchValues = searchValues }
+                        | WithFeatures withFeatures ->
+                            { current with WithFeatures = withFeatures }
                         | SearchFromBaseDirectory fromBase ->
                             { current with SearchFromBaseDirectory = fromBase }
                         | Enable -> { current with IsEnabled = true }))
@@ -321,7 +332,7 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                 GroupCategory = NoGrouping
                 SearchFilter =
                     {
-                        Filter = fun mode fi -> true
+                        Filter = fun mode file -> true
                         SearchDirectory = None
                     }
             }
@@ -341,15 +352,19 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             (newFiles |> List.map JoinWrapper, Seq.toList files)
             ||> fullOuterJoin
                 (fun newFile ->
-                    let { Group = group; FileInfo = fileInfo } = newFile.Value
-                    group, fileInfo.FullName)
+                    let { Group = group; FileInfo = file } = newFile.Value
+                    group, file.FullName)
                 (fun viewModel -> viewModel.Group, viewModel.FileInfo.FullName)
             |> Seq.iter (function
                 | LeftOnly vm -> files.Remove vm |> ignore
-                | RightOnly (JoinWrapped fileInstance) -> files.Add (FileViewModel fileInstance)
+                | RightOnly (JoinWrapped fileInstance) ->
+                    files.Add (FileViewModel fileInstance)
                 | JoinMatch (oldViewModel, JoinWrapped newFileInstance) ->
-                    if (newFileInstance.FileInfo.Length, newFileInstance.FileInfo.LastWriteTimeUtc, newFileInstance.NumberOfInstances)
-                       <> (oldViewModel.FileInfo.Length, oldViewModel.FileInfo.LastWriteTimeUtc, oldViewModel.NumberOfInstances)
+                    let inline sizeAndDate (file: FileInfo) =
+                        file.Length, file.LastWriteTimeUtc
+
+                    if (sizeAndDate newFileInstance.FileInfo, newFileInstance.NumberOfInstances)
+                       <> (sizeAndDate oldViewModel.FileInfo, oldViewModel.NumberOfInstances)
                     then
                         files.Remove oldViewModel |> ignore
                         files.Add (FileViewModel newFileInstance))

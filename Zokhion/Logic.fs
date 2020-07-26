@@ -104,7 +104,7 @@ module Logic =
         let m = regex.Match fileName
 
         if m.Success
-        then (m.Groups.["main"].Value, m.Groups.["names"].Value, m.Groups.["features"].Value)
+        then m.Groups.["main"].Value, m.Groups.["names"].Value, m.Groups.["features"].Value
         else "", "", ""
 
     let evaluateNamesPart (names: string) =
@@ -249,11 +249,11 @@ module Logic =
             | [] -> ""
             | _ ->
                 [
-                    yield "("
+                    "("
 
                     yield! namesToUse
 
-                    yield ")"
+                    ")"
                 ]
                 |> String.concat "."
 
@@ -264,11 +264,11 @@ module Logic =
                 | [] -> ""
                 | _ ->
                     [
-                        yield "["
+                        "["
 
                         yield! features
 
-                        yield "]"
+                        "]"
                     ]
                     |> String.concat ".")
             |> Option.defaultValue ""

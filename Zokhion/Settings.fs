@@ -7,10 +7,23 @@ module Settings =
     open System.Text.RegularExpressions
 
     type Feature =
-        { Name: string; Code: string; Include: string option; Instances: FeatureInstance list }
-    and FeatureInstance = { Name: string; Code: string }
+        {
+            Name: string
+            Code: string
+            Include: string option
+            Instances: FeatureInstance list
+        }
+    and FeatureInstance =
+        {
+            Name: string
+            Code: string
+        }
 
-    type Replacement = { ToReplace: string; ReplaceWith: string }
+    type Replacement = 
+        {
+            ToReplace: string
+            ReplaceWith: string
+        }
 
     type Settings =
         {
@@ -81,7 +94,10 @@ module Settings =
             |> Array.map (fun s ->
                 let [| toReplace; replaceWith |] = s.Split '|'
 
-                { ToReplace = toReplace; ReplaceWith = replaceWith })
+                {
+                    ToReplace = toReplace
+                    ReplaceWith = replaceWith
+                })
             |> Array.toList
         else []
 
@@ -104,11 +120,10 @@ module Settings =
 
         let serializeFeature (feature: Feature) =
             [
-                yield
-                    feature.Include
-                    |> Option.map (fun toInclude -> " > " + toInclude)
-                    |> Option.defaultValue ""
-                    |> sprintf "%s|%s%s" feature.Code feature.Name
+                feature.Include
+                |> Option.map (fun toInclude -> " > " + toInclude)
+                |> Option.defaultValue ""
+                |> sprintf "%s|%s%s" feature.Code feature.Name
 
                 yield! feature.Instances |> List.map (serializeInstance feature.Code)
             ]
@@ -161,7 +176,11 @@ module Settings =
                     Include = toInclude
                     Instances =
                         instances
-                        |> List.map (fun (name, code) -> { Name = name; Code = code })
+                        |> List.map (fun (name, code) ->
+                            {
+                                Name = name
+                                Code = code
+                            })
                 }
                 :: deserialize tail
             | _ -> []

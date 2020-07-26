@@ -78,7 +78,6 @@ type MainWindowViewModel() as this =
 
     let mutable selectedFile = Unchecked.defaultof<ReadOnlyReactiveProperty<FileInfo>>
 
-    let mutable showSettings = new ReactiveProperty<_>(false)
     let mutable saveSettingsCommand = Unchecked.defaultof<ReactiveCommand>
 
     let originalFileName = new ReactiveProperty<_>("", ReactivePropertyMode.None)
@@ -974,7 +973,6 @@ type MainWindowViewModel() as this =
 
     member __.SelectedFile: ReadOnlyReactiveProperty<FileInfo> = selectedFile
 
-    member __.ShowSettings = showSettings
     member __.SaveSettingsCommand = saveSettingsCommand
 
     member __.OriginalFileName: ReactiveProperty<string> = originalFileName

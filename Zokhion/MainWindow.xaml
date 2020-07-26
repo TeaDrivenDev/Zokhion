@@ -7,6 +7,7 @@
         xmlns:local="clr-namespace:TeaDriven.Zokhion;assembly=Zokhion"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:mde="clr-namespace:MaterialDesignExtensions.Controls;assembly=MaterialDesignExtensions"
         xmlns:system="clr-namespace:System;assembly=mscorlib"
         xmlns:ui="clr-namespace:TeaDriven.Zokhion.UIHelper;assembly=Zokhion"
         xmlns:viewModels="clr-namespace:TeaDriven.Zokhion.ViewModels;assembly=Zokhion"
@@ -619,942 +620,922 @@
                       Cursor="SizeWE"
                       ResizeBehavior="PreviousAndNext" />
 
-        <GroupBox Grid.Column="2"
-                  Margin="5"
-                  materialDesign:ShadowAssist.ShadowDepth="Depth3"
-                  BorderThickness="0"
-                  Header="Manage Metadata"
-                  IsEnabled="{Binding IsBaseDirectoryValid.Value}">
-            <GroupBox.HeaderTemplate>
-                <DataTemplate>
-                    <Grid>
+        <TabControl Grid.Column="2"
+                    Margin="5"
+                    mde:TabControlAssist.TabHeaderHorizontalAlignment="Left"
+                    IsEnabled="{Binding IsBaseDirectoryValid.Value}"
+                    Style="{StaticResource MaterialDesignTabControl}">
+            <TabItem Header="File Metadata"
+                     TextElement.Foreground="{DynamicResource MaterialDesignBody}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0"
+                          Margin="0 0 0 5">
+                        <Grid.Style>
+                            <Style TargetType="{x:Type Grid}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedFile.Value}"
+                                                 Value="{x:Null}">
+                                        <Setter Property="IsEnabled" Value="False" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+
+                        <Grid.Resources>
+                            <SolidColorBrush x:Key="ChangedColor"
+                                             Opacity="0.4"
+                                             Color="SeaGreen" />
+                        </Grid.Resources>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Column="0"
-                                   VerticalAlignment="Center"
-                                   Text="{Binding}" />
+                        <TextBox x:Name="OriginalName"
+                                 Grid.Row="0"
+                                 Grid.Column="0"
+                                 Height="25"
+                                 Margin="0 5 5 0"
+                                 Padding="3 0"
+                                 IsReadOnly="True"
+                                 SelectionChanged="OriginalFileName_SelectionChanged"
+                                 Text="{Binding OriginalFileName.Value}"
+                                 TextWrapping="NoWrap" />
 
-                        <StackPanel Grid.Column="1"
+                        <StackPanel Grid.Row="0"
+                                    Grid.Column="1"
                                     Orientation="Horizontal">
-                            <ToggleButton IsChecked="{Binding ElementName=MainWindowView,
-                                                              Path=DataContext.ShowSettings.Value}"
-                                          ToolTip="Show additional settings" />
+                            <Button Padding="0"
+                                    Command="{Binding OpenCommand}"
+                                    CommandParameter="{Binding SelectedFile.Value}"
+                                    ToolTip="Open file">
+
+                                <materialDesign:PackIcon Kind="OpenInNew" />
+                            </Button>
+
                             <Button Margin="5 0 0 0"
                                     Padding="0"
-                                    Command="{Binding ElementName=MainWindowView,
-                                                      Path=DataContext.SaveSettingsCommand}"
-                                    ToolTip="Save Settings">
+                                    Command="{Binding OpenExplorerCommand}"
+                                    CommandParameter="{Binding SelectedFile.Value}"
+                                    ToolTip="Show in Explorer">
 
-                                <materialDesign:PackIcon Kind="ContentSave" />
+                                <materialDesign:PackIcon Kind="FolderOutline" />
                             </Button>
                         </StackPanel>
+
+                        <WrapPanel Grid.Row="1"
+                                   Grid.Column="0"
+                                   Grid.ColumnSpan="2"
+                                   Margin="0 5 5 5"
+                                   Orientation="Horizontal">
+                            <CheckBox Height="23"
+                                      Margin="0 0 20 0"
+                                      VerticalAlignment="Center"
+                                      Content="Treat parenthesized part as names"
+                                      IsChecked="{Binding TreatParenthesizedPartAsNames.Value}" />
+
+                            <CheckBox Height="23"
+                                      Margin="0 0 20 0"
+                                      VerticalAlignment="Center"
+                                      Content="Fix up names in main part"
+                                      IsChecked="{Binding FixupNamesInMainPart.Value}" />
+
+                            <ComboBox Width="145"
+                                      Margin="0 0 20 0"
+                                      VerticalAlignment="Center"
+                                      VerticalContentAlignment="Center"
+                                      FontSize="12"
+                                      SelectedValue="{Binding UnderscoreHandling.Value}"
+                                      SelectedValuePath="Tag">
+                                <ComboBoxItem Tag="Ignore">
+                                    Ignore underscores
+                                </ComboBoxItem>
+                                <ComboBoxItem Tag="Replace">
+                                    Replace underscores
+                                </ComboBoxItem>
+                                <ComboBoxItem Tag="TrimSuffix">
+                                    Trim underscore suffix
+                                </ComboBoxItem>
+                            </ComboBox>
+
+                            <CheckBox Height="23"
+                                      Margin="0 0 20 0"
+                                      VerticalAlignment="Center"
+                                      Content="Detect names in main and names parts"
+                                      IsChecked="{Binding DetectNamesInMainAndNamesParts.Value}" />
+
+                            <CheckBox Height="23"
+                                      Margin="0 0 20 0"
+                                      VerticalAlignment="Center"
+                                      Content="Recapitalize names"
+                                      IsChecked="{Binding RecapitalizeNames.Value}" />
+                        </WrapPanel>
+
+                        <TextBox x:Name="NewName"
+                                 Grid.Row="2"
+                                 Grid.Column="0"
+                                 Grid.ColumnSpan="2"
+                                 Height="25"
+                                 Padding="3 0"
+                                 SelectionChanged="NewFileName_SelectionChanged"
+                                 Text="{Binding NewFileName.Value,
+                                                UpdateSourceTrigger=PropertyChanged}"
+                                 TextWrapping="NoWrap">
+                            <TextBox.Style>
+                                <Style BasedOn="{StaticResource MaterialDesignTextBox}"
+                                       TargetType="TextBox">
+                                    <Style.Triggers>
+                                        <DataTrigger Value="False">
+                                            <DataTrigger.Binding>
+                                                <MultiBinding Converter="{x:Static ui:AllItemsEqualConverter.Instance}">
+                                                    <Binding Path="NewFileName.Value" />
+                                                    <Binding Path="OriginalFileName.Value" />
+                                                </MultiBinding>
+                                            </DataTrigger.Binding>
+
+                                            <Setter Property="Background" Value="{StaticResource ChangedColor}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
                     </Grid>
-                </DataTemplate>
-            </GroupBox.HeaderTemplate>
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0"
-                      Margin="0 0 0 5">
-                    <Grid.Style>
-                        <Style TargetType="{x:Type Grid}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedFile.Value}"
-                                             Value="{x:Null}">
-                                    <Setter Property="IsEnabled" Value="False" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Grid.Style>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
 
-                    <Grid.Resources>
-                        <SolidColorBrush x:Key="ChangedColor"
-                                         Opacity="0.4"
-                                         Color="SeaGreen" />
-                    </Grid.Resources>
-
-                    <Grid.RowDefinitions>
-                        <RowDefinition />
-                        <RowDefinition />
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <TextBox x:Name="OriginalName"
-                             Grid.Row="0"
-                             Grid.Column="0"
-                             Height="25"
-                             Margin="0 0 5 0"
-                             Padding="3 0"
-                             IsReadOnly="True"
-                             SelectionChanged="OriginalFileName_SelectionChanged"
-                             Text="{Binding OriginalFileName.Value}"
-                             TextWrapping="NoWrap" />
-
-                    <StackPanel Grid.Row="0"
-                                Grid.Column="1"
-                                Orientation="Horizontal">
-                        <Button Padding="0"
-                                Command="{Binding OpenCommand}"
-                                CommandParameter="{Binding SelectedFile.Value}"
-                                ToolTip="Open file">
-
-                            <materialDesign:PackIcon Kind="OpenInNew" />
-                        </Button>
-
-                        <Button Margin="5 0 0 0"
-                                Padding="0"
-                                Command="{Binding OpenExplorerCommand}"
-                                CommandParameter="{Binding SelectedFile.Value}"
-                                ToolTip="Show in Explorer">
-
-                            <materialDesign:PackIcon Kind="FolderOutline" />
-                        </Button>
-                    </StackPanel>
-
-                    <WrapPanel Grid.Row="1"
-                               Grid.Column="0"
-                               Grid.ColumnSpan="2"
-                               Margin="0 5 5 5"
-                               Orientation="Horizontal">
-                        <CheckBox Height="23"
-                                  Margin="0 0 20 0"
-                                  VerticalAlignment="Center"
-                                  Content="Treat parenthesized part as names"
-                                  IsChecked="{Binding TreatParenthesizedPartAsNames.Value}" />
-
-                        <CheckBox Height="23"
-                                  Margin="0 0 20 0"
-                                  VerticalAlignment="Center"
-                                  Content="Fix up names in main part"
-                                  IsChecked="{Binding FixupNamesInMainPart.Value}" />
-
-                        <ComboBox Width="145"
-                                  Margin="0 0 20 0"
-                                  VerticalAlignment="Center"
-                                  VerticalContentAlignment="Center"
-                                  FontSize="12"
-                                  SelectedValue="{Binding UnderscoreHandling.Value}"
-                                  SelectedValuePath="Tag">
-                            <ComboBoxItem Tag="Ignore">
-                                Ignore underscores
-                            </ComboBoxItem>
-                            <ComboBoxItem Tag="Replace">
-                                Replace underscores
-                            </ComboBoxItem>
-                            <ComboBoxItem Tag="TrimSuffix">
-                                Trim underscore suffix
-                            </ComboBoxItem>
-                        </ComboBox>
-
-                        <CheckBox Height="23"
-                                  Margin="0 0 20 0"
-                                  VerticalAlignment="Center"
-                                  Content="Detect names in main and names parts"
-                                  IsChecked="{Binding DetectNamesInMainAndNamesParts.Value}" />
-
-                        <CheckBox Height="23"
-                                  Margin="0 0 20 0"
-                                  VerticalAlignment="Center"
-                                  Content="Recapitalize names"
-                                  IsChecked="{Binding RecapitalizeNames.Value}" />
-                    </WrapPanel>
-
-                    <TextBox x:Name="NewName"
-                             Grid.Row="2"
-                             Grid.Column="0"
-                             Grid.ColumnSpan="2"
-                             Height="25"
-                             Padding="3 0"
-                             SelectionChanged="NewFileName_SelectionChanged"
-                             Text="{Binding NewFileName.Value,
-                                            UpdateSourceTrigger=PropertyChanged}"
-                             TextWrapping="NoWrap">
-                        <TextBox.Style>
-                            <Style BasedOn="{StaticResource MaterialDesignTextBox}"
-                                   TargetType="TextBox">
-                                <Style.Triggers>
-                                    <DataTrigger Value="False">
-                                        <DataTrigger.Binding>
-                                            <MultiBinding Converter="{x:Static ui:AllItemsEqualConverter.Instance}">
-                                                <Binding Path="NewFileName.Value" />
-                                                <Binding Path="OriginalFileName.Value" />
-                                            </MultiBinding>
-                                        </DataTrigger.Binding>
-
-                                        <Setter Property="Background" Value="{StaticResource ChangedColor}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBox.Style>
-                    </TextBox>
-                </Grid>
-
-                <Grid Grid.Row="1"
-                      Visibility="{Binding Path=ShowSettings.Value,
-                                           Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}">
-                    <GroupBox Header="Replacements"
-                              Style="{DynamicResource MaterialDesignCardGroupBox}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBox Grid.Column="0"
-                                         Margin="2"
-                                         materialDesign:HintAssist.Hint="To Replace"
-                                         Text="{Binding ToReplaceToAdd.Value,
-                                                        UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Grid.Column="1"
-                                         Margin="2"
-                                         materialDesign:HintAssist.Hint="Replace With"
-                                         Text="{Binding ReplaceWithToAdd.Value,
-                                                        UpdateSourceTrigger=PropertyChanged}" />
-
-                                <Button Grid.Column="2"
-                                        Margin="5 0"
-                                        Padding="0 -1 -1 0"
-                                        Command="{Binding AddReplacementCommand}"
-                                        Content="+" />
-                            </Grid>
-
-                            <ItemsControl Grid.Row="1"
-                                          ItemsSource="{Binding Replacements}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0 3">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition />
-                                                <ColumnDefinition />
-                                            </Grid.ColumnDefinitions>
-
-                                            <TextBlock Grid.Column="0"
-                                                       Text="{Binding ToReplace}" />
-                                            <TextBlock Grid.Column="1">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Text" Value="{Binding ReplaceWith}" />
+                        <GroupBox Grid.Column="0"
+                                  Margin="0 0 2 0"
+                                  Header="Names"
+                                  Style="{DynamicResource MaterialDesignCardGroupBox}">
+                            <GroupBox.HeaderTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   VerticalAlignment="Center"
+                                                   Text="Names" />
+                                        <StackPanel Grid.Column="1"
+                                                    Orientation="Horizontal">
+                                            <Button Margin="0 0 5 0"
+                                                    Command="{Binding ElementName=MainWindowView,
+                                                                      Path=DataContext.ReviveFileSystemWatcherCommand}">
+                                                <Button.Style>
+                                                    <Style BasedOn="{StaticResource {x:Type Button}}"
+                                                           TargetType="{x:Type Button}">
+                                                        <Setter Property="Background" Value="DarkRed" />
+                                                        <Setter Property="ToolTip" Value="FileSystemWatcher is dead." />
 
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding ReplaceWith}"
-                                                                         Value="">
-                                                                <Setter Property="Opacity" Value="0.5" />
-                                                                <Setter Property="Text" Value="(remove)" />
+                                                            <DataTrigger Binding="{Binding ElementName=MainWindowView,
+                                                                                           Path=DataContext.IsFileSystemWatcherAlive.Value}"
+                                                                         Value="True">
+                                                                <Setter Property="Background" Value="DarkGreen" />
+                                                                <Setter Property="ToolTip" Value="FileSystemWatcher is alive." />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                            <Button Margin="0 0 5 0"
+                                                    Padding="0 -10"
+                                                    Command="{Binding ElementName=MainWindowView,
+                                                                      Path=DataContext.SetNameFilterCommand}"
+                                                    ToolTip="Search for file name parts">
+                                                <materialDesign:PackIcon Kind="FileFindOutline" />
+                                            </Button>
+                                            <Button Padding="0 -10"
+                                                    Command="{Binding ElementName=MainWindowView,
+                                                                      Path=DataContext.ResetNameSelectionCommand}"
+                                                    ToolTip="Reset name selection">
+
+                                                <materialDesign:PackIcon Kind="Undo" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </GroupBox.HeaderTemplate>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <Grid.Resources>
+                                    <ui:BindingProxy x:Key="MainWindowBindingProxy"
+                                                     Data="{Binding ElementName=MainWindowView}" />
+                                </Grid.Resources>
+
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBox x:Name="NewNameToAdd"
+                                             Grid.Column="0"
+                                             Margin="2"
+                                             materialDesign:HintAssist.Hint="Add Name"
+                                             KeyUp="NewNameToAdd_KeyUp"
+                                             Text="{Binding NewNameToAdd.Value,
+                                                            UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <Button Grid.Column="0"
+                                            Margin="5 0"
+                                            Padding="0 -1 -1 0"
+                                            HorizontalAlignment="Right"
+                                            Command="{Binding ClearNewNameToAddCommand}"
+                                            Content="&#x2716;"
+                                            FontSize="10"
+                                            Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
+                                            IsTabStop="False"
+                                            ToolTip="Clear name">
+                                        <Button.Style>
+                                            <Style BasedOn="{StaticResource {x:Type Button}}"
+                                                   TargetType="Button">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=NewNameToAdd,
+                                                                                   Path=Text}"
+                                                                 Value="">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+
+                                    <Button Grid.Column="1"
+                                            Margin="5 0"
+                                            Padding="0 -1 -1 0"
+                                            Command="{Binding AddNameCommand}"
+                                            CommandParameter="{Binding ElementName=NewNameToAdd,
+                                                                       Path=Text}"
+                                            Content="+" />
+                                </Grid>
+
+                                <ListBox x:Name="Names"
+                                         Grid.Row="1"
+                                         HorizontalContentAlignment="Stretch"
+                                         ItemsSource="{Binding Names}">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="{x:Type ListBoxItem}">
+                                            <Setter Property="Focusable" Value="False" />
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate DataType="viewModels:NameViewModel">
+                                            <CheckBox HorizontalContentAlignment="Stretch"
+                                                      VerticalContentAlignment="Center"
+                                                      Foreground="{StaticResource MaterialDesignBody}"
+                                                      IsChecked="{Binding IsSelected}">
+                                                <CheckBox.Style>
+                                                    <Style TargetType="CheckBox">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsNewlyDetected.Value}"
+                                                                         Value="True">
+                                                                <Setter Property="Background" Value="{StaticResource SecondaryAccentBrush}" />
+                                                            </DataTrigger>
+
+                                                            <DataTrigger Binding="{Binding ElementName=MainWindowView,
+                                                                                           Path=DataContext.HasTouchInput}"
+                                                                         Value="True">
+                                                                <Setter Property="Margin" Value="0 3" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </CheckBox.Style>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsAdded.Value}"
+                                                                             Value="True">
+                                                                    <Setter Property="Background">
+                                                                        <Setter.Value>
+                                                                            <SolidColorBrush Opacity="0.4"
+                                                                                             Color="SeaGreen" />
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsSelected}"
+                                                                             Value="True">
+                                                                    <Setter Property="Background">
+                                                                        <Setter.Value>
+                                                                            <SolidColorBrush Color="{StaticResource Accent700}" />
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
+
+                                                    <StackPanel VerticalAlignment="Center"
+                                                                Orientation="Horizontal">
+                                                        <TextBlock Grid.Column="0"
+                                                                   Margin="5 0 0 0"
+                                                                   HorizontalAlignment="Stretch"
+                                                                   VerticalAlignment="Center"
+                                                                   Text="{Binding Name.Value}">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsSelected}"
+                                                                                     Value="True">
+                                                                            <Setter Property="Foreground">
+                                                                                <Setter.Value>
+                                                                                    <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
+                                                                                </Setter.Value>
+                                                                            </Setter>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                        <TextBlock Grid.Column="0"
+                                                                   Margin="5 0 15 0"
+                                                                   HorizontalAlignment="Stretch"
+                                                                   VerticalAlignment="Center"
+                                                                   FontSize="10"
+                                                                   Text="{Binding Count.Value}">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsSelected}"
+                                                                                     Value="True">
+                                                                            <Setter Property="Foreground">
+                                                                                <Setter.Value>
+                                                                                    <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
+                                                                                </Setter.Value>
+                                                                            </Setter>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="1"
+                                                                Orientation="Horizontal">
+                                                        <StackPanel.Resources>
+                                                            <ui:BindingProxy x:Key="MainWindowBindingProxy"
+                                                                             Data="{Binding ElementName=MainWindowView}" />
+                                                            <ui:BindingProxy x:Key="NameViewModelBindingProxy"
+                                                                             Data="{Binding ElementName=ActionsButton,
+                                                                                            Path=DataContext}" />
+
+                                                            <Style x:Key="NameActionButton"
+                                                                   BasedOn="{StaticResource {x:Type Button}}"
+                                                                   TargetType="{x:Type Button}">
+                                                                <Setter Property="Margin" Value="0 2 5 1" />
+                                                                <Setter Property="Padding" Value="0 -5 0 -4" />
+
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding ElementName=MainWindowView,
+                                                                                                   Path=DataContext.HasTouchInput}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Margin" Value="0 2 5 2" />
+                                                                        <Setter Property="Opacity" Value="1" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </StackPanel.Resources>
+                                                        <materialDesign:PackIcon Margin="0 0 7 0"
+                                                                                 VerticalAlignment="Center"
+                                                                                 Kind="Pin"
+                                                                                 Visibility="{Binding IsPinned,
+                                                                                                      Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
+                                                        <Button x:Name="ActionsButton"
+                                                                Content="…">
+                                                            <Button.ContextMenu>
+                                                                <ContextMenu x:Name="ActionsButtonContextMenu">
+                                                                    <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
+                                                                                                Path=Data.DataContext.SearchForTextCommand}"
+                                                                              CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
+                                                                                                         Path=Data.Name.Value}"
+                                                                              Header="Search" />
+                                                                    <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
+                                                                                                Path=Data.DataContext.SearchForNameCommand}"
+                                                                              CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
+                                                                                                         Path=Data.Name.Value}"
+                                                                              Header="Search as Name" />
+                                                                    <MenuItem Command="{Binding Source={StaticResource NameViewModelBindingProxy},
+                                                                                                Path=Data.PinCommand}">
+                                                                        <MenuItem.Style>
+                                                                            <Style BasedOn="{StaticResource MaterialDesignMenuItem}"
+                                                                                   TargetType="{x:Type MenuItem}">
+                                                                                <Setter Property="Header" Value="Pin" />
+
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding Source={StaticResource NameViewModelBindingProxy},
+                                                                                                                   Path=Data.IsPinned}"
+                                                                                                 Value="True">
+                                                                                        <Setter Property="Header" Value="Unpin" />
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </MenuItem.Style>
+                                                                    </MenuItem>
+                                                                    <Separator />
+                                                                    <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
+                                                                                                Path=Data.DataContext.DeleteNameCommand}"
+                                                                              CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
+                                                                                                         Path=Data}"
+                                                                              Header="Delete" />
+                                                                </ContextMenu>
+                                                            </Button.ContextMenu>
+
+                                                            <Button.Triggers>
+                                                                <EventTrigger RoutedEvent="Button.Click"
+                                                                              SourceName="ActionsButton">
+                                                                    <BeginStoryboard>
+                                                                        <Storyboard>
+                                                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ActionsButtonContextMenu"
+                                                                                                           Storyboard.TargetProperty="(ContextMenu.IsOpen)">
+                                                                                <DiscreteObjectKeyFrame KeyTime="0:0:0">
+                                                                                    <DiscreteObjectKeyFrame.Value>
+                                                                                        <system:Boolean>True</system:Boolean>
+                                                                                    </DiscreteObjectKeyFrame.Value>
+                                                                                </DiscreteObjectKeyFrame>
+                                                                            </ObjectAnimationUsingKeyFrames>
+                                                                        </Storyboard>
+                                                                    </BeginStoryboard>
+                                                                </EventTrigger>
+                                                            </Button.Triggers>
+
+                                                            <Button.Style>
+                                                                <Style BasedOn="{StaticResource NameActionButton}"
+                                                                       TargetType="Button">
+                                                                    <Setter Property="Opacity" Value="0.4" />
+
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding ElementName=ActionsButtonContextMenu,
+                                                                                                       Path=IsOpen}"
+                                                                                     Value="True">
+                                                                            <Setter Property="Opacity" Value="1" />
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor,
+                                                                                                                                      AncestorType=CheckBox},
+                                                                                                       Path=IsMouseOver}"
+                                                                                     Value="True">
+                                                                            <Setter Property="Opacity" Value="1" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                        <Button Command="{Binding ClearNewFlagCommand}"
+                                                                Content="+"
+                                                                Style="{StaticResource NameActionButton}"
+                                                                Visibility="{Binding IsNewlyDetected.Value,
+                                                                                     Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </CheckBox>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <!--</ScrollViewer>-->
+                            </Grid>
+                        </GroupBox>
+
+                        <!--  Features  -->
+                        <GroupBox Grid.Column="1"
+                                  Margin="2 0 0 0"
+                                  Header="Features"
+                                  Style="{DynamicResource MaterialDesignCardGroupBox}">
+                            <GroupBox.HeaderTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   VerticalAlignment="Center"
+                                                   Text="Features" />
+                                        <StackPanel Grid.Column="1"
+                                                    HorizontalAlignment="Right"
+                                                    Orientation="Horizontal">
+                                            <ToggleButton x:Name="DragDropEnabled"
+                                                          Margin="0 0 5 0"
+                                                          IsChecked="{Binding ElementName=MainWindowView,
+                                                                              Path=DataContext.EnableFeatureEditing.Value}"
+                                                          ToolTip="Enable editing features" />
+                                            <Button Padding="0 -10"
+                                                    Command="{Binding ElementName=MainWindowView,
+                                                                      Path=DataContext.ExpandAllFeaturesCommand}"
+                                                    Content="+"
+                                                    FontSize="16"
+                                                    FontWeight="Black"
+                                                    ToolTip="Expand all" />
+                                            <Button Margin="7 0 0 0"
+                                                    Padding="0 -10"
+                                                    Command="{Binding ElementName=MainWindowView,
+                                                                      Path=DataContext.CollapseAllFeaturesCommand}"
+                                                    Content="-"
+                                                    FontSize="16"
+                                                    FontWeight="Black"
+                                                    ToolTip="Collapse all" />
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </GroupBox.HeaderTemplate>
+
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition Height="5" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TreeView x:Name="Features"
+                                          Grid.Row="0"
+                                          dd:DragDrop.IsDragSource="{Binding EnableFeatureEditing.Value}"
+                                          dd:DragDrop.IsDropTarget="{Binding EnableFeatureEditing.Value}"
+                                          dd:DragDrop.UseDefaultDragAdorner="True"
+                                          dd:DragDrop.UseDefaultEffectDataTemplate="True"
+                                          ItemsSource="{Binding Features}"
+                                          SelectedItemChanged="Features_SelectedItemChanged"
+                                          SelectedValuePath="">
+                                    <TreeView.Resources>
+                                        <HierarchicalDataTemplate x:Key="FeatureRootDataTemplate"
+                                                                  DataType="viewModels:FeatureViewModel"
+                                                                  ItemsSource="{Binding Instances}">
+                                            <TextBlock Margin="0 0 0 4"
+                                                       Padding="4 2"
+                                                       Foreground="{StaticResource MaterialDesignBody}"
+                                                       Text="{Binding .,
+                                                                      Converter={x:Static ui:FeatureToDisplayStringConverter.Instance}}">
+
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasSelectedInstances.Value}"
+                                                                         Value="True">
+                                                                <Setter Property="Background" Value="{StaticResource FeatureHighlightBrush}" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </TextBlock.Style>
                                             </TextBlock>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Grid>
-                    </GroupBox>
-                </Grid>
-
-                <Grid Grid.Row="1"
-                      Visibility="{Binding Path=ShowSettings.Value,
-                                           Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance},
-                                           ConverterParameter=True}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition />
-                    </Grid.ColumnDefinitions>
-
-                    <GroupBox Grid.Column="0"
-                              Margin="0 0 2 0"
-                              Header="Names"
-                              Style="{DynamicResource MaterialDesignCardGroupBox}">
-                        <GroupBox.HeaderTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0"
-                                               VerticalAlignment="Center"
-                                               Text="Names" />
-                                    <StackPanel Grid.Column="1"
-                                                Orientation="Horizontal">
-                                        <Button Margin="0 0 5 0"
-                                                Command="{Binding ElementName=MainWindowView,
-                                                                  Path=DataContext.ReviveFileSystemWatcherCommand}">
-                                            <Button.Style>
-                                                <Style BasedOn="{StaticResource {x:Type Button}}"
-                                                       TargetType="{x:Type Button}">
-                                                    <Setter Property="Background" Value="DarkRed" />
-                                                    <Setter Property="ToolTip" Value="FileSystemWatcher is dead." />
-
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding ElementName=MainWindowView,
-                                                                                       Path=DataContext.IsFileSystemWatcherAlive.Value}"
-                                                                     Value="True">
-                                                            <Setter Property="Background" Value="DarkGreen" />
-                                                            <Setter Property="ToolTip" Value="FileSystemWatcher is alive." />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Button.Style>
-                                        </Button>
-                                        <Button Margin="0 0 5 0"
-                                                Padding="0 -10"
-                                                Command="{Binding ElementName=MainWindowView,
-                                                                  Path=DataContext.SetNameFilterCommand}"
-                                                ToolTip="Search for file name parts">
-                                            <materialDesign:PackIcon Kind="FileFindOutline" />
-                                        </Button>
-                                        <Button Padding="0 -10"
-                                                Command="{Binding ElementName=MainWindowView,
-                                                                  Path=DataContext.ResetNameSelectionCommand}"
-                                                ToolTip="Reset name selection">
-
-                                            <materialDesign:PackIcon Kind="Undo" />
-                                        </Button>
-                                    </StackPanel>
-                                </Grid>
-                            </DataTemplate>
-                        </GroupBox.HeaderTemplate>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
-
-                            <Grid.Resources>
-                                <ui:BindingProxy x:Key="MainWindowBindingProxy"
-                                                 Data="{Binding ElementName=MainWindowView}" />
-                            </Grid.Resources>
-
-                            <Grid Grid.Row="0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBox x:Name="NewNameToAdd"
-                                         Grid.Column="0"
-                                         Margin="2"
-                                         materialDesign:HintAssist.Hint="Add Name"
-                                         KeyUp="NewNameToAdd_KeyUp"
-                                         Text="{Binding NewNameToAdd.Value,
-                                                        UpdateSourceTrigger=PropertyChanged}" />
-
-                                <Button Grid.Column="0"
-                                        Margin="5 0"
-                                        Padding="0 -1 -1 0"
-                                        HorizontalAlignment="Right"
-                                        Command="{Binding ClearNewNameToAddCommand}"
-                                        Content="&#x2716;"
-                                        FontSize="10"
-                                        Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
-                                        IsTabStop="False"
-                                        ToolTip="Clear name">
-                                    <Button.Style>
-                                        <Style BasedOn="{StaticResource {x:Type Button}}"
-                                               TargetType="Button">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding ElementName=NewNameToAdd,
-                                                                               Path=Text}"
-                                                             Value="">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-
-                                <Button Grid.Column="1"
-                                        Margin="5 0"
-                                        Padding="0 -1 -1 0"
-                                        Command="{Binding AddNameCommand}"
-                                        CommandParameter="{Binding ElementName=NewNameToAdd,
-                                                                   Path=Text}"
-                                        Content="+" />
-                            </Grid>
-
-                            <ListBox x:Name="Names"
-                                     Grid.Row="1"
-                                     HorizontalContentAlignment="Stretch"
-                                     ItemsSource="{Binding Names}">
-                                <ListBox.ItemContainerStyle>
-                                    <Style TargetType="{x:Type ListBoxItem}">
-                                        <Setter Property="Focusable" Value="False" />
-                                    </Style>
-                                </ListBox.ItemContainerStyle>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate DataType="viewModels:NameViewModel">
-                                        <CheckBox HorizontalContentAlignment="Stretch"
-                                                  VerticalContentAlignment="Center"
-                                                  Foreground="{StaticResource MaterialDesignBody}"
-                                                  IsChecked="{Binding IsSelected}">
-                                            <CheckBox.Style>
-                                                <Style TargetType="CheckBox">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsNewlyDetected.Value}"
-                                                                     Value="True">
-                                                            <Setter Property="Background" Value="{StaticResource SecondaryAccentBrush}" />
-                                                        </DataTrigger>
-
-                                                        <DataTrigger Binding="{Binding ElementName=MainWindowView,
-                                                                                       Path=DataContext.HasTouchInput}"
-                                                                     Value="True">
-                                                            <Setter Property="Margin" Value="0 3" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </CheckBox.Style>
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <Grid.Style>
-                                                    <Style TargetType="Grid">
+                                        </HierarchicalDataTemplate>
+                                        <HierarchicalDataTemplate x:Key="FeatureInstanceDataTemplate"
+                                                                  DataType="viewModels:FeatureInstanceViewModel"
+                                                                  ItemsSource="{Binding Instances}">
+                                            <CheckBox IsChecked="{Binding IsSelected}">
+                                                <CheckBox.Style>
+                                                    <Style TargetType="CheckBox">
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsAdded.Value}"
+                                                            <DataTrigger Binding="{Binding ElementName=MainWindowView,
+                                                                                           Path=DataContext.HasTouchInput}"
                                                                          Value="True">
-                                                                <Setter Property="Background">
-                                                                    <Setter.Value>
-                                                                        <SolidColorBrush Opacity="0.4"
-                                                                                         Color="SeaGreen" />
-                                                                    </Setter.Value>
-                                                                </Setter>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding IsSelected}"
-                                                                         Value="True">
-                                                                <Setter Property="Background">
-                                                                    <Setter.Value>
-                                                                        <SolidColorBrush Color="{StaticResource Accent700}" />
-                                                                    </Setter.Value>
-                                                                </Setter>
+                                                                <Setter Property="Margin" Value="0 10" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
-                                                </Grid.Style>
+                                                </CheckBox.Style>
 
-                                                <StackPanel VerticalAlignment="Center"
+                                                <TextBlock Foreground="{StaticResource MaterialDesignBody}">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding StringFormat="{}{0}: {1}">
+                                                            <Binding Path="InstanceName" />
+                                                            <Binding Path="InstanceCode" />
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </CheckBox>
+                                        </HierarchicalDataTemplate>
+                                    </TreeView.Resources>
+                                    <TreeView.ItemTemplateSelector>
+                                        <ui:FeaturesTreeViewItemTemplateSelector FeatureInstanceTemplate="{StaticResource FeatureInstanceDataTemplate}"
+                                                                                 FeatureRootTemplate="{StaticResource FeatureRootDataTemplate}" />
+                                    </TreeView.ItemTemplateSelector>
+                                    <TreeView.ItemContainerStyle>
+                                        <Style TargetType="{x:Type TreeViewItem}">
+                                            <Setter Property="IsExpanded" Value="{Binding IsExpanded.Value, Mode=TwoWay}" />
+                                            <Setter Property="Margin" Value="0 0 0 7" />
+                                        </Style>
+                                    </TreeView.ItemContainerStyle>
+                                </TreeView>
+
+                                <GridSplitter Grid.Row="1"
+                                              Height="5"
+                                              HorizontalAlignment="Stretch"
+                                              ResizeBehavior="PreviousAndNext"
+                                              ResizeDirection="Rows"
+                                              Visibility="{Binding Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance},
+                                                                   Path=EnableFeatureEditing.Value}" />
+
+                                <Grid Grid.Row="2"
+                                      Visibility="{Binding Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance},
+                                                           Path=EnableFeatureEditing.Value}">
+                                    <materialDesign:Card VerticalAlignment="Stretch"
+                                                         materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+
+                                            <Grid Grid.Row="0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition />
+                                                    <ColumnDefinition />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBox Grid.Column="0"
+                                                         Margin="2"
+                                                         materialDesign:HintAssist.Hint="Feature Name"
+                                                         Text="{Binding EditingFeatureName.Value,
+                                                                        UpdateSourceTrigger=PropertyChanged}" />
+                                                <TextBox Grid.Column="1"
+                                                         Margin="2"
+                                                         materialDesign:HintAssist.Hint="Feature Code"
+                                                         Text="{Binding EditingFeatureCode.Value,
+                                                                        UpdateSourceTrigger=PropertyChanged}" />
+
+                                                <StackPanel Grid.Column="2"
+                                                            VerticalAlignment="Center"
                                                             Orientation="Horizontal">
-                                                    <TextBlock Grid.Column="0"
-                                                               Margin="5 0 0 0"
-                                                               HorizontalAlignment="Stretch"
-                                                               VerticalAlignment="Center"
-                                                               Text="{Binding Name.Value}">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsSelected}"
-                                                                                 Value="True">
-                                                                        <Setter Property="Foreground">
-                                                                            <Setter.Value>
-                                                                                <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
-                                                                            </Setter.Value>
-                                                                        </Setter>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                    <TextBlock Grid.Column="0"
-                                                               Margin="5 0 15 0"
-                                                               HorizontalAlignment="Stretch"
-                                                               VerticalAlignment="Center"
-                                                               FontSize="10"
-                                                               Text="{Binding Count.Value}">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsSelected}"
-                                                                                 Value="True">
-                                                                        <Setter Property="Foreground">
-                                                                            <Setter.Value>
-                                                                                <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
-                                                                            </Setter.Value>
-                                                                        </Setter>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
+                                                    <TextBlock VerticalAlignment="Center"
+                                                               Text="➔" />
+                                                    <TextBox Width="50"
+                                                             Margin="5 0"
+                                                             materialDesign:HintAssist.Hint="Include"
+                                                             Text="{Binding EditingFeatureToInclude.Value,
+                                                                            UpdateSourceTrigger=PropertyChanged}" />
                                                 </StackPanel>
 
-                                                <StackPanel Grid.Column="1"
-                                                            Orientation="Horizontal">
-                                                    <StackPanel.Resources>
-                                                        <ui:BindingProxy x:Key="MainWindowBindingProxy"
-                                                                         Data="{Binding ElementName=MainWindowView}" />
-                                                        <ui:BindingProxy x:Key="NameViewModelBindingProxy"
-                                                                         Data="{Binding ElementName=ActionsButton,
-                                                                                        Path=DataContext}" />
+                                                <Button Grid.Column="3"
+                                                        Margin="5 0"
+                                                        Padding="-2 -1 -1 0"
+                                                        Command="{Binding ConfirmEditingFeatureCommand}"
+                                                        Content="&#x2714;"
+                                                        FontSize="10"
+                                                        Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
+                                                        IsTabStop="False"
+                                                        ToolTip="Accept changes" />
 
-                                                        <Style x:Key="NameActionButton"
-                                                               BasedOn="{StaticResource {x:Type Button}}"
-                                                               TargetType="{x:Type Button}">
-                                                            <Setter Property="Margin" Value="0 2 5 1" />
-                                                            <Setter Property="Padding" Value="0 -5 0 -4" />
+                                                <Button Grid.Column="4"
+                                                        Margin="5 0"
+                                                        Padding="0 -1 -1 0"
+                                                        Command="{Binding ClearSelectedFeatureCommand}"
+                                                        Content="&#x2716;"
+                                                        FontSize="10"
+                                                        Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
+                                                        IsTabStop="False"
+                                                        ToolTip="Discard changes" />
+                                            </Grid>
 
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding ElementName=MainWindowView,
-                                                                                               Path=DataContext.HasTouchInput}"
-                                                                             Value="True">
-                                                                    <Setter Property="Margin" Value="0 2 5 2" />
-                                                                    <Setter Property="Opacity" Value="1" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </StackPanel.Resources>
-                                                    <materialDesign:PackIcon Margin="0 0 7 0"
-                                                                             VerticalAlignment="Center"
-                                                                             Kind="Pin"
-                                                                             Visibility="{Binding IsPinned,
-                                                                                                  Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
-                                                    <Button x:Name="ActionsButton"
-                                                            Content="…">
-                                                        <Button.ContextMenu>
-                                                            <ContextMenu x:Name="ActionsButtonContextMenu">
-                                                                <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
-                                                                                            Path=Data.DataContext.SearchForTextCommand}"
-                                                                          CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                     Path=Data.Name.Value}"
-                                                                          Header="Search" />
-                                                                <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
-                                                                                            Path=Data.DataContext.SearchForNameCommand}"
-                                                                          CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                     Path=Data.Name.Value}"
-                                                                          Header="Search as Name" />
-                                                                <MenuItem Command="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                            Path=Data.PinCommand}">
-                                                                    <MenuItem.Style>
-                                                                        <Style BasedOn="{StaticResource MaterialDesignMenuItem}"
-                                                                               TargetType="{x:Type MenuItem}">
-                                                                            <Setter Property="Header" Value="Pin" />
+                                            <ScrollViewer Grid.Row="1"
+                                                          VerticalScrollBarVisibility="Auto">
+                                                <ItemsControl VerticalAlignment="Stretch"
+                                                              Grid.IsSharedSizeScope="True"
+                                                              ItemsSource="{Binding EditingFeatureInstances}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto"
+                                                                                      SharedSizeGroup="InstanceNumber" />
+                                                                    <ColumnDefinition />
+                                                                    <ColumnDefinition />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <TextBlock Grid.Column="0"
+                                                                           Margin="0 0 5 0"
+                                                                           HorizontalAlignment="Right"
+                                                                           VerticalAlignment="Center"
+                                                                           Opacity="0.5">
+                                                                    <TextBlock.Text>
+                                                                        <MultiBinding Converter="{x:Static ui:IndexOfConverter.Instance}"
+                                                                                      ConverterParameter="True">
+                                                                            <Binding RelativeSource="{RelativeSource FindAncestor,
+                                                                                                                     AncestorType={x:Type ItemsControl}}" />
+                                                                            <Binding Path="." />
+                                                                        </MultiBinding>
+                                                                    </TextBlock.Text>
+                                                                </TextBlock>
+
+                                                                <TextBox x:Name="InstanceName"
+                                                                         Grid.Column="1"
+                                                                         Margin="2"
+                                                                         materialDesign:HintAssist.Hint="Name"
+                                                                         KeyUp="InstanceName_KeyUp"
+                                                                         Text="{Binding InstanceName.Value,
+                                                                                        UpdateSourceTrigger=LostFocus}" />
+                                                                <TextBox x:Name="InstanceCode"
+                                                                         Grid.Column="2"
+                                                                         Margin="2"
+                                                                         materialDesign:HintAssist.Hint="Code"
+                                                                         KeyUp="InstanceCode_KeyUp"
+                                                                         Text="{Binding InstanceCode.Value,
+                                                                                        UpdateSourceTrigger=PropertyChanged}" />
+                                                                <Button Grid.Column="3"
+                                                                        Padding="0 -1 -1 0"
+                                                                        Command="{Binding ElementName=MainWindowView,
+                                                                                          Path=DataContext.RemoveFeatureInstanceRowCommand}"
+                                                                        CommandParameter="{Binding .}"
+                                                                        Content="-"
+                                                                        IsTabStop="False">
+                                                                    <Button.Style>
+                                                                        <Style BasedOn="{StaticResource {x:Type Button}}"
+                                                                               TargetType="{x:Type Button}">
+                                                                            <Setter Property="Margin" Value="5 0" />
 
                                                                             <Style.Triggers>
-                                                                                <DataTrigger Binding="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                               Path=Data.IsPinned}"
+                                                                                <DataTrigger Binding="{Binding ElementName=MainWindowView,
+                                                                                                               Path=DataContext.HasTouchInput}"
                                                                                              Value="True">
-                                                                                    <Setter Property="Header" Value="Unpin" />
+                                                                                    <Setter Property="Margin" Value="5 2" />
                                                                                 </DataTrigger>
                                                                             </Style.Triggers>
                                                                         </Style>
-                                                                    </MenuItem.Style>
-                                                                </MenuItem>
-                                                                <Separator />
-                                                                <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
-                                                                                            Path=Data.DataContext.DeleteNameCommand}"
-                                                                          CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                     Path=Data}"
-                                                                          Header="Delete" />
-                                                            </ContextMenu>
-                                                        </Button.ContextMenu>
+                                                                    </Button.Style>
+                                                                </Button>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </ScrollViewer>
 
-                                                        <Button.Triggers>
-                                                            <EventTrigger RoutedEvent="Button.Click"
-                                                                          SourceName="ActionsButton">
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ActionsButtonContextMenu"
-                                                                                                       Storyboard.TargetProperty="(ContextMenu.IsOpen)">
-                                                                            <DiscreteObjectKeyFrame KeyTime="0:0:0">
-                                                                                <DiscreteObjectKeyFrame.Value>
-                                                                                    <system:Boolean>True</system:Boolean>
-                                                                                </DiscreteObjectKeyFrame.Value>
-                                                                            </DiscreteObjectKeyFrame>
-                                                                        </ObjectAnimationUsingKeyFrames>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </EventTrigger>
-                                                        </Button.Triggers>
-
-                                                        <Button.Style>
-                                                            <Style BasedOn="{StaticResource NameActionButton}"
-                                                                   TargetType="Button">
-                                                                <Setter Property="Opacity" Value="0.4" />
-
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding ElementName=ActionsButtonContextMenu,
-                                                                                                   Path=IsOpen}"
-                                                                                 Value="True">
-                                                                        <Setter Property="Opacity" Value="1" />
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor,
-                                                                                                                                  AncestorType=CheckBox},
-                                                                                                   Path=IsMouseOver}"
-                                                                                 Value="True">
-                                                                        <Setter Property="Opacity" Value="1" />
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Button.Style>
-                                                    </Button>
-                                                    <Button Command="{Binding ClearNewFlagCommand}"
-                                                            Content="+"
-                                                            Style="{StaticResource NameActionButton}"
-                                                            Visibility="{Binding IsNewlyDetected.Value,
-                                                                                 Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
-                                                </StackPanel>
-                                            </Grid>
-                                        </CheckBox>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                            <!--</ScrollViewer>-->
-                        </Grid>
-                    </GroupBox>
-
-                    <!--  Features  -->
-                    <GroupBox Grid.Column="1"
-                              Margin="2 0 0 0"
-                              Header="Features"
-                              Style="{DynamicResource MaterialDesignCardGroupBox}">
-                        <GroupBox.HeaderTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0"
-                                               VerticalAlignment="Center"
-                                               Text="Features" />
-                                    <StackPanel Grid.Column="1"
-                                                HorizontalAlignment="Right"
-                                                Orientation="Horizontal">
-                                        <ToggleButton x:Name="DragDropEnabled"
-                                                      Margin="0 0 5 0"
-                                                      IsChecked="{Binding ElementName=MainWindowView,
-                                                                          Path=DataContext.EnableFeatureEditing.Value}"
-                                                      ToolTip="Enable editing features" />
-                                        <Button Padding="0 -10"
-                                                Command="{Binding ElementName=MainWindowView,
-                                                                  Path=DataContext.ExpandAllFeaturesCommand}"
-                                                Content="+"
-                                                FontSize="16"
-                                                FontWeight="Black"
-                                                ToolTip="Expand all" />
-                                        <Button Margin="7 0 0 0"
-                                                Padding="0 -10"
-                                                Command="{Binding ElementName=MainWindowView,
-                                                                  Path=DataContext.CollapseAllFeaturesCommand}"
-                                                Content="-"
-                                                FontSize="16"
-                                                FontWeight="Black"
-                                                ToolTip="Collapse all" />
-                                    </StackPanel>
+                                            <Button Grid.Row="2"
+                                                    Padding="1 -1 0 0"
+                                                    HorizontalAlignment="Left"
+                                                    Command="{Binding AddFeatureInstanceRowCommand}"
+                                                    Content="+"
+                                                    FontWeight="Black"
+                                                    IsTabStop="False" />
+                                        </Grid>
+                                    </materialDesign:Card>
                                 </Grid>
-                            </DataTemplate>
-                        </GroupBox.HeaderTemplate>
+                            </Grid>
+                        </GroupBox>
+                    </Grid>
 
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition />
-                                <RowDefinition Height="5" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
+                    <Grid Grid.Row="2"
+                          Margin="0 4 0 0">
+                        <Grid.Style>
+                            <Style TargetType="{x:Type Grid}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedFile.Value}"
+                                                 Value="{x:Null}">
+                                        <Setter Property="IsEnabled" Value="False" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
 
-                            <TreeView x:Name="Features"
-                                      Grid.Row="0"
-                                      dd:DragDrop.IsDragSource="{Binding EnableFeatureEditing.Value}"
-                                      dd:DragDrop.IsDropTarget="{Binding EnableFeatureEditing.Value}"
-                                      dd:DragDrop.UseDefaultDragAdorner="True"
-                                      dd:DragDrop.UseDefaultEffectDataTemplate="True"
-                                      ItemsSource="{Binding Features}"
-                                      SelectedItemChanged="Features_SelectedItemChanged"
-                                      SelectedValuePath="">
-                                <TreeView.Resources>
-                                    <HierarchicalDataTemplate x:Key="FeatureRootDataTemplate"
-                                                              DataType="viewModels:FeatureViewModel"
-                                                              ItemsSource="{Binding Instances}">
-                                        <TextBlock Margin="0 0 0 4"
-                                                   Padding="4 2"
-                                                   Foreground="{StaticResource MaterialDesignBody}"
-                                                   Text="{Binding .,
-                                                                  Converter={x:Static ui:FeatureToDisplayStringConverter.Instance}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
+                        <StackPanel Grid.Column="0"
+                                    Width="150">
+                            <TextBox Grid.Column="0"
+                                     Margin="0 2 5 -1"
+                                     Padding="2 0"
+                                     HorizontalAlignment="Left"
+                                     VerticalAlignment="Center"
+                                     materialDesign:HintAssist.Hint="Prefixes"
+                                     Text="{Binding Path=DestinationDirectoryPrefixes.Value,
+                                                    UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Destination directory prefixes" />
+                            <ComboBox Grid.Column="1"
+                                      Padding="2 6"
+                                      HorizontalAlignment="Stretch"
+                                      DisplayMemberPath="Name"
+                                      ItemsSource="{Binding DestinationDirectories}"
+                                      SelectedItem="{Binding SelectedDestinationDirectory.Value}"
+                                      ToolTip="Destination directory" />
+                        </StackPanel>
+                        <TextBlock x:Name="ResultingFilePath"
+                                   Grid.Column="1"
+                                   Height="Auto"
+                                   Margin="5 0"
+                                   VerticalAlignment="Center"
+                                   Text="{Binding ResultingFilePath.Value}"
+                                   TextWrapping="Wrap" />
+                        <Button Grid.Column="2"
+                                Padding="0"
+                                Command="{Binding ApplyCommand}"
+                                ToolTip="Apply">
+
+                            <materialDesign:PackIcon Kind="Check" />
+                        </Button>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Settings"
+                     TextElement.Foreground="{DynamicResource MaterialDesignBody}">
+                <GroupBox Header="Replacements"
+                          Style="{DynamicResource MaterialDesignCardGroupBox}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Grid.Column="0"
+                                     Margin="2"
+                                     materialDesign:HintAssist.Hint="To Replace"
+                                     Text="{Binding ToReplaceToAdd.Value,
+                                                    UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Grid.Column="1"
+                                     Margin="2"
+                                     materialDesign:HintAssist.Hint="Replace With"
+                                     Text="{Binding ReplaceWithToAdd.Value,
+                                                    UpdateSourceTrigger=PropertyChanged}" />
+
+                            <Button Grid.Column="2"
+                                    Margin="5 0"
+                                    Padding="0 -1 -1 0"
+                                    Command="{Binding AddReplacementCommand}"
+                                    Content="+" />
+                        </Grid>
+
+                        <ItemsControl Grid.Row="1"
+                                      ItemsSource="{Binding Replacements}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0 3">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition />
+                                            <ColumnDefinition />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding ToReplace}" />
+                                        <TextBlock Grid.Column="1">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="{Binding ReplaceWith}" />
+
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding HasSelectedInstances.Value}"
-                                                                     Value="True">
-                                                            <Setter Property="Background" Value="{StaticResource FeatureHighlightBrush}" />
+                                                        <DataTrigger Binding="{Binding ReplaceWith}"
+                                                                     Value="">
+                                                            <Setter Property="Opacity" Value="0.5" />
+                                                            <Setter Property="Text" Value="(remove)" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </TextBlock.Style>
                                         </TextBlock>
-                                    </HierarchicalDataTemplate>
-                                    <HierarchicalDataTemplate x:Key="FeatureInstanceDataTemplate"
-                                                              DataType="viewModels:FeatureInstanceViewModel"
-                                                              ItemsSource="{Binding Instances}">
-                                        <CheckBox IsChecked="{Binding IsSelected}">
-                                            <CheckBox.Style>
-                                                <Style TargetType="CheckBox">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding ElementName=MainWindowView,
-                                                                                       Path=DataContext.HasTouchInput}"
-                                                                     Value="True">
-                                                            <Setter Property="Margin" Value="0 10" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </CheckBox.Style>
-
-                                            <TextBlock Foreground="{StaticResource MaterialDesignBody}">
-                                                <TextBlock.Text>
-                                                    <MultiBinding StringFormat="{}{0}: {1}">
-                                                        <Binding Path="InstanceName" />
-                                                        <Binding Path="InstanceCode" />
-                                                    </MultiBinding>
-                                                </TextBlock.Text>
-                                            </TextBlock>
-                                        </CheckBox>
-                                    </HierarchicalDataTemplate>
-                                </TreeView.Resources>
-                                <TreeView.ItemTemplateSelector>
-                                    <ui:FeaturesTreeViewItemTemplateSelector FeatureInstanceTemplate="{StaticResource FeatureInstanceDataTemplate}"
-                                                                             FeatureRootTemplate="{StaticResource FeatureRootDataTemplate}" />
-                                </TreeView.ItemTemplateSelector>
-                                <TreeView.ItemContainerStyle>
-                                    <Style TargetType="{x:Type TreeViewItem}">
-                                        <Setter Property="IsExpanded" Value="{Binding IsExpanded.Value, Mode=TwoWay}" />
-                                        <Setter Property="Margin" Value="0 0 0 7" />
-                                    </Style>
-                                </TreeView.ItemContainerStyle>
-                            </TreeView>
-
-                            <GridSplitter Grid.Row="1"
-                                          Height="5"
-                                          HorizontalAlignment="Stretch"
-                                          ResizeBehavior="PreviousAndNext"
-                                          ResizeDirection="Rows"
-                                          Visibility="{Binding Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance},
-                                                               Path=EnableFeatureEditing.Value}" />
-
-                            <Grid Grid.Row="2"
-                                  Visibility="{Binding Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance},
-                                                       Path=EnableFeatureEditing.Value}">
-                                <materialDesign:Card VerticalAlignment="Stretch"
-                                                     materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-
-                                        <Grid Grid.Row="0">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition />
-                                                <ColumnDefinition />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-
-                                            <TextBox Grid.Column="0"
-                                                     Margin="2"
-                                                     materialDesign:HintAssist.Hint="Feature Name"
-                                                     Text="{Binding EditingFeatureName.Value,
-                                                                    UpdateSourceTrigger=PropertyChanged}" />
-                                            <TextBox Grid.Column="1"
-                                                     Margin="2"
-                                                     materialDesign:HintAssist.Hint="Feature Code"
-                                                     Text="{Binding EditingFeatureCode.Value,
-                                                                    UpdateSourceTrigger=PropertyChanged}" />
-
-                                            <StackPanel Grid.Column="2"
-                                                        VerticalAlignment="Center"
-                                                        Orientation="Horizontal">
-                                                <TextBlock VerticalAlignment="Center"
-                                                           Text="➔" />
-                                                <TextBox Width="50"
-                                                         Margin="5 0"
-                                                         materialDesign:HintAssist.Hint="Include"
-                                                         Text="{Binding EditingFeatureToInclude.Value,
-                                                                        UpdateSourceTrigger=PropertyChanged}" />
-                                            </StackPanel>
-
-                                            <Button Grid.Column="3"
-                                                    Margin="5 0"
-                                                    Padding="-2 -1 -1 0"
-                                                    Command="{Binding ConfirmEditingFeatureCommand}"
-                                                    Content="&#x2714;"
-                                                    FontSize="10"
-                                                    Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
-                                                    IsTabStop="False"
-                                                    ToolTip="Accept changes" />
-
-                                            <Button Grid.Column="4"
-                                                    Margin="5 0"
-                                                    Padding="0 -1 -1 0"
-                                                    Command="{Binding ClearSelectedFeatureCommand}"
-                                                    Content="&#x2716;"
-                                                    FontSize="10"
-                                                    Foreground="{DynamicResource SecondaryAccentForegroundBrush}"
-                                                    IsTabStop="False"
-                                                    ToolTip="Discard changes" />
-                                        </Grid>
-
-                                        <ScrollViewer Grid.Row="1"
-                                                      VerticalScrollBarVisibility="Auto">
-                                            <ItemsControl VerticalAlignment="Stretch"
-                                                          Grid.IsSharedSizeScope="True"
-                                                          ItemsSource="{Binding EditingFeatureInstances}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Grid>
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="Auto"
-                                                                                  SharedSizeGroup="InstanceNumber" />
-                                                                <ColumnDefinition />
-                                                                <ColumnDefinition />
-                                                                <ColumnDefinition Width="Auto" />
-                                                            </Grid.ColumnDefinitions>
-
-                                                            <TextBlock Grid.Column="0"
-                                                                       Margin="0 0 5 0"
-                                                                       HorizontalAlignment="Right"
-                                                                       VerticalAlignment="Center"
-                                                                       Opacity="0.5">
-                                                                <TextBlock.Text>
-                                                                    <MultiBinding Converter="{x:Static ui:IndexOfConverter.Instance}"
-                                                                                  ConverterParameter="True">
-                                                                        <Binding RelativeSource="{RelativeSource FindAncestor,
-                                                                                                                 AncestorType={x:Type ItemsControl}}" />
-                                                                        <Binding Path="." />
-                                                                    </MultiBinding>
-                                                                </TextBlock.Text>
-                                                            </TextBlock>
-
-                                                            <TextBox x:Name="InstanceName"
-                                                                     Grid.Column="1"
-                                                                     Margin="2"
-                                                                     materialDesign:HintAssist.Hint="Name"
-                                                                     KeyUp="InstanceName_KeyUp"
-                                                                     Text="{Binding InstanceName.Value,
-                                                                                    UpdateSourceTrigger=LostFocus}" />
-                                                            <TextBox x:Name="InstanceCode"
-                                                                     Grid.Column="2"
-                                                                     Margin="2"
-                                                                     materialDesign:HintAssist.Hint="Code"
-                                                                     KeyUp="InstanceCode_KeyUp"
-                                                                     Text="{Binding InstanceCode.Value,
-                                                                                    UpdateSourceTrigger=PropertyChanged}" />
-                                                            <Button Grid.Column="3"
-                                                                    Padding="0 -1 -1 0"
-                                                                    Command="{Binding ElementName=MainWindowView,
-                                                                                      Path=DataContext.RemoveFeatureInstanceRowCommand}"
-                                                                    CommandParameter="{Binding .}"
-                                                                    Content="-"
-                                                                    IsTabStop="False">
-                                                                <Button.Style>
-                                                                    <Style BasedOn="{StaticResource {x:Type Button}}"
-                                                                           TargetType="{x:Type Button}">
-                                                                        <Setter Property="Margin" Value="5 0" />
-
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding ElementName=MainWindowView,
-                                                                                                           Path=DataContext.HasTouchInput}"
-                                                                                         Value="True">
-                                                                                <Setter Property="Margin" Value="5 2" />
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </Button.Style>
-                                                            </Button>
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </ScrollViewer>
-
-                                        <Button Grid.Row="2"
-                                                Padding="1 -1 0 0"
-                                                HorizontalAlignment="Left"
-                                                Command="{Binding AddFeatureInstanceRowCommand}"
-                                                Content="+"
-                                                FontWeight="Black"
-                                                IsTabStop="False" />
                                     </Grid>
-                                </materialDesign:Card>
-                            </Grid>
-                        </Grid>
-                    </GroupBox>
-                </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </GroupBox>
+            </TabItem>
+        </TabControl>
 
-                <Grid Grid.Row="2"
-                      Margin="0 4 0 0">
-                    <Grid.Style>
-                        <Style TargetType="{x:Type Grid}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedFile.Value}"
-                                             Value="{x:Null}">
-                                    <Setter Property="IsEnabled" Value="False" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Grid.Style>
+        <Button Grid.Column="2"
+                Margin="0 15 5 0"
+                Padding="0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Command="{Binding ElementName=MainWindowView,
+                                  Path=DataContext.SaveSettingsCommand}"
+                ToolTip="Save Settings">
 
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <StackPanel Grid.Column="0"
-                                Width="150">
-                        <TextBox Grid.Column="0"
-                                 Margin="0 2 5 -1"
-                                 Padding="2 0"
-                                 HorizontalAlignment="Left"
-                                 VerticalAlignment="Center"
-                                 materialDesign:HintAssist.Hint="Prefixes"
-                                 Text="{Binding Path=DestinationDirectoryPrefixes.Value,
-                                                UpdateSourceTrigger=PropertyChanged}"
-                                 ToolTip="Destination directory prefixes" />
-                        <ComboBox Grid.Column="1"
-                                  Padding="2 6"
-                                  HorizontalAlignment="Stretch"
-                                  DisplayMemberPath="Name"
-                                  ItemsSource="{Binding DestinationDirectories}"
-                                  SelectedItem="{Binding SelectedDestinationDirectory.Value}"
-                                  ToolTip="Destination directory" />
-                    </StackPanel>
-                    <TextBlock x:Name="ResultingFilePath"
-                               Grid.Column="1"
-                               Height="Auto"
-                               Margin="5 0"
-                               VerticalAlignment="Center"
-                               Text="{Binding ResultingFilePath.Value}"
-                               TextWrapping="Wrap" />
-                    <Button Grid.Column="2"
-                            Padding="0"
-                            Command="{Binding ApplyCommand}"
-                            ToolTip="Apply">
-
-                        <materialDesign:PackIcon Kind="Check" />
-                    </Button>
-                </Grid>
-            </Grid>
-        </GroupBox>
+            <materialDesign:PackIcon Kind="ContentSave" />
+        </Button>
     </Grid>
 </Window>

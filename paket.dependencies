@@ -8,6 +8,7 @@ nuget FSharp.Core
 nuget FsXaml.Wpf
 nuget gong-wpf-dragdrop
 nuget MaterialDesignThemes
+nuget MaterialDesignExtensions
 nuget ReactiveProperty
 nuget ReactiveUI < 9
 nuget Splat < 7

@@ -2,6 +2,7 @@ System.ValueTuple
 FSharp.Core
 FsXaml.Wpf
 MaterialDesignThemes
+MaterialDesignExtensions
 Dragablz
 FSharp.Control.Reactive
 ReactiveUI

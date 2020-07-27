@@ -50,6 +50,27 @@ type UnderscoreHandling = Ignore = 0 | Replace = 1 | TrimSuffix = 2
 
 type FileChange = Added | Removed
 
+type LogLevel =
+    | Common
+    | Uncommon
+    | Rare
+    | Epic
+    | Legendary
+
+type Activity =
+    | KeepAlive
+    | RenameFile
+    | DeleteFile
+    | AddName
+
+type LogEntry =
+    {
+        TimeStamp: DateTimeOffset
+        LogLevel: LogLevel
+        Activity: Activity
+        Message: string
+    }
+
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
@@ -148,6 +169,15 @@ type MainWindowViewModel() as this =
     let mutable isFileSystemWatcherAlive = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     let mutable activityLog = ObservableCollection()
+    let activityLogSubject = new System.Reactive.Subjects.Subject<_>()
+    let log logLevel activity message =
+        {
+            TimeStamp = DateTimeOffset.Now
+            LogLevel = logLevel
+            Activity = activity
+            Message = message
+        }
+        |> activityLogSubject.OnNext
 
     let updateDirectoriesList baseDirectory prefixes filterByPrefixes =
         directories.Clear()
@@ -574,7 +604,9 @@ type MainWindowViewModel() as this =
                 |> Observable.map (Seq.toList >> List.forall id))
 
         reviveFileSystemWatcherCommand <-
-            ReactiveCommand.Create<_, _>(fun () -> watcher.EnableRaisingEvents <- true)
+            ReactiveCommand.Create<_, _>(fun () ->
+                watcher.EnableRaisingEvents <- true
+                log Rare KeepAlive "Manually triggered FileSystemWatcher keepalive")
 
         let removeFilesToChangeSubject = new System.Reactive.Subjects.Subject<_>()
 
@@ -948,7 +980,18 @@ type MainWindowViewModel() as this =
             Observable.interval (TimeSpan.FromSeconds 1.)
             |> Observable.map (fun _ -> watcher.EnableRaisingEvents)
             |> Observable.distinctUntilChanged
+            |> Observable.iter (fun isAlive ->
+                if isAlive
+                then "FileSystemWatcher is alive"
+                else "FileSystemWatcher is dead"
+                |> log Rare KeepAlive)
             |> toReadOnlyReactiveProperty
+
+        activityLogSubject
+        |> Observable.observeOn RxApp.MainThreadScheduler
+        |> Observable.subscribeOn RxApp.MainThreadScheduler
+        |> Observable.subscribe activityLog.Add
+        |> ignore
 
     member __.Shutdown () = saveSettings __.BaseDirectory.Value
 

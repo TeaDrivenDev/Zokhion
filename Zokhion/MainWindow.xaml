@@ -1534,7 +1534,7 @@
                               Margin="0 5 0 0"
                               Header="Activity Log"
                               Style="{DynamicResource MaterialDesignCardGroupBox}">
-                        <ItemsControl ItemsSource="{Binding ActivityLog}" />
+                        <DataGrid ItemsSource="{Binding ActivityLog}" />
                     </GroupBox>
                 </Grid>
             </TabItem>

@@ -59,8 +59,10 @@ type LogLevel =
 
 type Activity =
     | KeepAlive
-    | RenameFile
-    | DeleteFile
+    | RenameSuccess
+    | RenameFailure
+    | DeleteSuccess
+    | DeleteFailure
     | AddName
 
 type LogEntry =
@@ -243,6 +245,8 @@ type MainWindowViewModel() as this =
                     vm)
 
             viewModel.IsSelected <- true
+
+            log Rare AddName name
 
             this.NewNameToAdd.Value <- ""
 
@@ -445,9 +449,13 @@ type MainWindowViewModel() as this =
                             try
                                 File.Delete file.FullName
                                 searchCommands.OnNext (Refresh [ file ])
+                                log Rare DeleteSuccess file.FullName
 
                                 None
-                            with _ -> Some [ AddDelete file ]
+                            with _ ->
+                                log Rare DeleteFailure file.FullName
+
+                                Some [ AddDelete file ]
                         | _ -> None
                 else None)
 
@@ -587,8 +595,14 @@ type MainWindowViewModel() as this =
 
                         [ oldFile; FileInfo newName ] |> Refresh |> searchCommands.OnNext
 
+                        sprintf "%s\n%s" oldFile.FullName newName
+                        |> log Rare RenameSuccess
+
                         None
-                    with _ -> [ AddRename (oldFile, newName) ] |> Some),
+                    with _ ->
+                        log Rare RenameFailure oldFile.FullName
+
+                        [ AddRename (oldFile, newName) ] |> Some),
                 [
                     this.SelectedFile
                     |> Observable.map (fun file -> not <| isNull file && file.Exists)
@@ -657,6 +671,10 @@ type MainWindowViewModel() as this =
                     then
                         try
                             File.Move(oldFile.FullName, newName)
+
+                            sprintf "%s\n%s" oldFile.FullName newName
+                            |> log Rare RenameSuccess
+
                             Some (oldFile, Some (FileInfo newName))
                         with _ -> None
                     else Some (oldFile, None))
@@ -668,6 +686,9 @@ type MainWindowViewModel() as this =
                 |> Seq.choose (fun file ->
                     try
                         File.Delete file.FullName
+
+                        log Rare DeleteSuccess file.FullName
+
                         Some file
                     with _ -> None)
                 |> Seq.toList

@@ -67,7 +67,7 @@ type Activity =
 
 type LogEntry =
     {
-        TimeStamp: DateTimeOffset
+        Timestamp: DateTimeOffset
         LogLevel: LogLevel
         Activity: Activity
         Message: string
@@ -174,7 +174,7 @@ type MainWindowViewModel() as this =
     let activityLogSubject = new System.Reactive.Subjects.Subject<_>()
     let log logLevel activity message =
         {
-            TimeStamp = DateTimeOffset.Now
+            Timestamp = DateTimeOffset.Now
             LogLevel = logLevel
             Activity = activity
             Message = message

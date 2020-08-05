@@ -1535,6 +1535,8 @@
                               Header="Activity Log"
                               Style="{DynamicResource MaterialDesignCardGroupBox}">
                         <DataGrid Margin="-8"
+                                  materialDesign:DataGridAssist.CellPadding="4 2 2 2"
+                                  materialDesign:DataGridAssist.ColumnHeaderPadding="4 2 2 2"
                                   AutoGenerateColumns="False"
                                   ItemsSource="{Binding ActivityLog}">
                             <DataGrid.Columns>
@@ -1543,7 +1545,7 @@
                                                                                      StringFormat=s}"
                                                                    Header="Timestamp"
                                                                    IsReadOnly="True" />
-                                <materialDesign:DataGridTextColumn Width="75"
+                                <materialDesign:DataGridTextColumn Width="100"
                                                                    Binding="{Binding LogLevel}"
                                                                    Header="Level"
                                                                    IsReadOnly="True" />

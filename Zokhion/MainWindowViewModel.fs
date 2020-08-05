@@ -51,11 +51,10 @@ type UnderscoreHandling = Ignore = 0 | Replace = 1 | TrimSuffix = 2
 type FileChange = Added | Removed
 
 type LogLevel =
-    | Common
-    | Uncommon
-    | Rare
-    | Epic
-    | Legendary
+    | Diagnostic
+    | Informational
+    | Warning
+    | Critical
 
 type Activity =
     | KeepAlive
@@ -246,7 +245,7 @@ type MainWindowViewModel() as this =
 
             viewModel.IsSelected <- true
 
-            log Rare AddName name
+            log Informational AddName name
 
             this.NewNameToAdd.Value <- ""
 
@@ -449,11 +448,11 @@ type MainWindowViewModel() as this =
                             try
                                 File.Delete file.FullName
                                 searchCommands.OnNext (Refresh [ file ])
-                                log Rare DeleteSuccess file.FullName
+                                log Informational DeleteSuccess file.FullName
 
                                 None
                             with _ ->
-                                log Rare DeleteFailure file.FullName
+                                log Diagnostic DeleteFailure file.FullName
 
                                 Some [ AddDelete file ]
                         | _ -> None
@@ -596,11 +595,11 @@ type MainWindowViewModel() as this =
                         [ oldFile; FileInfo newName ] |> Refresh |> searchCommands.OnNext
 
                         sprintf "%s\n%s" oldFile.FullName newName
-                        |> log Rare RenameSuccess
+                        |> log Informational RenameSuccess
 
                         None
                     with _ ->
-                        log Rare RenameFailure oldFile.FullName
+                        log Diagnostic RenameFailure oldFile.FullName
 
                         [ AddRename (oldFile, newName) ] |> Some),
                 [
@@ -620,7 +619,7 @@ type MainWindowViewModel() as this =
         reviveFileSystemWatcherCommand <-
             ReactiveCommand.Create<_, _>(fun () ->
                 watcher.EnableRaisingEvents <- true
-                log Rare KeepAlive "Manually triggered FileSystemWatcher keepalive")
+                log Informational KeepAlive "Manually triggered FileSystemWatcher keepalive")
 
         let removeFilesToChangeSubject = new System.Reactive.Subjects.Subject<_>()
 
@@ -673,7 +672,7 @@ type MainWindowViewModel() as this =
                             File.Move(oldFile.FullName, newName)
 
                             sprintf "%s\n%s" oldFile.FullName newName
-                            |> log Rare RenameSuccess
+                            |> log Informational RenameSuccess
 
                             Some (oldFile, Some (FileInfo newName))
                         with _ -> None
@@ -687,7 +686,7 @@ type MainWindowViewModel() as this =
                     try
                         File.Delete file.FullName
 
-                        log Rare DeleteSuccess file.FullName
+                        log Informational DeleteSuccess file.FullName
 
                         Some file
                     with _ -> None)
@@ -1005,7 +1004,7 @@ type MainWindowViewModel() as this =
                 if isAlive
                 then "FileSystemWatcher is alive"
                 else "FileSystemWatcher is dead"
-                |> log Rare KeepAlive)
+                |> log Informational KeepAlive)
             |> toReadOnlyReactiveProperty
 
         activityLogSubject

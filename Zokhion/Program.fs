@@ -1,10 +1,12 @@
 ﻿namespace TeaDriven.Zokhion
 
 open System
+open System.Collections.Specialized
 open System.ComponentModel
 open System.Windows
 open System.Windows.Controls
 open System.Windows.Input
+open System.Windows.Media
 open System.Windows.Threading
 
 open FsXaml
@@ -30,7 +32,20 @@ type MainWindow() as this =
 
     member __.ViewModel: MainWindowViewModel = __.DataContext :?> MainWindowViewModel
 
-    override __.SelectFolder_Click (_: obj, e: RoutedEventArgs) =
+    override __.MainWindow_OnActivated(_: obj, e: EventArgs) =
+        (this.ActivityLog.Items :> INotifyCollectionChanged).CollectionChanged.Add (fun _ ->
+            if __.ActivityLog.Items.Count > 0
+            then
+                if VisualTreeHelper.GetChildrenCount __.ActivityLog > 0
+                then
+                    match VisualTreeHelper.GetChild(__.ActivityLog, 0) with
+                    | :? Decorator as decorator ->
+                        match decorator.Child with
+                        | :? ScrollViewer as scrollViewer -> scrollViewer.ScrollToEnd()
+                        | _ -> ()
+                    | _ -> ())
+
+    override __.SelectFolder_Click(_: obj, e: RoutedEventArgs) =
         use folderBrowserDialog = new Forms.FolderBrowserDialog()
         folderBrowserDialog.ShowNewFolderButton <- false
 

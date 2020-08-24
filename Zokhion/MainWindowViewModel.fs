@@ -1003,7 +1003,13 @@ type MainWindowViewModel() as this =
             |> Observable.iter (fun isAlive ->
                 if isAlive
                 then "FileSystemWatcher is alive"
-                else "FileSystemWatcher is dead"
+                else
+                    if not <| isNull watcher.Path && Directory.Exists watcher.Path
+                    then
+                        watcher.EnableRaisingEvents <- true
+
+                        "FileSystemWatcher revived"
+                    else "FileSystemWatcher is dead"
                 |> log Informational KeepAlive)
             |> toReadOnlyReactiveProperty
 

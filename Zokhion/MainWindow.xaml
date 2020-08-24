@@ -1456,7 +1456,7 @@
                     </Grid>
                 </Grid>
             </TabItem>
-            <TabItem Header="Settings"
+            <TabItem Header="Settings/Log"
                      TextElement.Foreground="{DynamicResource MaterialDesignBody}">
                 <Grid>
                     <Grid.RowDefinitions>

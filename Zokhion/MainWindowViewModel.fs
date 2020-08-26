@@ -999,7 +999,9 @@ type MainWindowViewModel() as this =
         isFileSystemWatcherAlive <-
             Observable.interval (TimeSpan.FromSeconds 1.)
             |> Observable.map (fun _ -> watcher.EnableRaisingEvents)
-            |> Observable.distinctUntilChanged
+            |> Observable.scanInit (false, None) (fun (acc, _) elem ->
+                elem, (if not elem || acc <> elem then Some elem else None))
+            |> Observable.choose snd
             |> Observable.iter (fun isAlive ->
                 if isAlive
                 then "FileSystemWatcher is alive"

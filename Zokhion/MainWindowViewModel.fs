@@ -72,6 +72,12 @@ type LogEntry =
         Message: string
     }
 
+type FileSystemWatcherStatus =
+    | NewlyAlive
+    | AlreadyAlive
+    | NewlyDead
+    | AlreadyDead
+
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
@@ -999,20 +1005,31 @@ type MainWindowViewModel() as this =
         isFileSystemWatcherAlive <-
             Observable.interval (TimeSpan.FromSeconds 1.)
             |> Observable.map (fun _ -> watcher.EnableRaisingEvents)
-            |> Observable.scanInit (false, None) (fun (acc, _) elem ->
-                elem, (if not elem || acc <> elem then Some elem else None))
-            |> Observable.choose snd
-            |> Observable.iter (fun isAlive ->
-                if isAlive
-                then "FileSystemWatcher is alive"
-                else
-                    if not <| isNull watcher.Path && Directory.Exists watcher.Path
-                    then
-                        watcher.EnableRaisingEvents <- true
+            |> Observable.scanInit (false, AlreadyDead) (fun (previousValue, _) newValue ->
+                newValue,
+                match previousValue, newValue with
+                | false, true -> NewlyAlive
+                | true, true -> AlreadyAlive
+                | true, false -> NewlyDead
+                | false, false -> AlreadyDead)
+            |> Observable.map (fun (_, status) ->
+                let isAlive, logMessage =
+                    match status with
+                    | AlreadyAlive -> true, None
+                    | NewlyAlive -> true, Some "FileSystemWatcher is alive"
+                    | _ ->
+                        if not <| isNull watcher.Path && Directory.Exists watcher.Path
+                        then
+                            watcher.EnableRaisingEvents <- true
 
-                        "FileSystemWatcher revived"
-                    else "FileSystemWatcher is dead"
-                |> log Informational KeepAlive)
+                            true, Some "FileSystemWatcher revived"
+                        elif status = NewlyDead
+                        then false, Some "FileSystemWatcher is dead"
+                        else false, None
+
+                logMessage |> Option.iter (log Informational KeepAlive)
+
+                isAlive)
             |> toReadOnlyReactiveProperty
 
         activityLogSubject

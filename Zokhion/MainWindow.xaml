@@ -129,7 +129,19 @@
                       Margin="5"
                       DisplayMemberPath="Name"
                       ItemsSource="{Binding Directories}"
-                      SelectedItem="{Binding SelectedDirectory.Value}" />
+                      SelectedItem="{Binding SelectedDirectory.Value}">
+                <ComboBox.Style>
+                    <Style BasedOn="{StaticResource MaterialDesignComboBox}"
+                           TargetType="{x:Type ComboBox}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Directories.Count}"
+                                         Value="0">
+                                <Setter Property="IsEnabled" Value="False" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ComboBox.Style>
+            </ComboBox>
 
             <!--  Search  -->
             <dragablz:TabablzControl Grid.Row="2"

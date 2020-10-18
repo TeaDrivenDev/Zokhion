@@ -59,6 +59,7 @@
             </Style.Triggers>
         </Style>
     </Window.Resources>
+
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="3*" />
@@ -127,6 +128,7 @@
 
             <ComboBox Grid.Row="1"
                       Margin="5"
+                      materialDesign:HintAssist.Hint="Select Directory"
                       DisplayMemberPath="Name"
                       ItemsSource="{Binding Directories}"
                       SelectedItem="{Binding SelectedDirectory.Value}">

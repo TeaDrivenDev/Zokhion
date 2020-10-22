@@ -78,6 +78,13 @@ type FileSystemWatcherStatus =
     | NewlyDead
     | AlreadyDead
 
+[<AllowNullLiteral>]
+type DirectoryViewModel(directoryInfo: DirectoryInfo, fileCount: int) =
+    member __.DirectoryInfo = directoryInfo
+    member __.FullName = directoryInfo.FullName
+    member __.Name = directoryInfo.Name
+    member __.FileCount = fileCount
+
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
@@ -91,7 +98,7 @@ type MainWindowViewModel() as this =
     let sourceDirectoryPrefixes =
         new ReactiveProperty<_>("", ReactivePropertyMode.RaiseLatestValueOnSubscribe)
     let selectedDirectory =
-        new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
+        new ReactiveProperty<_>(Unchecked.defaultof<DirectoryViewModel>, ReactivePropertyMode.None)
     let directories = ObservableCollection()
     let mutable refreshDirectoriesCommand = Unchecked.defaultof<ReactiveCommand>
 
@@ -195,6 +202,10 @@ type MainWindowViewModel() as this =
             match filterByPrefixes, prefixes with
             | false, _ | _, "" -> true
             | _ -> prefixes |> Seq.exists (string >> di.Name.StartsWith))
+        |> Seq.map (fun di ->
+            let files = di.GetFiles()
+
+            DirectoryViewModel(di, files.Length))
         |> Seq.sortWith (fun x y -> Interop.StrCmpLogicalW(x.Name, y.Name))
         |> Seq.iter directories.Add
 
@@ -719,7 +730,8 @@ type MainWindowViewModel() as this =
                 mode = ReactivePropertyMode.RaiseLatestValueOnSubscribe)
 
         this.SelectedDirectory
-        |> Observable.map (fun dir -> Directories (Option.ofObj dir, this.BaseDirectory.Value))
+        |> Observable.map (fun dir ->
+            Directories (dir |> Option.ofObj |> Option.map (fun dir -> dir.DirectoryInfo), this.BaseDirectory.Value))
         |> Observable.subscribeObserver searchCommands
         |> ignore
 
@@ -1047,7 +1059,7 @@ type MainWindowViewModel() as this =
     member __.SourceDirectoryPrefixes: ReactiveProperty<_> = sourceDirectoryPrefixes
     member __.RefreshDirectoriesCommand = refreshDirectoriesCommand
 
-    member __.SelectedDirectory: ReactiveProperty<DirectoryInfo> = selectedDirectory
+    member __.SelectedDirectory: ReactiveProperty<DirectoryViewModel> = selectedDirectory
 
     member __.Directories = directories
 

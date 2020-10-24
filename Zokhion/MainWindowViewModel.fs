@@ -150,6 +150,7 @@ type MainWindowViewModel() as this =
     let mutable setNameFilterCommand = Unchecked.defaultof<ReactiveCommand>
     let allNames = new SourceCache<NameViewModel, string>(fun vm -> vm.Name.Value)
 
+    let mutable selectedNames = Unchecked.defaultof<ReadOnlyObservableCollection<_>>
     let mutable names = Unchecked.defaultof<ReadOnlyObservableCollection<_>>
 
     let mutable resetNameSelectionCommand = Unchecked.defaultof<ReactiveCommand>
@@ -954,8 +955,17 @@ type MainWindowViewModel() as this =
 
         allNames.Connect()
             .AutoRefresh()
+            .Filter(fun vm -> vm.IsSelected || vm.IsPinned)
+            .Sort(NameViewModelComparer Selection)
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Bind(&selectedNames)
+            .Subscribe()
+        |> ignore
+
+        allNames.Connect()
+            .AutoRefresh()
             .Filter(nameFilter)
-            .Sort(NameViewModelComparer())
+            .Sort(NameViewModelComparer NameOnly)
             .ObserveOn(RxApp.MainThreadScheduler)
             .Bind(&names)
             .Subscribe()
@@ -1112,6 +1122,7 @@ type MainWindowViewModel() as this =
     member __.AddNameCommand = addNameCommand
     member __.SetNameFilterCommand = setNameFilterCommand
 
+    member __.SelectedNames: ReadOnlyObservableCollection<NameViewModel> = selectedNames
     member __.Names: ReadOnlyObservableCollection<NameViewModel> = names
 
     member __.ResetNameSelectionCommand: ReactiveCommand = resetNameSelectionCommand

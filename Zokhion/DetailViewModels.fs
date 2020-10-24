@@ -155,7 +155,9 @@ type NameViewModel(name: string, isSelected: bool, isNewlyDetected: bool, isAdde
     member __.PinCommand =
         ReactiveCommand.Create(fun () -> __.IsPinned <- not __.IsPinned)
 
-type NameViewModelComparer() =
+type NameViewModelComparerMode = NameOnly | Selection
+
+type NameViewModelComparer(mode: NameViewModelComparerMode) =
     interface IComparer<NameViewModel> with
         member __.Compare (a, b) =
             let byFlag flagA flagB =
@@ -164,9 +166,15 @@ type NameViewModelComparer() =
                 | false, true -> Some 1
                 | _ -> None
 
-            byFlag a.IsSelected b.IsSelected
-            |> Option.defaultWith (fun () ->
-                byFlag a.IsNewlyDetected.Value b.IsNewlyDetected.Value
+            let byName () =
+                a.Name.Value.CompareTo b.Name.Value
+
+            match mode with
+            | NameOnly -> byName ()
+            | Selection ->
+                byFlag a.IsSelected b.IsSelected
                 |> Option.defaultWith (fun () ->
-                    byFlag a.IsPinned b.IsPinned
-                    |> Option.defaultWith (fun () -> a.Name.Value.CompareTo b.Name.Value)))
+                    byFlag a.IsNewlyDetected.Value b.IsNewlyDetected.Value
+                    |> Option.defaultWith (fun () ->
+                        byFlag a.IsPinned b.IsPinned
+                        |> Option.defaultWith byName))

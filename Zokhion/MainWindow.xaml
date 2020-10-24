@@ -866,20 +866,237 @@
                                     <ui:BindingProxy x:Key="MainWindowBindingProxy"
                                                      Data="{Binding ElementName=MainWindowView}" />
 
-                                    <Style x:Key="NameActionButton"
-                                           BasedOn="{StaticResource {x:Type Button}}"
-                                           TargetType="{x:Type Button}">
-                                        <Setter Property="Margin" Value="0 2 5 1" />
-                                        <Setter Property="Padding" Value="0 -5 0 -4" />
+                                    <Style x:Key="NamesListBoxStyle"
+                                           BasedOn="{StaticResource MaterialDesignListBox}"
+                                           TargetType="{x:Type ListBox}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
 
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding ElementName=MainWindowView,
-                                                                           Path=DataContext.HasTouchInput}"
-                                                         Value="True">
-                                                <Setter Property="Margin" Value="0 2 5 2" />
-                                                <Setter Property="Opacity" Value="1" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
+                                        <Setter Property="ItemContainerStyle">
+                                            <Setter.Value>
+                                                <Style TargetType="{x:Type ListBoxItem}">
+                                                    <Setter Property="Focusable" Value="False" />
+                                                </Style>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter Property="ItemTemplate">
+                                            <Setter.Value>
+                                                <DataTemplate DataType="viewModels:NameViewModel">
+                                                    <DataTemplate.Resources>
+                                                        <Style x:Key="NameActionButton"
+                                                               BasedOn="{StaticResource {x:Type Button}}"
+                                                               TargetType="{x:Type Button}">
+                                                            <Setter Property="Margin" Value="0 2 5 1" />
+                                                            <Setter Property="Padding" Value="0 -5 0 -4" />
+
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding ElementName=MainWindowView,
+                                                                                               Path=DataContext.HasTouchInput}"
+                                                                             Value="True">
+                                                                    <Setter Property="Margin" Value="0 2 5 2" />
+                                                                    <Setter Property="Opacity" Value="1" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </DataTemplate.Resources>
+
+                                                    <CheckBox HorizontalContentAlignment="Stretch"
+                                                              VerticalContentAlignment="Center"
+                                                              Foreground="{StaticResource MaterialDesignBody}"
+                                                              IsChecked="{Binding IsSelected}">
+                                                        <CheckBox.Style>
+                                                            <Style TargetType="CheckBox">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsNewlyDetected.Value}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Background" Value="{StaticResource SecondaryAccentBrush}" />
+                                                                    </DataTrigger>
+
+                                                                    <DataTrigger Binding="{Binding ElementName=MainWindowView,
+                                                                                                   Path=DataContext.HasTouchInput}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Margin" Value="0 3" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </CheckBox.Style>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Grid.Style>
+                                                                <Style TargetType="Grid">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsAdded.Value}"
+                                                                                     Value="True">
+                                                                            <Setter Property="Background">
+                                                                                <Setter.Value>
+                                                                                    <SolidColorBrush Opacity="0.4"
+                                                                                                     Color="SeaGreen" />
+                                                                                </Setter.Value>
+                                                                            </Setter>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding IsSelected}"
+                                                                                     Value="True">
+                                                                            <Setter Property="Background">
+                                                                                <Setter.Value>
+                                                                                    <SolidColorBrush Color="{StaticResource Accent700}" />
+                                                                                </Setter.Value>
+                                                                            </Setter>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Grid.Style>
+
+                                                            <StackPanel VerticalAlignment="Center"
+                                                                        Orientation="Horizontal">
+                                                                <TextBlock Grid.Column="0"
+                                                                           Margin="5 0 0 0"
+                                                                           HorizontalAlignment="Stretch"
+                                                                           VerticalAlignment="Center"
+                                                                           Text="{Binding Name.Value}">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock">
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsSelected}"
+                                                                                             Value="True">
+                                                                                    <Setter Property="Foreground">
+                                                                                        <Setter.Value>
+                                                                                            <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
+                                                                                        </Setter.Value>
+                                                                                    </Setter>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
+                                                                <TextBlock Grid.Column="0"
+                                                                           Margin="5 0 15 0"
+                                                                           HorizontalAlignment="Stretch"
+                                                                           VerticalAlignment="Center"
+                                                                           FontSize="10"
+                                                                           Text="{Binding Count.Value}">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock">
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsSelected}"
+                                                                                             Value="True">
+                                                                                    <Setter Property="Foreground">
+                                                                                        <Setter.Value>
+                                                                                            <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
+                                                                                        </Setter.Value>
+                                                                                    </Setter>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
+                                                            </StackPanel>
+
+                                                            <StackPanel Grid.Column="1"
+                                                                        Orientation="Horizontal">
+                                                                <StackPanel.Resources>
+                                                                    <ui:BindingProxy x:Key="MainWindowBindingProxy"
+                                                                                     Data="{Binding ElementName=MainWindowView}" />
+                                                                    <ui:BindingProxy x:Key="NameViewModelBindingProxy"
+                                                                                     Data="{Binding ElementName=ActionsButton,
+                                                                                                    Path=DataContext}" />
+                                                                </StackPanel.Resources>
+                                                                <materialDesign:PackIcon Margin="0 0 7 0"
+                                                                                         VerticalAlignment="Center"
+                                                                                         Kind="Pin"
+                                                                                         Visibility="{Binding IsPinned,
+                                                                                                              Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
+                                                                <Button x:Name="ActionsButton"
+                                                                        Content="…">
+                                                                    <Button.ContextMenu>
+                                                                        <ContextMenu x:Name="ActionsButtonContextMenu">
+                                                                            <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
+                                                                                                        Path=Data.DataContext.SearchForTextCommand}"
+                                                                                      CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
+                                                                                                                 Path=Data.Name.Value}"
+                                                                                      Header="Search" />
+                                                                            <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
+                                                                                                        Path=Data.DataContext.SearchForNameCommand}"
+                                                                                      CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
+                                                                                                                 Path=Data.Name.Value}"
+                                                                                      Header="Search as Name" />
+                                                                            <MenuItem Command="{Binding Source={StaticResource NameViewModelBindingProxy},
+                                                                                                        Path=Data.PinCommand}">
+                                                                                <MenuItem.Style>
+                                                                                    <Style BasedOn="{StaticResource MaterialDesignMenuItem}"
+                                                                                           TargetType="{x:Type MenuItem}">
+                                                                                        <Setter Property="Header" Value="Pin" />
+
+                                                                                        <Style.Triggers>
+                                                                                            <DataTrigger Binding="{Binding Source={StaticResource NameViewModelBindingProxy},
+                                                                                                                           Path=Data.IsPinned}"
+                                                                                                         Value="True">
+                                                                                                <Setter Property="Header" Value="Unpin" />
+                                                                                            </DataTrigger>
+                                                                                        </Style.Triggers>
+                                                                                    </Style>
+                                                                                </MenuItem.Style>
+                                                                            </MenuItem>
+                                                                            <Separator />
+                                                                            <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
+                                                                                                        Path=Data.DataContext.DeleteNameCommand}"
+                                                                                      CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
+                                                                                                                 Path=Data}"
+                                                                                      Header="Delete" />
+                                                                        </ContextMenu>
+                                                                    </Button.ContextMenu>
+
+                                                                    <Button.Triggers>
+                                                                        <EventTrigger RoutedEvent="Button.Click"
+                                                                                      SourceName="ActionsButton">
+                                                                            <BeginStoryboard>
+                                                                                <Storyboard>
+                                                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ActionsButtonContextMenu"
+                                                                                                                   Storyboard.TargetProperty="(ContextMenu.IsOpen)">
+                                                                                        <DiscreteObjectKeyFrame KeyTime="0:0:0">
+                                                                                            <DiscreteObjectKeyFrame.Value>
+                                                                                                <system:Boolean>True</system:Boolean>
+                                                                                            </DiscreteObjectKeyFrame.Value>
+                                                                                        </DiscreteObjectKeyFrame>
+                                                                                    </ObjectAnimationUsingKeyFrames>
+                                                                                </Storyboard>
+                                                                            </BeginStoryboard>
+                                                                        </EventTrigger>
+                                                                    </Button.Triggers>
+
+                                                                    <Button.Style>
+                                                                        <Style BasedOn="{StaticResource NameActionButton}"
+                                                                               TargetType="Button">
+                                                                            <Setter Property="Opacity" Value="0.4" />
+
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding ElementName=ActionsButtonContextMenu,
+                                                                                                               Path=IsOpen}"
+                                                                                             Value="True">
+                                                                                    <Setter Property="Opacity" Value="1" />
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor,
+                                                                                                                                              AncestorType=CheckBox},
+                                                                                                               Path=IsMouseOver}"
+                                                                                             Value="True">
+                                                                                    <Setter Property="Opacity" Value="1" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Button.Style>
+                                                                </Button>
+                                                                <Button Command="{Binding ClearNewFlagCommand}"
+                                                                        Content="+"
+                                                                        Style="{StaticResource NameActionButton}"
+                                                                        Visibility="{Binding IsNewlyDetected.Value,
+                                                                                             Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </CheckBox>
+                                                </DataTemplate>
+                                            </Setter.Value>
+                                        </Setter>
                                     </Style>
                                 </Grid.Resources>
 
@@ -934,11 +1151,10 @@
                                          Grid.Row="1"
                                          MaxHeight="156"
                                          Margin="0 0 0 2"
-                                         HorizontalContentAlignment="Stretch"
                                          BorderBrush="{StaticResource MaterialDesignBody}"
                                          ItemsSource="{Binding SelectedNames}">
                                     <ListBox.Style>
-                                        <Style BasedOn="{StaticResource MaterialDesignListBox}"
+                                        <Style BasedOn="{StaticResource NamesListBoxStyle}"
                                                TargetType="{x:Type ListBox}">
                                             <Setter Property="BorderThickness" Value="0 0 0 1" />
                                             <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Visible" />
@@ -952,425 +1168,14 @@
                                             </Style.Triggers>
                                         </Style>
                                     </ListBox.Style>
-
-                                    <ListBox.ItemContainerStyle>
-                                        <Style TargetType="{x:Type ListBoxItem}">
-                                            <Setter Property="Focusable" Value="False" />
-                                        </Style>
-                                    </ListBox.ItemContainerStyle>
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate DataType="viewModels:NameViewModel">
-                                            <CheckBox HorizontalContentAlignment="Stretch"
-                                                      VerticalContentAlignment="Center"
-                                                      Foreground="{StaticResource MaterialDesignBody}"
-                                                      IsChecked="{Binding IsSelected}">
-                                                <CheckBox.Style>
-                                                    <Style TargetType="CheckBox">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsNewlyDetected.Value}"
-                                                                         Value="True">
-                                                                <Setter Property="Background" Value="{StaticResource SecondaryAccentBrush}" />
-                                                            </DataTrigger>
-
-                                                            <DataTrigger Binding="{Binding ElementName=MainWindowView,
-                                                                                           Path=DataContext.HasTouchInput}"
-                                                                         Value="True">
-                                                                <Setter Property="Margin" Value="0 3" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </CheckBox.Style>
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <Grid.Style>
-                                                        <Style TargetType="Grid">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsAdded.Value}"
-                                                                             Value="True">
-                                                                    <Setter Property="Background">
-                                                                        <Setter.Value>
-                                                                            <SolidColorBrush Opacity="0.4"
-                                                                                             Color="SeaGreen" />
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding IsSelected}"
-                                                                             Value="True">
-                                                                    <Setter Property="Background">
-                                                                        <Setter.Value>
-                                                                            <SolidColorBrush Color="{StaticResource Accent700}" />
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Grid.Style>
-
-                                                    <StackPanel VerticalAlignment="Center"
-                                                                Orientation="Horizontal">
-                                                        <TextBlock Grid.Column="0"
-                                                                   Margin="5 0 0 0"
-                                                                   HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Center"
-                                                                   Text="{Binding Name.Value}">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsSelected}"
-                                                                                     Value="True">
-                                                                            <Setter Property="Foreground">
-                                                                                <Setter.Value>
-                                                                                    <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
-                                                                                </Setter.Value>
-                                                                            </Setter>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                        <TextBlock Grid.Column="0"
-                                                                   Margin="5 0 15 0"
-                                                                   HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Center"
-                                                                   FontSize="10"
-                                                                   Text="{Binding Count.Value}">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsSelected}"
-                                                                                     Value="True">
-                                                                            <Setter Property="Foreground">
-                                                                                <Setter.Value>
-                                                                                    <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
-                                                                                </Setter.Value>
-                                                                            </Setter>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                    </StackPanel>
-
-                                                    <StackPanel Grid.Column="1"
-                                                                Orientation="Horizontal">
-                                                        <StackPanel.Resources>
-                                                            <ui:BindingProxy x:Key="MainWindowBindingProxy"
-                                                                             Data="{Binding ElementName=MainWindowView}" />
-                                                            <ui:BindingProxy x:Key="NameViewModelBindingProxy"
-                                                                             Data="{Binding ElementName=ActionsButton1,
-                                                                                            Path=DataContext}" />
-                                                        </StackPanel.Resources>
-
-                                                        <materialDesign:PackIcon Margin="0 0 7 0"
-                                                                                 VerticalAlignment="Center"
-                                                                                 Kind="Pin"
-                                                                                 Visibility="{Binding IsPinned,
-                                                                                                      Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
-                                                        <Button x:Name="ActionsButton1"
-                                                                Content="…">
-                                                            <Button.ContextMenu>
-                                                                <ContextMenu x:Name="ActionsButtonContextMenu1">
-                                                                    <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
-                                                                                                Path=Data.DataContext.SearchForTextCommand}"
-                                                                              CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                         Path=Data.Name.Value}"
-                                                                              Header="Search" />
-                                                                    <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
-                                                                                                Path=Data.DataContext.SearchForNameCommand}"
-                                                                              CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                         Path=Data.Name.Value}"
-                                                                              Header="Search as Name" />
-                                                                    <MenuItem Command="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                Path=Data.PinCommand}">
-                                                                        <MenuItem.Style>
-                                                                            <Style BasedOn="{StaticResource MaterialDesignMenuItem}"
-                                                                                   TargetType="{x:Type MenuItem}">
-                                                                                <Setter Property="Header" Value="Pin" />
-
-                                                                                <Style.Triggers>
-                                                                                    <DataTrigger Binding="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                                   Path=Data.IsPinned}"
-                                                                                                 Value="True">
-                                                                                        <Setter Property="Header" Value="Unpin" />
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-                                                                            </Style>
-                                                                        </MenuItem.Style>
-                                                                    </MenuItem>
-                                                                    <Separator />
-                                                                    <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
-                                                                                                Path=Data.DataContext.DeleteNameCommand}"
-                                                                              CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                         Path=Data}"
-                                                                              Header="Delete" />
-                                                                </ContextMenu>
-                                                            </Button.ContextMenu>
-
-                                                            <Button.Triggers>
-                                                                <EventTrigger RoutedEvent="Button.Click"
-                                                                              SourceName="ActionsButton1">
-                                                                    <BeginStoryboard>
-                                                                        <Storyboard>
-                                                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ActionsButtonContextMenu1"
-                                                                                                           Storyboard.TargetProperty="(ContextMenu.IsOpen)">
-                                                                                <DiscreteObjectKeyFrame KeyTime="0:0:0">
-                                                                                    <DiscreteObjectKeyFrame.Value>
-                                                                                        <system:Boolean>True</system:Boolean>
-                                                                                    </DiscreteObjectKeyFrame.Value>
-                                                                                </DiscreteObjectKeyFrame>
-                                                                            </ObjectAnimationUsingKeyFrames>
-                                                                        </Storyboard>
-                                                                    </BeginStoryboard>
-                                                                </EventTrigger>
-                                                            </Button.Triggers>
-
-                                                            <Button.Style>
-                                                                <Style BasedOn="{StaticResource NameActionButton}"
-                                                                       TargetType="Button">
-                                                                    <Setter Property="Opacity" Value="0.4" />
-
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding ElementName=ActionsButtonContextMenu1,
-                                                                                                       Path=IsOpen}"
-                                                                                     Value="True">
-                                                                            <Setter Property="Opacity" Value="1" />
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor,
-                                                                                                                                      AncestorType=CheckBox},
-                                                                                                       Path=IsMouseOver}"
-                                                                                     Value="True">
-                                                                            <Setter Property="Opacity" Value="1" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Button.Style>
-                                                        </Button>
-                                                        <Button Command="{Binding ClearNewFlagCommand}"
-                                                                Content="+"
-                                                                Style="{StaticResource NameActionButton}"
-                                                                Visibility="{Binding IsNewlyDetected.Value,
-                                                                                     Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </CheckBox>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
                                 </ListBox>
 
                                 <ListBox x:Name="Names"
                                          Grid.Row="2"
                                          Margin="0 2 0 0"
-                                         HorizontalContentAlignment="Stretch"
                                          ItemsSource="{Binding Names}"
-                                         ScrollViewer.VerticalScrollBarVisibility="Visible">
-                                    <ListBox.ItemContainerStyle>
-                                        <Style TargetType="{x:Type ListBoxItem}">
-                                            <Setter Property="Focusable" Value="False" />
-                                        </Style>
-                                    </ListBox.ItemContainerStyle>
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate DataType="viewModels:NameViewModel">
-                                            <CheckBox HorizontalContentAlignment="Stretch"
-                                                      VerticalContentAlignment="Center"
-                                                      Foreground="{StaticResource MaterialDesignBody}"
-                                                      IsChecked="{Binding IsSelected}">
-                                                <CheckBox.Style>
-                                                    <Style TargetType="CheckBox">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsNewlyDetected.Value}"
-                                                                         Value="True">
-                                                                <Setter Property="Background" Value="{StaticResource SecondaryAccentBrush}" />
-                                                            </DataTrigger>
-
-                                                            <DataTrigger Binding="{Binding ElementName=MainWindowView,
-                                                                                           Path=DataContext.HasTouchInput}"
-                                                                         Value="True">
-                                                                <Setter Property="Margin" Value="0 3" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </CheckBox.Style>
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <Grid.Style>
-                                                        <Style TargetType="Grid">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsAdded.Value}"
-                                                                             Value="True">
-                                                                    <Setter Property="Background">
-                                                                        <Setter.Value>
-                                                                            <SolidColorBrush Opacity="0.4"
-                                                                                             Color="SeaGreen" />
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding IsSelected}"
-                                                                             Value="True">
-                                                                    <Setter Property="Background">
-                                                                        <Setter.Value>
-                                                                            <SolidColorBrush Color="{StaticResource Accent700}" />
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Grid.Style>
-
-                                                    <StackPanel VerticalAlignment="Center"
-                                                                Orientation="Horizontal">
-                                                        <TextBlock Grid.Column="0"
-                                                                   Margin="5 0 0 0"
-                                                                   HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Center"
-                                                                   Text="{Binding Name.Value}">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsSelected}"
-                                                                                     Value="True">
-                                                                            <Setter Property="Foreground">
-                                                                                <Setter.Value>
-                                                                                    <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
-                                                                                </Setter.Value>
-                                                                            </Setter>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                        <TextBlock Grid.Column="0"
-                                                                   Margin="5 0 15 0"
-                                                                   HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Center"
-                                                                   FontSize="10"
-                                                                   Text="{Binding Count.Value}">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsSelected}"
-                                                                                     Value="True">
-                                                                            <Setter Property="Foreground">
-                                                                                <Setter.Value>
-                                                                                    <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
-                                                                                </Setter.Value>
-                                                                            </Setter>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                    </StackPanel>
-
-                                                    <StackPanel Grid.Column="1"
-                                                                Orientation="Horizontal">
-                                                        <StackPanel.Resources>
-                                                            <ui:BindingProxy x:Key="MainWindowBindingProxy"
-                                                                             Data="{Binding ElementName=MainWindowView}" />
-                                                            <ui:BindingProxy x:Key="NameViewModelBindingProxy"
-                                                                             Data="{Binding ElementName=ActionsButton,
-                                                                                            Path=DataContext}" />
-                                                        </StackPanel.Resources>
-                                                        <materialDesign:PackIcon Margin="0 0 7 0"
-                                                                                 VerticalAlignment="Center"
-                                                                                 Kind="Pin"
-                                                                                 Visibility="{Binding IsPinned,
-                                                                                                      Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
-                                                        <Button x:Name="ActionsButton"
-                                                                Content="…">
-                                                            <Button.ContextMenu>
-                                                                <ContextMenu x:Name="ActionsButtonContextMenu">
-                                                                    <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
-                                                                                                Path=Data.DataContext.SearchForTextCommand}"
-                                                                              CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                         Path=Data.Name.Value}"
-                                                                              Header="Search" />
-                                                                    <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
-                                                                                                Path=Data.DataContext.SearchForNameCommand}"
-                                                                              CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                         Path=Data.Name.Value}"
-                                                                              Header="Search as Name" />
-                                                                    <MenuItem Command="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                Path=Data.PinCommand}">
-                                                                        <MenuItem.Style>
-                                                                            <Style BasedOn="{StaticResource MaterialDesignMenuItem}"
-                                                                                   TargetType="{x:Type MenuItem}">
-                                                                                <Setter Property="Header" Value="Pin" />
-
-                                                                                <Style.Triggers>
-                                                                                    <DataTrigger Binding="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                                   Path=Data.IsPinned}"
-                                                                                                 Value="True">
-                                                                                        <Setter Property="Header" Value="Unpin" />
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-                                                                            </Style>
-                                                                        </MenuItem.Style>
-                                                                    </MenuItem>
-                                                                    <Separator />
-                                                                    <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
-                                                                                                Path=Data.DataContext.DeleteNameCommand}"
-                                                                              CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                         Path=Data}"
-                                                                              Header="Delete" />
-                                                                </ContextMenu>
-                                                            </Button.ContextMenu>
-
-                                                            <Button.Triggers>
-                                                                <EventTrigger RoutedEvent="Button.Click"
-                                                                              SourceName="ActionsButton">
-                                                                    <BeginStoryboard>
-                                                                        <Storyboard>
-                                                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ActionsButtonContextMenu"
-                                                                                                           Storyboard.TargetProperty="(ContextMenu.IsOpen)">
-                                                                                <DiscreteObjectKeyFrame KeyTime="0:0:0">
-                                                                                    <DiscreteObjectKeyFrame.Value>
-                                                                                        <system:Boolean>True</system:Boolean>
-                                                                                    </DiscreteObjectKeyFrame.Value>
-                                                                                </DiscreteObjectKeyFrame>
-                                                                            </ObjectAnimationUsingKeyFrames>
-                                                                        </Storyboard>
-                                                                    </BeginStoryboard>
-                                                                </EventTrigger>
-                                                            </Button.Triggers>
-
-                                                            <Button.Style>
-                                                                <Style BasedOn="{StaticResource NameActionButton}"
-                                                                       TargetType="Button">
-                                                                    <Setter Property="Opacity" Value="0.4" />
-
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding ElementName=ActionsButtonContextMenu,
-                                                                                                       Path=IsOpen}"
-                                                                                     Value="True">
-                                                                            <Setter Property="Opacity" Value="1" />
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor,
-                                                                                                                                      AncestorType=CheckBox},
-                                                                                                       Path=IsMouseOver}"
-                                                                                     Value="True">
-                                                                            <Setter Property="Opacity" Value="1" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Button.Style>
-                                                        </Button>
-                                                        <Button Command="{Binding ClearNewFlagCommand}"
-                                                                Content="+"
-                                                                Style="{StaticResource NameActionButton}"
-                                                                Visibility="{Binding IsNewlyDetected.Value,
-                                                                                     Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </CheckBox>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
+                                         ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                         Style="{StaticResource NamesListBoxStyle}" />
                             </Grid>
                         </GroupBox>
 

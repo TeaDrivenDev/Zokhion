@@ -19,13 +19,21 @@ open TeaDriven.Zokhion
 
 [<AllowNullLiteral>]
 type FileViewModel(fileInstance: FileInstance) =
+    let name = fileInstance.FileInfo.Name
+    let fullName = fileInstance.FileInfo.FullName
+    let directoryName = fileInstance.FileInfo.DirectoryName
+    let lastWriteTime = fileInstance.FileInfo.LastWriteTime
+    let length = fileInstance.FileInfo.Length
+    let creationTime = fileInstance.FileInfo.CreationTime
+
     member __.Group = fileInstance.Group
     member __.FileInfo = fileInstance.FileInfo
-    member __.Name = fileInstance.FileInfo.Name
-    member __.DirectoryName = fileInstance.FileInfo.DirectoryName
-    member __.LastWriteTime = fileInstance.FileInfo.LastWriteTime
-    member __.Length = fileInstance.FileInfo.Length
-    member __.CreationTime = fileInstance.FileInfo.CreationTime
+    member __.Name = name
+    member __.FullName = fullName
+    member __.DirectoryName = directoryName
+    member __.LastWriteTime = lastWriteTime
+    member __.Length = length
+    member __.CreationTime = creationTime
     member __.NumberOfInstances = fileInstance.NumberOfInstances
 
 type SearchViewModelCommand =

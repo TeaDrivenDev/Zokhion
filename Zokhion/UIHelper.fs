@@ -173,14 +173,14 @@ type FileChangesToEnumConverter() =
     interface IMultiValueConverter with
         member this.Convert(values: obj [], targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
             match values with
-            | [| :? FileInfo as fileInfo; :? FileChanges as fileChanges |] ->
-                match fileChanges.RenamedFiles.TryGetValue fileInfo.FullName with
+            | [| :? FileViewModel as fileViewModel; :? FileChanges as fileChanges |] ->
+                match fileChanges.RenamedFiles.TryGetValue fileViewModel.FullName with
                 | true, renamedFile ->
                     if Path.GetDirectoryName renamedFile.OriginalFile.FullName = Path.GetDirectoryName renamedFile.NewFilePath
                     then FileChange.Renamed
                     else FileChange.Moved
                 | false, _ ->
-                    match fileChanges.DeletedFiles.TryGetValue fileInfo.FullName with
+                    match fileChanges.DeletedFiles.TryGetValue fileViewModel.FullName with
                     | true, _ -> FileChange.Deleted
                     | _ -> FileChange.NoChange
             | _ -> FileChange.NoChange
@@ -197,7 +197,7 @@ type FilesToUniqueCountConverter() =
             match value with
             | :? (FileViewModel seq) as files ->
                 files
-                |> Seq.distinctBy (fun vm -> vm.FileInfo.FullName)
+                |> Seq.distinctBy (fun vm -> vm.FullName)
                 |> Seq.length
             | _ -> 0
             :> obj
@@ -213,7 +213,7 @@ type FilesToTotalSizeConverter() =
             match value with
             | :? (FileViewModel seq) as files ->
                 files
-                |> Seq.distinctBy (fun vm -> vm.FileInfo.FullName)
+                |> Seq.distinctBy (fun vm -> vm.FullName)
                 |> Seq.sumBy (fun fi -> fi.Length)
                 |> float |> Utilities.bytesToMegabytes
             | _ -> 0.

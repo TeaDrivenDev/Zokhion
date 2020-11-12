@@ -11,6 +11,8 @@ open System.Windows.Threading
 
 open FsXaml
 
+open MaterialDesignColors
+
 open TeaDriven.Zokhion.ViewModels
 
 type Win32Window(handle: IntPtr) =
@@ -21,6 +23,8 @@ type MainWindowBase = XAML<"MainWindow.xaml">
 
 type MainWindow() as this =
     inherit MainWindowBase()
+
+    let _materialDesignColorsResourcesReference = new Hue("", Colors.Black, Colors.Black)
 
     let mutable dragStart = Unchecked.defaultof<Point>
     let draggedItems = ResizeArray<_>()

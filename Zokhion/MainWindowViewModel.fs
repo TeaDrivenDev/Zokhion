@@ -892,7 +892,7 @@ type MainWindowViewModel() as this =
 
             this.FeatureInstances.ItemChanged
             |> Observable.filter (fun change ->
-                change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
+                change.PropertyName = nameof Unchecked.defaultof<FeatureInstanceViewModel>.IsSelected)
             |> xwhen updateNewNameGate
             |> Observable.iter (fun change ->
                 if change.Sender.IsSelected

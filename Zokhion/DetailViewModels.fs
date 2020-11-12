@@ -32,7 +32,7 @@ type FeatureViewModel(feature: Feature) as this =
         hasSelectedInstances <-
             instances.ItemChanged
             |> Observable.filter (fun change ->
-                change.PropertyName = nameof <@ any<FeatureInstanceViewModel>.IsSelected @>)
+                change.PropertyName = nameof (Unchecked.defaultof<FeatureInstanceViewModel>.IsSelected))
             |> Observable.map (fun _ ->
                 instances |> Seq.exists (fun instance -> instance.IsSelected))
             |> toReadOnlyReactiveProperty
@@ -70,7 +70,7 @@ and [<AllowNullLiteral>]
     member __.IsSelected
         with get () = isSelected
         and set value =
-            __.RaiseAndSetIfChanged(&isSelected, value, nameof <@ __.IsSelected @>) |> ignore
+            __.RaiseAndSetIfChanged(&isSelected, value, nameof __.IsSelected) |> ignore
 
     member __.Instance = instance
 
@@ -135,11 +135,11 @@ type NameViewModel(name: string, isSelected: bool, isNewlyDetected: bool, isAdde
 
     member __.IsSelected
         with get () = xIsSelected
-        and set value = __.SetAndRaise(&xIsSelected, value, nameof <@ __.IsSelected @>)
+        and set value = __.SetAndRaise(&xIsSelected, value, nameof __.IsSelected)
 
     member __.IsPinned
         with get () = isPinned
-        and set value = __.SetAndRaise(&isPinned, value, nameof <@ __.IsPinned @>)
+        and set value = __.SetAndRaise(&isPinned, value, nameof __.IsPinned)
 
     member val IsNewlyDetected = new ReactiveProperty<_>(isNewlyDetected)
 

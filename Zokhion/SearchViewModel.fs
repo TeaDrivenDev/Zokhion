@@ -379,7 +379,7 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
 
             isUpdatingNotifier.TurnOff()
 
-            this.RaisePropertyChanged(nameof <@ this.Files @>))
+            this.RaisePropertyChanged(nameof this.Files))
         |> ignore
 
         [ refreshCommand.AsObservable(); commands ]

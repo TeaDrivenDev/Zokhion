@@ -490,7 +490,7 @@
                                                         <ui:BindingProxy x:Key="FileChangeBindingProxy">
                                                             <ui:BindingProxy.Data>
                                                                 <MultiBinding Converter="{x:Static ui:FileChangesToEnumConverter.Instance}">
-                                                                    <Binding Path="FileInfo" />
+                                                                    <Binding Path="FullName" />
                                                                     <Binding ElementName="MainWindowView"
                                                                              Path="DataContext.FileChanges.Value" />
                                                                 </MultiBinding>

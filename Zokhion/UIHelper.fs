@@ -173,14 +173,14 @@ type FileChangesToEnumConverter() =
     interface IMultiValueConverter with
         member this.Convert(values: obj [], targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
             match values with
-            | [| :? FileViewModel as fileViewModel; :? FileChanges as fileChanges |] ->
-                match fileChanges.RenamedFiles.TryGetValue fileViewModel.FullName with
+            | [| :? FileInfo as fileInfo; :? FileChanges as fileChanges |] ->
+                match fileChanges.RenamedFiles.TryGetValue fileInfo.FullName with
                 | true, renamedFile ->
                     if Path.GetDirectoryName renamedFile.OriginalFile.FullName = Path.GetDirectoryName renamedFile.NewFilePath
                     then FileChange.Renamed
                     else FileChange.Moved
                 | false, _ ->
-                    match fileChanges.DeletedFiles.TryGetValue fileViewModel.FullName with
+                    match fileChanges.DeletedFiles.TryGetValue fileInfo.FullName with
                     | true, _ -> FileChange.Deleted
                     | _ -> FileChange.NoChange
             | _ -> FileChange.NoChange

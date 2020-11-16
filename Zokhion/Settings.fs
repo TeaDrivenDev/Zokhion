@@ -3,8 +3,9 @@
 [<AutoOpen>]
 module Settings =
     open System
-    open System.IO
     open System.Text.RegularExpressions
+
+    open TeaDriven.Zokhion.FileSystem
 
     type Feature =
         {
@@ -19,7 +20,7 @@ module Settings =
             Code: string
         }
 
-    type Replacement = 
+    type Replacement =
         {
             ToReplace: string
             ReplaceWith: string
@@ -34,10 +35,10 @@ module Settings =
             Features: Feature list
         }
 
-    let prefixesFilePath directory = Path.Combine(directory, ".prefixes")
-    let replacementsFilePath directory = Path.Combine(directory, ".replacements")
-    let namesFilePath directory = Path.Combine(directory, ".names")
-    let featuresFilePath directory = Path.Combine(directory, ".features")
+    let prefixesFilePath directory = Path.combine [| directory; ".prefixes" |]
+    let replacementsFilePath directory = Path.combine [| directory; ".replacements" |]
+    let namesFilePath directory = Path.combine [| directory; ".names" |]
+    let featuresFilePath directory = Path.combine [| directory; ".features" |]
 
     let writePrefixes directory (sourcePrefixes, destinationPrefixes) =
         let prefixesFilePath = prefixesFilePath directory
@@ -50,16 +51,16 @@ module Settings =
             |> List.filter (snd >> String.IsNullOrWhiteSpace >> not)
             |> List.map (uncurry (sprintf "%s=%s"))
 
-        if not <| List.isEmpty prefixesLines || File.Exists prefixesFilePath
-        then File.WriteAllLines(prefixesFilePath, prefixesLines)
+        if not <| List.isEmpty prefixesLines || File.exists prefixesFilePath
+        then File.writeAllLines prefixesFilePath prefixesLines
 
     let readPrefixes directory =
         let prefixesFilePath = prefixesFilePath directory
 
-        if File.Exists prefixesFilePath
+        if File.exists prefixesFilePath
         then
             let prefixes =
-                File.ReadAllLines prefixesFilePath
+                File.readAllLines prefixesFilePath
                 |> Array.map (fun s ->
                     let [| name; prefixes |] = s.Split [| '=' |]
                     name, prefixes)
@@ -82,15 +83,15 @@ module Settings =
             |> List.map (fun replacement ->
                 sprintf "%s|%s" replacement.ToReplace replacement.ReplaceWith)
 
-        if not <| List.isEmpty lines || File.Exists replacementsFilePath
-        then File.WriteAllLines(replacementsFilePath, lines)
+        if not <| List.isEmpty lines || File.exists replacementsFilePath
+        then File.writeAllLines replacementsFilePath lines
 
     let readReplacements directory =
         let replacementsFilePath = replacementsFilePath directory
 
-        if File.Exists replacementsFilePath
+        if File.exists replacementsFilePath
         then
-            File.ReadAllLines replacementsFilePath
+            File.readAllLines replacementsFilePath
             |> Array.map (fun s ->
                 let [| toReplace; replaceWith |] = s.Split '|'
 
@@ -104,14 +105,14 @@ module Settings =
     let writeNames directory (names: _ list) =
         let namesFilePath = namesFilePath directory
 
-        if not <| List.isEmpty names || File.Exists namesFilePath
-        then File.WriteAllLines(namesFilePath, names)
+        if not <| List.isEmpty names || File.exists namesFilePath
+        then File.writeAllLines namesFilePath names
 
     let readNames directory =
         let namesFilePath = namesFilePath directory
 
-        if File.Exists namesFilePath
-        then File.ReadAllLines namesFilePath |> Array.toList
+        if File.exists namesFilePath
+        then File.readAllLines namesFilePath |> Array.toList
         else []
 
     let serializeFeatures features =
@@ -133,12 +134,11 @@ module Settings =
     let writeFeatures directory (features: Feature list) =
         let featuresFilePath = featuresFilePath directory
 
-        if not <| List.isEmpty features || File.Exists featuresFilePath
+        if not <| List.isEmpty features || File.exists featuresFilePath
         then
             features
             |> serializeFeatures
-            |> asSnd featuresFilePath
-            |> File.WriteAllLines
+            |> File.writeAllLines featuresFilePath
 
     let instanceRegex = Regex "^\t(?<code>.+)\\|(?<name>.+)$"
     let featureRegex = Regex "^(?<code>.+)\\|(?<name>[^>]+)( > (?<include>.+))?$"
@@ -190,10 +190,10 @@ module Settings =
     let readFeatures directory =
         let featuresFilePath = featuresFilePath directory
 
-        if File.Exists featuresFilePath
+        if File.exists featuresFilePath
         then
             featuresFilePath
-            |> File.ReadAllLines
+            |> File.readAllLines
             |> Array.toList
             |> deserializeFeatures
         else []

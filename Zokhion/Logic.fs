@@ -7,6 +7,8 @@ module Logic =
     open System.IO
     open System.Text.RegularExpressions
 
+    open TeaDriven.Zokhion.FileSystem
+
     let inline ( <||> ) f g x = f x || g x
     let trim (s: string) = s.Trim()
     let toUpper (s: string) = s.ToUpper()
@@ -314,7 +316,7 @@ module Logic =
 
     let extractNames fileName =
         let _, names, _=
-            Path.GetFileNameWithoutExtension fileName
+            Path.getFileNameWithoutExtension fileName
             |> splitFileName true
 
         let m = Regex.Match(names, @"^\(\.(?<names>.+)\.\)$")
@@ -349,7 +351,7 @@ module Logic =
         files
         |> List.collect (fun fileInfo ->
             let _, _, features =
-                Path.GetFileNameWithoutExtension fileInfo.Name
+                Path.getFileNameWithoutExtension fileInfo.Name
                 |> splitFileName false
 
             evaluateFeaturesPart features

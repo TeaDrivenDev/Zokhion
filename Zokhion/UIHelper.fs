@@ -6,7 +6,7 @@ open System.Windows
 open System.Windows.Controls
 open System.Windows.Data
 
-open TeaDriven.Zokhion.FileSystem.Utilities
+open TeaDriven.Zokhion.FileSystem
 open TeaDriven.Zokhion.ViewModels
 
 module Utilities =
@@ -125,7 +125,7 @@ type NameHasFeaturesConverter() =
             match value with
             | :? string as name ->
                 name
-                |> getFileNameWithoutExtension
+                |> Path.getFileNameWithoutExtension
                 |> NameHasFeaturesConverter.FeatureRegex.IsMatch
             | _ -> false
             :> obj
@@ -176,7 +176,7 @@ type FileChangesToEnumConverter() =
             | [| :? string as fullName; :? FileChanges as fileChanges |] ->
                 match fileChanges.RenamedFiles.TryGetValue fullName with
                 | true, renamedFile ->
-                    if getDirectoryName renamedFile.OriginalFile.FullName = getDirectoryName renamedFile.NewFilePath
+                    if Path.getDirectoryName renamedFile.OriginalFile.FullName = Path.getDirectoryName renamedFile.NewFilePath
                     then FileChange.Renamed
                     else FileChange.Moved
                 | false, _ ->

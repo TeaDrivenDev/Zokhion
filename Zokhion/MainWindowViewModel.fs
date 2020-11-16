@@ -25,6 +25,7 @@ open Reactive.Bindings.Notifiers
 open ReactiveUI
 
 open TeaDriven.Zokhion
+open TeaDriven.Zokhion.FileSystem
 
 type GroupCategoryEntry =
     {
@@ -197,7 +198,7 @@ type MainWindowViewModel() as this =
     let updateDirectoriesList baseDirectory prefixes filterByPrefixes =
         directories.Clear()
 
-        Directory.GetDirectories baseDirectory
+        Directory.getDirectories baseDirectory
         |> Seq.map DirectoryInfo
         |> Seq.filter (fun di ->
             match filterByPrefixes, prefixes with
@@ -214,7 +215,7 @@ type MainWindowViewModel() as this =
         let startsWithAny parts (s: string) =
             parts |> Seq.toList |> List.exists (string >> s.StartsWith)
 
-        let currentFileDirectory = Path.GetDirectoryName currentFilePath
+        let currentFileDirectory = Path.getDirectoryName currentFilePath
 
         destinationDirectories.Clear()
 
@@ -227,8 +228,8 @@ type MainWindowViewModel() as this =
             currentFileDirectory
 
             yield!
-                Directory.GetDirectories this.BaseDirectory.Value
-                |> Array.filter (Path.GetFileName >> filter)
+                Directory.getDirectories this.BaseDirectory.Value
+                |> Array.filter (Path.getFileName >> filter)
                 |> Array.sortWith (fun x y -> Interop.StrCmpLogicalW(x, y))
                 |> Array.toList
         ]
@@ -311,12 +312,14 @@ type MainWindowViewModel() as this =
             |> Option.ofObj
             |> Option.iter (fun selectedFile ->
                 this.ResultingFilePath.Value <-
-                    Path.Combine(
-                        this.SelectedDestinationDirectory.Value.FullName,
-                        this.NewFileName.Value + Path.GetExtension(selectedFile.Name)))
+                    [|
+                        this.SelectedDestinationDirectory.Value.FullName
+                        this.NewFileName.Value + Path.getExtension selectedFile.Name
+                    |]
+                    |> Path.combine)
 
     let saveSettings baseDirectory =
-        if Directory.Exists baseDirectory
+        if Directory.exists baseDirectory
         then
             {
                 SourceDirectoryPrefixes = this.SourceDirectoryPrefixes.Value
@@ -464,7 +467,7 @@ type MainWindowViewModel() as this =
                     |> function
                         | MessageBoxResult.OK ->
                             try
-                                File.Delete file.FullName
+                                File.delete file.FullName
                                 searchCommands.OnNext (Refresh [ file ])
                                 log Informational DeleteSuccess file.FullName
 
@@ -608,7 +611,7 @@ type MainWindowViewModel() as this =
                     let oldFile, newName = this.SelectedFile.Value, this.ResultingFilePath.Value
 
                     try
-                        File.Move(oldFile.FullName, newName)
+                        File.move oldFile.FullName newName
 
                         [ oldFile; FileInfo newName ] |> Refresh |> searchCommands.OnNext
 
@@ -627,7 +630,7 @@ type MainWindowViewModel() as this =
                     this.ResultingFilePath
                     |> Observable.map (fun path ->
                         not <| isNull path
-                        && (not <| File.Exists path
+                        && (not <| File.exists path
                             || this.SelectedFile.Value.FullName <> path
                                 && String.Compare(this.SelectedFile.Value.FullName, path, true) = 0))
                 ]
@@ -684,10 +687,10 @@ type MainWindowViewModel() as this =
                 fileChanges.RenamedFiles.Values
                 |> Seq.choose (fun { OriginalFile = oldFile; NewFilePath = newName } ->
 
-                    if File.Exists oldFile.FullName
+                    if File.exists oldFile.FullName
                     then
                         try
-                            File.Move(oldFile.FullName, newName)
+                            File.move oldFile.FullName newName
 
                             sprintf "%s\n%s" oldFile.FullName newName
                             |> log Informational RenameSuccess
@@ -702,7 +705,7 @@ type MainWindowViewModel() as this =
                 fileChanges.DeletedFiles.Values
                 |> Seq.choose (fun file ->
                     try
-                        File.Delete file.FullName
+                        File.delete file.FullName
 
                         log Informational DeleteSuccess file.FullName
 
@@ -745,7 +748,7 @@ type MainWindowViewModel() as this =
         let validBaseDirectory =
             this.BaseDirectory
             |> Observable.throttle (TimeSpan.FromMilliseconds 500.)
-            |> Observable.filter Directory.Exists
+            |> Observable.filter Directory.exists
 
         validBaseDirectory
         |> Observable.observeOn RxApp.MainThreadScheduler
@@ -763,7 +766,7 @@ type MainWindowViewModel() as this =
         validBaseDirectory
         |> Observable.map (fun directory ->
             let scanned =
-                Directory.EnumerateFiles(directory,"*.*", SearchOption.AllDirectories)
+                Directory.enumerateFiles directory
                 |> Seq.map (asFst Added >> List.singleton)
                 |> Observable.ofSeq
 
@@ -786,7 +789,7 @@ type MainWindowViewModel() as this =
             |> Observable.map (fun changes ->
                 changes
                 |> List.collect (fun (filePath, change) ->
-                    Path.GetFileNameWithoutExtension filePath
+                    Path.getFileNameWithoutExtension filePath
                     |> parseNames
                     |> List.map (asFst change)))
             |> Observable.scanInit (Map.empty, []) (fun (acc, _) current ->
@@ -839,7 +842,7 @@ type MainWindowViewModel() as this =
             |> List.iter allNames.Remove
 
             this.OriginalFileName.Value <-
-                string file.Name |> Path.GetFileNameWithoutExtension
+                string file.Name |> Path.getFileNameWithoutExtension
 
             this.NewNameToAdd.Value <- "")
         |> ignore
@@ -1040,7 +1043,7 @@ type MainWindowViewModel() as this =
                     | AlreadyAlive -> true, None
                     | NewlyAlive -> true, Some "FileSystemWatcher is alive"
                     | _ ->
-                        if not <| isNull watcher.Path && Directory.Exists watcher.Path
+                        if not <| isNull watcher.Path && Directory.exists watcher.Path
                         then
                             watcher.EnableRaisingEvents <- true
 

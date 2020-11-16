@@ -16,6 +16,7 @@ open Reactive.Bindings.Notifiers
 open ReactiveUI
 
 open TeaDriven.Zokhion
+open TeaDriven.Zokhion.FileSystem
 
 [<AllowNullLiteral>]
 type FileViewModel(fileInstance: FileInstance) =
@@ -176,7 +177,7 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                                 | contains ->
                                     (fun (file: FileInfo) ->
                                         file.Name
-                                        |> Path.GetFileNameWithoutExtension
+                                        |> Path.getFileNameWithoutExtension
                                         |> toUpper
                                         |> (fun s -> [ s; s.Replace("_", " ") ])
                                         |> Seq.exists (containsAll contains))
@@ -185,7 +186,7 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
 
                     let checkHasFeatures (file: FileInfo) =
                         file.FullName
-                        |> Path.GetFileNameWithoutExtension
+                        |> Path.getFileNameWithoutExtension
                         |> hasFeaturesRegex.IsMatch
 
                     match searchFilterParameters.WithFeatures with
@@ -216,9 +217,9 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
 
     let getFiles filter =
         filter.SearchDirectory
-        |> Option.filter (String.IsNullOrWhiteSpace >> not <&&> Directory.Exists)
+        |> Option.filter (String.IsNullOrWhiteSpace >> not <&&> Directory.exists)
         |> Option.map (fun dir ->
-            Directory.GetFiles(dir, "*", SearchOption.AllDirectories)
+            Directory.getFiles dir
             |> Seq.map FileInfo
             |> Seq.filter (filter.Filter Search))
 

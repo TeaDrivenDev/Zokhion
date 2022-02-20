@@ -1,9 +1,17 @@
 ﻿namespace TeaDriven.Zokhion
 
+
 module FileSystem =
     open System
+    open System.Collections.Concurrent
     open System.IO
+    open System.Linq
+    open System.Reactive.Linq
     open System.Reactive.Disposables
+
+    open FSharp.Control.Reactive
+
+    open Reactive.Bindings
 
     [<RequireQualifiedAccess>]
     module Directory =
@@ -45,3 +53,102 @@ module FileSystem =
             Path.GetFileNameWithoutExtension path
 
     type FileChange = Added | Removed
+
+    type FileSystemCacheStatus =
+        | Empty
+        | Initializing of progress: float
+        | Ready
+
+    type FileSystemCache() =
+        let compositeDisposable = new CompositeDisposable()
+
+        let watcher =
+            new FileSystemWatcher(EnableRaisingEvents = false, IncludeSubdirectories = true)
+        let fileSystemChanges =
+            Observable.Create
+                (fun observer ->
+                    [
+                        watcher.Created |> Observable.map (fun e -> [ e.FullPath, Added ])
+                        watcher.Deleted |> Observable.map (fun e -> [ e.FullPath, Removed ])
+                        watcher.Renamed
+                        |> Observable.map (fun e -> [ e.OldFullPath, Removed; e.FullPath, Added ])
+                    ]
+                    |> Observable.mergeSeq
+                    |> Observable.subscribeObserver observer)
+
+        let mutable directories = Unchecked.defaultof<ConcurrentDictionary<string, string list>>
+
+        let mutable status = Unchecked.defaultof<ReactiveProperty<_>>
+
+        let mutable fileSystemUpdates = Unchecked.defaultof<IObservable<_>>
+
+        do
+            compositeDisposable.Add watcher
+
+            status <- new ReactiveProperty<_>(Empty)
+
+        interface IDisposable with
+            member __.Dispose() =
+                compositeDisposable.Dispose()
+
+        member __.Status = status
+
+        member __.DirectoriesWithFiles =
+            directories
+            |> Option.ofObj
+            |> Option.map (fun directories -> directories |> Seq.toList)
+            |> Option.defaultValue []
+
+        member __.FileSystemUpdates = fileSystemUpdates
+
+        member __.Initialize(baseDirectory: string) =
+            status.Value <- Initializing 0.
+            watcher.EnableRaisingEvents <- false
+
+            async {
+                let subDirectories = Directory.GetDirectories baseDirectory
+
+                let data =
+                    subDirectories
+                    |> Array.mapi
+                        (fun index directory ->
+                            let files = Directory.GetFiles directory
+
+                            status.Value <- Initializing (float index/float subDirectories.Length)
+
+                            directory, files |> Array.toList)
+
+                directories <- ConcurrentDictionary(data.ToDictionary(fst, snd))
+
+                status.Value <- Ready
+
+                let connectableObservable =
+                    fileSystemChanges
+                    |> Observable.iter
+                        (fun changes ->
+                            changes
+                            |> List.groupBy (fst >> Path.getDirectoryName)
+                            |> List.iter
+                                (fun (directory, files) ->
+                                    let filesInDirectory =
+                                        match directories.TryGetValue directory with
+                                        | true, filesInDirectory -> filesInDirectory
+                                        | false, _ -> []
+                                    
+                                    let updatedFilesInDirectory =
+                                        (filesInDirectory, files)
+                                        ||> List.fold
+                                            (fun acc (file, fileChange) ->
+                                                match fileChange with
+                                                | Added -> file :: acc
+                                                | Removed -> acc |> List.except [ file ])
+
+                                    directories.[directory] <- updatedFilesInDirectory))
+                    |> Observable.multicast Subject.broadcast
+
+                connectableObservable.Connect() |> ignore
+                fileSystemUpdates <- connectableObservable
+
+                watcher.Path <- baseDirectory
+                watcher.EnableRaisingEvents <- true
+            }

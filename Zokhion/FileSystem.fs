@@ -43,3 +43,5 @@ module FileSystem =
 
         let inline getFileNameWithoutExtension path =
             Path.GetFileNameWithoutExtension path
+
+    type FileChange = Added | Removed

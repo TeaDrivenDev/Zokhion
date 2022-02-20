@@ -49,8 +49,6 @@ type FileOperation =
 
 type UnderscoreHandling = Ignore = 0 | Replace = 1 | TrimSuffix = 2
 
-type FileChange = Added | Removed
-
 type LogLevel =
     | Diagnostic
     | Informational

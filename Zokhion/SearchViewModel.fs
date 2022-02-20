@@ -86,6 +86,8 @@ type DisplayParameterChange =
     | GroupCategory of GroupCategory
     | SearchFilter of SearchFilter
 
+type FileViewModelOperation = Keep | Replace | Remove
+
 type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
     inherit ReactiveObject()
 
@@ -222,6 +224,13 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             Directory.getFiles dir
             |> Seq.map FileInfo
             |> Seq.filter (filter.Filter Search))
+
+    let tryAddFile (files: ObservableCollection<_>) fileInstance =
+        try
+            FileViewModel fileInstance
+            |> Some
+        with _ -> None
+        |> Option.iter files.Add
 
     do
         header <-
@@ -367,16 +376,25 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             |> Seq.iter (function
                 | LeftOnly vm -> files.Remove vm |> ignore
                 | RightOnly (JoinWrapped fileInstance) ->
-                    files.Add (FileViewModel fileInstance)
+                    fileInstance |> tryAddFile files
                 | JoinMatch (oldViewModel, JoinWrapped newFileInstance) ->
                     let inline sizeAndDate (file: FileInfo) =
                         file.Length, file.LastWriteTimeUtc
 
-                    if (sizeAndDate newFileInstance.FileInfo, newFileInstance.NumberOfInstances)
-                       <> (sizeAndDate oldViewModel.FileInfo, oldViewModel.NumberOfInstances)
-                    then
-                        files.Remove oldViewModel |> ignore
-                        files.Add (FileViewModel newFileInstance))
+                    try
+                        if (sizeAndDate newFileInstance.FileInfo, newFileInstance.NumberOfInstances)
+                            <> (sizeAndDate oldViewModel.FileInfo, oldViewModel.NumberOfInstances)
+                        then Replace
+                        else Keep
+                    with
+                    | :? FileNotFoundException as ex -> Remove
+                    |> function
+                        | Keep -> ()
+                        | Remove -> files.Remove oldViewModel |> ignore
+                        | Replace ->
+                            files.Remove oldViewModel |> ignore
+
+                            newFileInstance |> tryAddFile files)
 
             isUpdatingNotifier.TurnOff()
 

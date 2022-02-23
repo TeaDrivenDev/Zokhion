@@ -33,18 +33,18 @@ type GroupCategoryEntry =
         GroupCategory: GroupCategory
     }
 
-type RenamedFile = { OriginalFile: FileInfo; NewFilePath: string }
+type RenamedFile = { OriginalFile: FileInfoCopy; NewFilePath: string }
 
 type FileChanges =
     {
         RenamedFiles: IDictionary<string, RenamedFile>
-        DeletedFiles: IDictionary<string, FileInfo>
+        DeletedFiles: IDictionary<string, FileInfoCopy>
     }
 
 type FileOperation =
-    | AddRename of oldFile:FileInfo * newName:string
+    | AddRename of oldFile:FileInfoCopy * newName:string
     | RemoveRename of oldNames:string list
-    | AddDelete of FileInfo
+    | AddDelete of FileInfoCopy
     | RemoveDelete of string list
 
 type UnderscoreHandling = Ignore = 0 | Replace = 1 | TrimSuffix = 2
@@ -108,9 +108,9 @@ type MainWindowViewModel() as this =
         :> ISubject<SearchViewModelCommand>
     let searches = ObservableCollection<SearchViewModel>()
     let activeSearchTab = new ReactiveProperty<SearchViewModel>()
-    let selectedFilesSubject = new System.Reactive.Subjects.Subject<IObservable<FileInfo>>()
+    let selectedFilesSubject = new System.Reactive.Subjects.Subject<IObservable<FileInfoCopy>>()
 
-    let mutable selectedFile = Unchecked.defaultof<ReadOnlyReactiveProperty<FileInfo>>
+    let mutable selectedFile = Unchecked.defaultof<ReadOnlyReactiveProperty<FileInfoCopy>>
 
     let mutable saveSettingsCommand = Unchecked.defaultof<ReactiveCommand>
 
@@ -426,16 +426,16 @@ type MainWindowViewModel() as this =
 
         openCommand <-
             ReactiveCommand.Create(
-                (fun (file: FileInfo) -> Process.Start file.FullName |> ignore),
+                (fun (file: FileInfoCopy) -> Process.Start file.FullName |> ignore),
                 this.SelectedFile
-                |> Observable.map (fun file -> not <| isNull file && file.Exists))
+                |> Observable.map (fun file -> not <| isNull file && File.exists file.FullName))
 
         openFromSearchCommand <-
-            ReactiveCommand.Create(fun (file: FileInfo) ->
-                if file.Exists then Process.Start file.FullName |> ignore)
+            ReactiveCommand.Create(fun (file: FileInfoCopy) ->
+                if File.exists file.FullName then Process.Start file.FullName |> ignore)
 
         openExplorerCommand <-
-            ReactiveCommand.Create(fun (file: FileInfo) ->
+            ReactiveCommand.Create(fun (file: FileInfoCopy) ->
                 if not <| isNull file
                 then
                     file.FullName
@@ -450,12 +450,12 @@ type MainWindowViewModel() as this =
                 |> Option.iter (asSnd "explorer.exe" >> Process.Start >> ignore))
 
         showFilePropertiesCommand <-
-            ReactiveCommand.Create(fun (file: FileInfo) ->
-                if file.Exists then Interop.showFileProperties file.FullName |> ignore)
+            ReactiveCommand.Create(fun (file: FileInfoCopy) ->
+                if File.exists file.FullName then Interop.showFileProperties file.FullName |> ignore)
 
         deleteFileCommand <-
-            ReactiveCommand.Create(fun (file: FileInfo) ->
-                if file.Exists
+            ReactiveCommand.Create(fun (file: FileInfoCopy) ->
+                if File.exists file.FullName
                 then
                     MessageBox.Show(
                         sprintf "Delete file %s?" file.FullName,
@@ -611,7 +611,9 @@ type MainWindowViewModel() as this =
                     try
                         File.move oldFile.FullName newName
 
-                        [ oldFile; FileInfo newName ] |> Refresh |> searchCommands.OnNext
+                        [ oldFile; FileInfoCopy newName ]
+                        |> Refresh 
+                        |> searchCommands.OnNext
 
                         sprintf "%s\n%s" oldFile.FullName newName
                         |> log Informational RenameSuccess
@@ -623,7 +625,7 @@ type MainWindowViewModel() as this =
                         [ AddRename (oldFile, newName) ] |> Some),
                 [
                     this.SelectedFile
-                    |> Observable.map (fun file -> not <| isNull file && file.Exists)
+                    |> Observable.map (fun file -> not <| isNull file && File.exists file.FullName)
 
                     this.ResultingFilePath
                     |> Observable.map (fun path ->
@@ -693,7 +695,7 @@ type MainWindowViewModel() as this =
                             sprintf "%s\n%s" oldFile.FullName newName
                             |> log Informational RenameSuccess
 
-                            Some (oldFile, Some (FileInfo newName))
+                            Some (oldFile, Some (FileInfoCopy newName))
                         with _ -> None
                     else Some (oldFile, None))
                 |> Seq.toList
@@ -784,6 +786,7 @@ type MainWindowViewModel() as this =
 
             scanned
             |> Observable.concat watched
+            |> Observable.filter (List.isEmpty >> not)
             |> Observable.map (fun changes ->
                 changes
                 |> List.collect (fun (filePath, change) ->
@@ -1084,7 +1087,7 @@ type MainWindowViewModel() as this =
         ItemActionCallback(fun (args: ItemActionCallbackArgs<TabablzControl>) ->
             if args.Owner.Items.Count < 2 then args.Cancel())
 
-    member __.SelectedFile: ReadOnlyReactiveProperty<FileInfo> = selectedFile
+    member __.SelectedFile: ReadOnlyReactiveProperty<FileInfoCopy> = selectedFile
 
     member __.SaveSettingsCommand = saveSettingsCommand
 

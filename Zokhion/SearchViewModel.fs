@@ -39,7 +39,7 @@ type FileViewModel(fileInstance: FileInstance) =
 
 type SearchViewModelCommand =
     | Directories of (DirectoryInfo option * string)
-    | Refresh of FileInfo list
+    | Refresh of FileInfoCopy list
     | InitialSearchString of string
     | EnableTab
 
@@ -72,7 +72,7 @@ type FilterMode = Search | CheckAffected
 
 type SearchFilter =
     {
-        Filter: FilterMode -> FileInfo -> bool
+        Filter: FilterMode -> FileInfoCopy -> bool
         SearchDirectory: string option
     }
 
@@ -168,16 +168,16 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                             [
                                 smaller
                                 |> Option.map (fun smaller ->
-                                    fun (file: FileInfo) -> file.Length < int64 smaller)
+                                    fun (file: FileInfoCopy) -> file.Length < int64 smaller)
 
                                 larger
                                 |> Option.map (fun larger ->
-                                    fun (file: FileInfo) -> file.Length > int64 larger)
+                                    fun (file: FileInfoCopy) -> file.Length > int64 larger)
 
                                 match contains with
                                 | [] -> None
                                 | contains ->
-                                    (fun (file: FileInfo) ->
+                                    (fun (file: FileInfoCopy) ->
                                         file.Name
                                         |> Path.getFileNameWithoutExtension
                                         |> toUpper
@@ -186,7 +186,7 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                                         |> Some
                             ]
 
-                    let checkHasFeatures (file: FileInfo) =
+                    let checkHasFeatures (file: FileInfoCopy) =
                         file.FullName
                         |> Path.getFileNameWithoutExtension
                         |> hasFeaturesRegex.IsMatch
@@ -198,16 +198,16 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                 ]
                 |> List.choose id
 
-            fun (file: FileInfo) -> filters |> Seq.forall (fun filter -> filter file)
+            fun (file: FileInfoCopy) -> filters |> Seq.forall (fun filter -> filter file)
 
         let filter =
             let checkFilter =
-                fun (file: FileInfo) ->
+                fun (file: FileInfoCopy) ->
                     (toUpper file.FullName)
                         .StartsWith(searchDirectory |> Option.defaultValue "" |> toUpper)
                     && searchFilters file
 
-            fun filterMode (file: FileInfo) ->
+            fun filterMode (file: FileInfoCopy) ->
                 match filterMode with
                 | Search -> searchFilters file
                 | CheckAffected -> checkFilter file
@@ -222,7 +222,7 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
         |> Option.filter (String.IsNullOrWhiteSpace >> not <&&> Directory.exists)
         |> Option.map (fun dir ->
             Directory.getFiles dir
-            |> Seq.map FileInfo
+            |> Seq.map FileInfoCopy
             |> Seq.filter (filter.Filter Search))
 
     let tryAddFile (files: ObservableCollection<_>) fileInstance =
@@ -378,8 +378,8 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                 | RightOnly (JoinWrapped fileInstance) ->
                     fileInstance |> tryAddFile files
                 | JoinMatch (oldViewModel, JoinWrapped newFileInstance) ->
-                    let inline sizeAndDate (file: FileInfo) =
-                        file.Length, file.LastWriteTimeUtc
+                    let inline sizeAndDate (file: FileInfoCopy) =
+                        file.Length, file.LastWriteTime
 
                     try
                         if (sizeAndDate newFileInstance.FileInfo, newFileInstance.NumberOfInstances)

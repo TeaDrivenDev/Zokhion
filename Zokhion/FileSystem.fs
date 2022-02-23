@@ -59,6 +59,24 @@ module FileSystem =
         | Initializing of progress: float
         | Ready
 
+    [<AllowNullLiteral>]
+    type FileInfoCopy(fileInfo: FileInfo) =
+        let name = fileInfo.Name
+        let fullName = fileInfo.FullName
+        let directoryName = fileInfo.DirectoryName
+        let creationTime = fileInfo.CreationTime
+        let lastWriteTime = fileInfo.LastWriteTime
+        let length = fileInfo.Length
+
+        member __.Name = name
+        member __.FullName = fullName
+        member __.DirectoryName = directoryName
+        member __.CreationTime = creationTime
+        member __.LastWriteTime = lastWriteTime
+        member __.Length = length
+
+        new(filePath: string) = FileInfoCopy(FileInfo(filePath))
+
     type FileSystemCache() =
         let compositeDisposable = new CompositeDisposable()
 

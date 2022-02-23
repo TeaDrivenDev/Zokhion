@@ -38,7 +38,7 @@ type FileViewModel(fileInstance: FileInstance) =
     member __.NumberOfInstances = fileInstance.NumberOfInstances
 
 type SearchViewModelCommand =
-    | Directories of (DirectoryInfo option * string)
+    | Directories of (DirectoryInfoCopy option * string)
     | Refresh of FileInfoCopy list
     | InitialSearchString of string
     | EnableTab
@@ -92,7 +92,7 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
     inherit ReactiveObject()
 
     let mutable baseDirectory = ""
-    let selectedDirectory = new BehaviorSubject<DirectoryInfo option>(None)
+    let selectedDirectory = new BehaviorSubject<DirectoryInfoCopy option>(None)
 
     let isGroupByFeatureValue = new ReactiveProperty<bool>()
     let groupCategory = new ReactiveProperty<GroupCategory>(NoGrouping)

@@ -77,6 +77,19 @@ module FileSystem =
 
         new(filePath: string) = FileInfoCopy(FileInfo(filePath))
 
+    [<AllowNullLiteral>]
+    type DirectoryInfoCopy(directoryInfo: System.IO.DirectoryInfo) =
+        let fullName = directoryInfo.FullName
+        let name = directoryInfo.Name
+        
+        member __.FullName = fullName
+        member __.Name = name
+
+        // TODO Remove/Change
+        member __.NumberOfFiles = directoryInfo.GetFiles().Length
+
+        new (directoryPath: string) = DirectoryInfoCopy(DirectoryInfo(directoryPath))
+
     type FileSystemCache() =
         let compositeDisposable = new CompositeDisposable()
 

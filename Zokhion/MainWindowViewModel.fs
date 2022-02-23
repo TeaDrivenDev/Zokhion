@@ -78,7 +78,7 @@ type FileSystemWatcherStatus =
     | AlreadyDead
 
 [<AllowNullLiteral>]
-type DirectoryViewModel(directoryInfo: DirectoryInfo, fileCount: int) =
+type DirectoryViewModel(directoryInfo: DirectoryInfoCopy, fileCount: int) =
     member __.DirectoryInfo = directoryInfo
     member __.FullName = directoryInfo.FullName
     member __.Name = directoryInfo.Name
@@ -134,7 +134,7 @@ type MainWindowViewModel() as this =
     let mutable fileChanges = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     let selectedDestinationDirectory =
-        new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
+        new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfoCopy>, ReactivePropertyMode.None)
     let destinationDirectoryPrefixes = new ReactiveProperty<_>("")
     let destinationDirectories = ObservableCollection()
 
@@ -197,15 +197,13 @@ type MainWindowViewModel() as this =
         directories.Clear()
 
         Directory.getDirectories baseDirectory
-        |> Seq.map DirectoryInfo
+        |> Seq.map DirectoryInfoCopy
         |> Seq.filter (fun di ->
             match filterByPrefixes, prefixes with
             | false, _ | _, "" -> true
             | _ -> prefixes |> Seq.exists (string >> di.Name.StartsWith))
-        |> Seq.map (fun di ->
-            let files = di.GetFiles()
-
-            DirectoryViewModel(di, files.Length))
+        |> Seq.map (fun directoryInfo ->
+            DirectoryViewModel(directoryInfo, directoryInfo.NumberOfFiles))
         |> Seq.sortWith (fun x y -> Interop.StrCmpLogicalW(x.Name, y.Name))
         |> Seq.iter directories.Add
 
@@ -232,12 +230,12 @@ type MainWindowViewModel() as this =
                 |> Array.toList
         ]
         |> List.distinct
-        |> List.map DirectoryInfo
+        |> List.map DirectoryInfoCopy
         |> List.iter destinationDirectories.Add
 
         this.SelectedDestinationDirectory.Value <-
             destinationDirectories
-            |> Seq.find (fun (d: DirectoryInfo) -> d.FullName = currentFileDirectory)
+            |> Seq.find (fun (d: DirectoryInfoCopy) -> d.FullName = currentFileDirectory)
 
     let clearNewNameToAdd () = this.NewNameToAdd.Value <- ""
 
@@ -369,7 +367,7 @@ type MainWindowViewModel() as this =
         |> Seq.collect (fun vm -> vm.Instances)
         |> this.FeatureInstances.AddRange
 
-    let createSearchTab directory searchString =
+    let createSearchTab (directory: string option) searchString =
         let search = SearchViewModel(searchCommands.AsObservable())
         search.SearchFromBaseDirectory.Value <- true
 
@@ -378,7 +376,7 @@ type MainWindowViewModel() as this =
 
         directory
         |> Option.iter (fun dir ->
-            Directories (Some (DirectoryInfo dir), this.BaseDirectory.Value)
+            Directories (Some (DirectoryInfoCopy dir), this.BaseDirectory.Value)
             |> searchCommands.OnNext)
 
         searchString

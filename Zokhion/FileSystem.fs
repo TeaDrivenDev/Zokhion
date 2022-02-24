@@ -107,7 +107,7 @@ module FileSystem =
                     |> Observable.mergeSeq
                     |> Observable.subscribeObserver observer)
 
-        let mutable directories = Unchecked.defaultof<ConcurrentDictionary<string, string list>>
+        let mutable directories = Unchecked.defaultof<ConcurrentDictionary<_, _>>
 
         let mutable status = Unchecked.defaultof<ReactiveProperty<_>>
 
@@ -147,7 +147,7 @@ module FileSystem =
 
                             status.Value <- Initializing (float index/float subDirectories.Length)
 
-                            directory, files |> Array.toList)
+                            directory, files |> Array.map FileInfoCopy |> Array.toList)
 
                 directories <- ConcurrentDictionary(data.ToDictionary(fst, snd))
 
@@ -171,8 +171,11 @@ module FileSystem =
                                         ||> List.fold
                                             (fun acc (file, fileChange) ->
                                                 match fileChange with
-                                                | Added -> file :: acc
-                                                | Removed -> acc |> List.except [ file ])
+                                                | Added -> FileInfoCopy file :: acc
+                                                | Removed -> 
+                                                    acc 
+                                                    |> List.filter 
+                                                        (fun fileHere -> fileHere.FullName <> file))
 
                                     directories.[directory] <- updatedFilesInDirectory))
                     |> Observable.multicast Subject.broadcast

@@ -1644,6 +1644,20 @@
                 <SolidColorBrush Color="White"
                                  Opacity=".3" />
             </Border.Background>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <ProgressBar Grid.Column="1"
+                             Height="35"
+                             Minimum="0" 
+                             Maximum="100"
+                             Value="{Binding BusyProgress.Value, Mode=OneWay}" />
+            </Grid>
         </Border>
     </Grid>
 </Window>

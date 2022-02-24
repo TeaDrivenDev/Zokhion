@@ -93,6 +93,7 @@ type MainWindowViewModel() as this =
         |> Seq.exists (fun tablet -> tablet.Type = TabletDeviceType.Touch)
 
     let isBusy = new BooleanNotifier(false)
+    let mutable busyProgress = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     let baseDirectory = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let filterBySourceDirectoryPrefixes = new ReactiveProperty<_>(true)
@@ -412,6 +413,14 @@ type MainWindowViewModel() as this =
     do
         RxApp.MainThreadScheduler <-
             DispatcherScheduler(Application.Current.Dispatcher)
+
+        busyProgress <-
+            fileSystemCache.Status
+            |> Observable.map
+                (function
+                    | Initializing progress -> progress
+                    | _ -> 0.)
+            |> toReadOnlyReactiveProperty
 
         refreshDirectoriesCommand <-
             ReactiveCommand.Create(fun () ->
@@ -1083,6 +1092,7 @@ type MainWindowViewModel() as this =
     member __.HasTouchInput = hasTouchInput
 
     member __.IsBusy = isBusy
+    member __.BusyProgress = busyProgress
 
     member __.BaseDirectory: ReactiveProperty<string> = baseDirectory
     member __.FilterBySourceDirectoryPrefixes: ReactiveProperty<_> = filterBySourceDirectoryPrefixes

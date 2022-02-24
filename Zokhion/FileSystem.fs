@@ -145,7 +145,8 @@ module FileSystem =
                         (fun index files ->
                             let files = Directory.GetFiles files
 
-                            status.Value <- Initializing (float index/float subDirectories.Length)
+                            status.Value <- 
+                                Initializing (float index / float subDirectories.Length * 100.)
 
                             files
                             |> Array.map (fun file -> file, (FileInfoCopy file)))

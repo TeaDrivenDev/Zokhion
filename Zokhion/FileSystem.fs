@@ -1,11 +1,9 @@
 ﻿namespace TeaDriven.Zokhion
 
-
 module FileSystem =
     open System
     open System.Collections.Concurrent
     open System.IO
-    open System.Linq
     open System.Reactive.Linq
     open System.Reactive.Disposables
 
@@ -107,7 +105,7 @@ module FileSystem =
                     |> Observable.mergeSeq
                     |> Observable.subscribeObserver observer)
 
-        let mutable directories = Unchecked.defaultof<ConcurrentDictionary<_, _>>
+        let mutable files = Unchecked.defaultof<ConcurrentDictionary<_, _>>
 
         let mutable status = Unchecked.defaultof<ReactiveProperty<_>>
 
@@ -124,10 +122,10 @@ module FileSystem =
 
         member __.Status = status
 
-        member __.DirectoriesWithFiles =
-            directories
+        member __.Files =
+            files
             |> Option.ofObj
-            |> Option.map (fun directories -> directories |> Seq.toList)
+            |> Option.map Seq.toList
             |> Option.defaultValue []
 
         member __.FileSystemUpdates = fileSystemUpdates
@@ -136,20 +134,24 @@ module FileSystem =
             status.Value <- Initializing 0.
             watcher.EnableRaisingEvents <- false
 
+            files |> Option.ofObj |> Option.iter (fun files -> files.Clear())
+
             async {
                 let subDirectories = Directory.GetDirectories baseDirectory
 
                 let data =
                     subDirectories
                     |> Array.mapi
-                        (fun index directory ->
-                            let files = Directory.GetFiles directory
+                        (fun index files ->
+                            let files = Directory.GetFiles files
 
                             status.Value <- Initializing (float index/float subDirectories.Length)
 
-                            directory, files |> Array.map FileInfoCopy |> Array.toList)
+                            files
+                            |> Array.map (fun file -> file, (FileInfoCopy file)))
+                    |> Array.concat
 
-                directories <- ConcurrentDictionary(data.ToDictionary(fst, snd))
+                files <- data |> dict |> ConcurrentDictionary
 
                 status.Value <- Ready
 
@@ -158,26 +160,11 @@ module FileSystem =
                     |> Observable.iter
                         (fun changes ->
                             changes
-                            |> List.groupBy (fst >> Path.getDirectoryName)
                             |> List.iter
-                                (fun (directory, files) ->
-                                    let filesInDirectory =
-                                        match directories.TryGetValue directory with
-                                        | true, filesInDirectory -> filesInDirectory
-                                        | false, _ -> []
-                                    
-                                    let updatedFilesInDirectory =
-                                        (filesInDirectory, files)
-                                        ||> List.fold
-                                            (fun acc (file, fileChange) ->
-                                                match fileChange with
-                                                | Added -> FileInfoCopy file :: acc
-                                                | Removed -> 
-                                                    acc 
-                                                    |> List.filter 
-                                                        (fun fileHere -> fileHere.FullName <> file))
-
-                                    directories.[directory] <- updatedFilesInDirectory))
+                                (fun (file, fileChange) ->
+                                    match fileChange with
+                                    | Added -> files.[file] <- FileInfoCopy file
+                                    | Removed -> files.TryRemove file |> ignore))
                     |> Observable.multicast Subject.broadcast
 
                 connectableObservable.Connect() |> ignore

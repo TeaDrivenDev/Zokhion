@@ -1635,5 +1635,15 @@
 
             <materialDesign:PackIcon Kind="ContentSave" />
         </Button>
+
+        <Border Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Visibility="{Binding IsBusy.Value, 
+                             Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}">
+            <Border.Background>
+                <SolidColorBrush Color="White"
+                                 Opacity=".3" />
+            </Border.Background>
+        </Border>
     </Grid>
 </Window>

@@ -92,6 +92,8 @@ type MainWindowViewModel() as this =
         |> Seq.cast<TabletDevice>
         |> Seq.exists (fun tablet -> tablet.Type = TabletDeviceType.Touch)
 
+    let isBusy = new BooleanNotifier(false)
+
     let baseDirectory = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let filterBySourceDirectoryPrefixes = new ReactiveProperty<_>(true)
     let sourceDirectoryPrefixes =
@@ -181,6 +183,10 @@ type MainWindowViewModel() as this =
     let watcher = new FileSystemWatcher(EnableRaisingEvents = false, IncludeSubdirectories = true)
     let mutable reviveFileSystemWatcherCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable isFileSystemWatcherAlive = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
+
+
+    let fileSystemCache = new FileSystemCache()
+
 
     let mutable activityLog = ObservableCollection()
     let activityLogSubject = new System.Reactive.Subjects.Subject<_>()
@@ -750,9 +756,19 @@ type MainWindowViewModel() as this =
 
         validBaseDirectory
         |> Observable.observeOn RxApp.MainThreadScheduler
-        |> Observable.subscribe (fun dir ->
-            loadSettings dir
-            searchCommands.OnNext (Directories (None, dir)))
+        |> Observable.subscribe 
+            (fun directory ->
+                async {
+                    isBusy.TurnOn()
+
+                    do! fileSystemCache.Initialize directory
+
+                    isBusy.TurnOff()
+                }
+                |> Async.Start
+
+                loadSettings directory
+                searchCommands.OnNext (Directories (None, directory)))
         |> ignore
 
         isBaseDirectoryValid <-
@@ -1065,6 +1081,8 @@ type MainWindowViewModel() as this =
     member __.Shutdown () = saveSettings __.BaseDirectory.Value
 
     member __.HasTouchInput = hasTouchInput
+
+    member __.IsBusy = isBusy
 
     member __.BaseDirectory: ReactiveProperty<string> = baseDirectory
     member __.FilterBySourceDirectoryPrefixes: ReactiveProperty<_> = filterBySourceDirectoryPrefixes

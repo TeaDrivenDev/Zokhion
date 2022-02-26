@@ -185,9 +185,7 @@ type MainWindowViewModel() as this =
     let mutable reviveFileSystemWatcherCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable isFileSystemWatcherAlive = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
-
     let fileSystemCache = new FileSystemCache()
-
 
     let mutable activityLog = ObservableCollection()
     let activityLogSubject = new System.Reactive.Subjects.Subject<_>()
@@ -375,7 +373,7 @@ type MainWindowViewModel() as this =
         |> this.FeatureInstances.AddRange
 
     let createSearchTab (directory: string option) searchString =
-        let search = SearchViewModel(searchCommands.AsObservable())
+        let search = SearchViewModel(fileSystemCache, searchCommands.AsObservable())
         search.SearchFromBaseDirectory.Value <- true
 
         selectedFilesSubject.OnNext search.SelectedFileWhenActive
@@ -625,7 +623,7 @@ type MainWindowViewModel() as this =
                         File.move oldFile.FullName newName
 
                         [ oldFile; FileInfoCopy newName ]
-                        |> Refresh 
+                        |> Refresh
                         |> searchCommands.OnNext
 
                         sprintf "%s\n%s" oldFile.FullName newName
@@ -765,19 +763,20 @@ type MainWindowViewModel() as this =
 
         validBaseDirectory
         |> Observable.observeOn RxApp.MainThreadScheduler
-        |> Observable.subscribe 
+        |> Observable.subscribe
             (fun directory ->
+                loadSettings directory
+
                 async {
                     isBusy.TurnOn()
 
                     do! fileSystemCache.Initialize directory
 
                     isBusy.TurnOff()
-                }
-                |> Async.Start
 
-                loadSettings directory
-                searchCommands.OnNext (Directories (None, directory)))
+                    searchCommands.OnNext (Directories (None, directory))
+                }
+                |> Async.Start)
         |> ignore
 
         isBaseDirectoryValid <-

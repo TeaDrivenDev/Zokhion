@@ -6,6 +6,7 @@
     <DebugType>portable</DebugType>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="FileSystemTests.fs" />
     <Compile Include="Zokhion.Tests.fs" />
     <None Include="paket.references" />
   </ItemGroup>

@@ -17,6 +17,7 @@ open ReactiveUI
 
 open TeaDriven.Zokhion
 open TeaDriven.Zokhion.FileSystem
+open System.Windows.Threading
 
 [<AllowNullLiteral>]
 type FileViewModel(fileInstance: FileInstance) =
@@ -88,7 +89,9 @@ type DisplayParameterChange =
 
 type FileViewModelOperation = Keep | Replace | Remove
 
-type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
+type SearchViewModel(
+    fileSystemCache: FileSystemCache,
+    commands: IObservable<SearchViewModelCommand>) as this =
     inherit ReactiveObject()
 
     let mutable baseDirectory = ""
@@ -220,10 +223,15 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
     let getFiles filter =
         filter.SearchDirectory
         |> Option.filter (String.IsNullOrWhiteSpace >> not <&&> Directory.exists)
-        |> Option.map (fun dir ->
-            Directory.getFiles dir
-            |> Seq.map FileInfoCopy
-            |> Seq.filter (filter.Filter Search))
+        |> Option.map
+            (fun searchDirectory ->
+                fileSystemCache.Files
+                |> Seq.filter
+                    (fun (KeyValue(file, fileInfo)) ->
+                        Path.isSubDirectoryOf searchDirectory (Path.getDirectoryName file))
+                |> Seq.map (fun (KeyValue(file, fileInfo)) -> fileInfo)
+                |> Seq.filter (filter.Filter Search)
+                |> Seq.toList)
 
     let tryAddFile (files: ObservableCollection<_>) fileInstance =
         try

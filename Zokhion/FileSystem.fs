@@ -50,6 +50,35 @@ module FileSystem =
         let inline getFileNameWithoutExtension path =
             Path.GetFileNameWithoutExtension path
 
+        let inline private right length (value: string) =
+            if length < value.Length
+            then value.Substring(value.Length - length)
+            else value
+
+        let inline private withEnding (ending: string) (value: string) =
+            let rec recc (ending: string) index result =
+                if index = ending.Length
+                then result
+                else
+                    let tmp = result + right index ending
+
+                    if tmp.EndsWith ending
+                    then tmp
+                    else recc ending (index + 1) result
+
+            if isNull value
+            then ending
+            else recc ending 0 value
+
+        let inline isSubDirectoryOf (baseDirectory: string) (subDirectory: string) =
+            let normalizedPath =
+                Path.GetFullPath(subDirectory.Replace('/', '\\')) |> withEnding "\\";
+
+            let normalizedBaseDirPath =
+                Path.GetFullPath(baseDirectory.Replace('/', '\\')) |> withEnding "\\"
+
+            normalizedPath.StartsWith(normalizedBaseDirPath, StringComparison.OrdinalIgnoreCase)
+
     type FileChange = Added | Removed
 
     type FileSystemCacheStatus =
@@ -79,7 +108,7 @@ module FileSystem =
     type DirectoryInfoCopy(directoryInfo: System.IO.DirectoryInfo) =
         let fullName = directoryInfo.FullName
         let name = directoryInfo.Name
-        
+
         member __.FullName = fullName
         member __.Name = name
 
@@ -145,7 +174,7 @@ module FileSystem =
                         (fun index files ->
                             let files = Directory.GetFiles files
 
-                            status.Value <- 
+                            status.Value <-
                                 Initializing (float index / float subDirectories.Length * 100.)
 
                             files

@@ -50,32 +50,12 @@ module FileSystem =
         let inline getFileNameWithoutExtension path =
             Path.GetFileNameWithoutExtension path
 
-        let inline private right length (value: string) =
-            if length < value.Length
-            then value.Substring(value.Length - length)
-            else value
-
-        let inline private withEnding (ending: string) (value: string) =
-            let rec recc (ending: string) index result =
-                if index = ending.Length
-                then result
-                else
-                    let tmp = result + right index ending
-
-                    if tmp.EndsWith ending
-                    then tmp
-                    else recc ending (index + 1) result
-
-            if isNull value
-            then ending
-            else recc ending 0 value
-
-        let inline isSubDirectoryOf (baseDirectory: string) (subDirectory: string) =
+        let isSubDirectoryOf (baseDirectory: string) (subDirectory: string) =
             let normalizedPath =
-                Path.GetFullPath(subDirectory.Replace('/', '\\')) |> withEnding "\\";
+                Path.GetFullPath(subDirectory.Replace('/', '\\')).TrimEnd('\\') + "\\"
 
             let normalizedBaseDirPath =
-                Path.GetFullPath(baseDirectory.Replace('/', '\\')) |> withEnding "\\"
+                Path.GetFullPath(baseDirectory.Replace('/', '\\')).TrimEnd('\\') + "\\"
 
             normalizedPath.StartsWith(normalizedBaseDirPath, StringComparison.OrdinalIgnoreCase)
 

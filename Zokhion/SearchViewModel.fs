@@ -17,7 +17,6 @@ open ReactiveUI
 
 open TeaDriven.Zokhion
 open TeaDriven.Zokhion.FileSystem
-open System.Windows.Threading
 
 [<AllowNullLiteral>]
 type FileViewModel(fileInstance: FileInstance) =

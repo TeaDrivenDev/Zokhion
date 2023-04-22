@@ -170,6 +170,7 @@ module FileSystem =
                     |> Observable.iter
                         (fun changes ->
                             changes
+                            |> List.filter (fst >> Directory.Exists >> not)
                             |> List.iter
                                 (fun (file, fileChange) ->
                                     match fileChange with

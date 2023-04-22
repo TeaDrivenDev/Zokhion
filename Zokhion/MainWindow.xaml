@@ -1038,12 +1038,6 @@
                                                                                     </Style>
                                                                                 </MenuItem.Style>
                                                                             </MenuItem>
-                                                                            <Separator />
-                                                                            <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
-                                                                                                        Path=Data.DataContext.DeleteNameCommand}"
-                                                                                      CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                                 Path=Data}"
-                                                                                      Header="Delete" />
                                                                         </ContextMenu>
                                                                     </Button.ContextMenu>
 
@@ -1638,7 +1632,7 @@
 
         <Border Grid.Column="0"
                 Grid.ColumnSpan="3"
-                Visibility="{Binding IsBusy.Value, 
+                Visibility="{Binding IsBusy.Value,
                              Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}">
             <Border.Background>
                 <SolidColorBrush Color="White"
@@ -1654,7 +1648,7 @@
 
                 <ProgressBar Grid.Column="1"
                              Height="35"
-                             Minimum="0" 
+                             Minimum="0"
                              Maximum="100"
                              Value="{Binding BusyProgress.Value, Mode=OneWay}" />
             </Grid>

@@ -1135,7 +1135,7 @@
                                     <Button Grid.Column="1"
                                             Margin="5 0"
                                             Padding="0 -1 -1 0"
-                                            Command="{Binding AddNameCommand}"
+                                            Command="{Binding AddEnteredNameCommand}"
                                             CommandParameter="{Binding ElementName=NewNameToAdd,
                                                                        Path=Text}"
                                             Content="+" />
@@ -1633,10 +1633,10 @@
         <Border Grid.Column="0"
                 Grid.ColumnSpan="3"
                 Visibility="{Binding IsBusy.Value,
-                             Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}">
+                                     Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}">
             <Border.Background>
-                <SolidColorBrush Color="White"
-                                 Opacity=".3" />
+                <SolidColorBrush Opacity=".3"
+                                 Color="White" />
             </Border.Background>
 
             <Grid>
@@ -1648,9 +1648,10 @@
 
                 <ProgressBar Grid.Column="1"
                              Height="35"
-                             Minimum="0"
                              Maximum="100"
-                             Value="{Binding BusyProgress.Value, Mode=OneWay}" />
+                             Minimum="0"
+                             Value="{Binding BusyProgress.Value,
+                                             Mode=OneWay}" />
             </Grid>
         </Border>
     </Grid>

@@ -148,7 +148,7 @@ type MainWindowViewModel() as this =
 
     let newNameToAdd = new ReactiveProperty<_>("", ReactivePropertyMode.RaiseLatestValueOnSubscribe)
     let mutable clearNewNameToAddCommand = Unchecked.defaultof<ReactiveCommand>
-    let mutable addNameCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable addEnteredNameCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable setNameFilterCommand = Unchecked.defaultof<ReactiveCommand>
     let allNames = new SourceCache<NameViewModel, string>(fun vm -> vm.Name.Value)
 
@@ -243,7 +243,7 @@ type MainWindowViewModel() as this =
 
     let clearNewNameToAdd () = this.NewNameToAdd.Value <- ""
 
-    let addName name =
+    let addEnteredName name =
         if not <| String.IsNullOrWhiteSpace name
         then
             let name = trim name
@@ -295,7 +295,7 @@ type MainWindowViewModel() as this =
         |> Seq.map (fun vm -> vm.Name.Value)
         |> Seq.toList
 
-    let updateNewName originalFileName parameters =
+    let updateNewFileName originalFileName parameters =
         let result = rename parameters originalFileName
         this.NewFileName.Value <- result.NewFileName
 
@@ -502,9 +502,9 @@ type MainWindowViewModel() as this =
 
         clearNewNameToAddCommand <- ReactiveCommand.Create clearNewNameToAdd
 
-        addNameCommand <-
+        addEnteredNameCommand <-
             ReactiveCommand.Create(
-                addName,
+                addEnteredName,
                 this.NewNameToAdd
                 |> Observable.map (fun name ->
                     not <| String.IsNullOrWhiteSpace name
@@ -875,7 +875,7 @@ type MainWindowViewModel() as this =
         NewFeatureInstanceViewModel()
         |> this.EditingFeatureInstances.Add
 
-        let updateNewNameGate = new BooleanNotifier(true)
+        let updateNewFileNameGate = new BooleanNotifier(true)
 
         let allNamesChanges = allNames.Connect().WhenPropertyChanged(fun vm -> vm.IsSelected)
 
@@ -889,7 +889,7 @@ type MainWindowViewModel() as this =
             this.RecapitalizeNames |> Observable.map RecapitalizeNames
 
             allNamesChanges
-            |> xwhen updateNewNameGate
+            |> xwhen updateNewFileNameGate
             |> Observable.map (fun _ ->
                 allNames.Items
                 |> Seq.filter (fun n -> n.IsSelected)
@@ -908,11 +908,11 @@ type MainWindowViewModel() as this =
             this.FeatureInstances.ItemChanged
             |> Observable.filter (fun change ->
                 change.PropertyName = nameof Unchecked.defaultof<FeatureInstanceViewModel>.IsSelected)
-            |> xwhen updateNewNameGate
+            |> xwhen updateNewFileNameGate
             |> Observable.iter (fun change ->
                 if change.Sender.IsSelected
                 then
-                    updateNewNameGate.TurnOff()
+                    updateNewFileNameGate.TurnOff()
 
                     change.Sender.Include
                     |> Option.iter (fun toInclude ->
@@ -923,7 +923,7 @@ type MainWindowViewModel() as this =
                         featureToInclude
                         |> Option.iter (fun vm -> vm.IsSelected <- true))
 
-                    updateNewNameGate.TurnOn())
+                    updateNewFileNameGate.TurnOn())
             |> Observable.map (fun _ ->
                 this.SelectedFeatureInstances
                 |> Seq.toList
@@ -945,9 +945,9 @@ type MainWindowViewModel() as this =
             }
             (updateParameters this.Replacements getAllNames)
         |> Observable.subscribe (fun parameters ->
-            updateNewNameGate.TurnOff()
-            updateNewName this.OriginalFileName.Value parameters
-            updateNewNameGate.TurnOn())
+            updateNewFileNameGate.TurnOff()
+            updateNewFileName this.OriginalFileName.Value parameters
+            updateNewFileNameGate.TurnOn())
         |> ignore
 
         let nameFilter =
@@ -1136,8 +1136,8 @@ type MainWindowViewModel() as this =
     member __.NewNameToAdd: ReactiveProperty<string> = newNameToAdd
     member __.ClearNewNameToAdd() = clearNewNameToAdd ()
     member __.ClearNewNameToAddCommand = clearNewNameToAddCommand
-    member __.AddName(name: string) = addName name
-    member __.AddNameCommand = addNameCommand
+    member __.AddEnteredName(name: string) = addEnteredName name
+    member __.AddEnteredNameCommand = addEnteredNameCommand
     member __.SetNameFilterCommand = setNameFilterCommand
 
     member __.SelectedNames: ReadOnlyObservableCollection<NameViewModel> = selectedNames

@@ -147,11 +147,6 @@ type NameViewModel(name: string, isSelected: bool, isNewlyDetected: bool, isAdde
 
     member val Count = new ReactiveProperty<_>(0)
 
-    member __.ClearNewFlagCommand =
-        ReactiveCommand.Create(fun () ->
-            __.IsNewlyDetected.Value <- false
-            __.IsAdded.Value <- true)
-
     member __.PinCommand =
         ReactiveCommand.Create(fun () -> __.IsPinned <- not __.IsPinned)
 

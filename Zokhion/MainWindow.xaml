@@ -1080,11 +1080,6 @@
                                                                         </Style>
                                                                     </Button.Style>
                                                                 </Button>
-                                                                <Button Command="{Binding ClearNewFlagCommand}"
-                                                                        Content="+"
-                                                                        Style="{StaticResource NameActionButton}"
-                                                                        Visibility="{Binding IsNewlyDetected.Value,
-                                                                                             Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
                                                             </StackPanel>
                                                         </Grid>
                                                     </CheckBox>

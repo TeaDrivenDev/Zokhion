@@ -109,9 +109,15 @@ module FileSystem =
                         watcher.Created |> Observable.map (fun e -> [ e.FullPath, Added ])
                         watcher.Deleted |> Observable.map (fun e -> [ e.FullPath, Removed ])
                         watcher.Renamed
-                        |> Observable.map (fun e -> [ e.OldFullPath, Removed; e.FullPath, Added ])
+                        |> Observable.map
+                            (fun e ->
+                                if not (Directory.Exists e.OldFullPath) && not (Directory.Exists e.FullPath)
+                                then [ e.OldFullPath, Removed; e.FullPath, Added ]
+                                else [])
                     ]
                     |> Observable.mergeSeq
+                    |> Observable.filter (List.isEmpty >> not)
+                    |> Observable.distinctUntilChanged
                     |> Observable.subscribeObserver observer)
 
         let mutable files = Unchecked.defaultof<ConcurrentDictionary<_, _>>

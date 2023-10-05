@@ -4,7 +4,6 @@ open System
 open System.Collections.Generic
 open System.Collections.ObjectModel
 open System.Diagnostics
-open System.IO
 open System.Linq
 open System.Reactive.Concurrency
 open System.Reactive.Disposables
@@ -183,7 +182,6 @@ type MainWindowViewModel() as this =
     let resultingFilePath = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let mutable applyCommand = Unchecked.defaultof<ReactiveCommand<_, _>>
 
-    let watcher = new FileSystemWatcher(EnableRaisingEvents = false, IncludeSubdirectories = true)
     let mutable reviveFileSystemWatcherCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable isFileSystemWatcherAlive = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
@@ -689,7 +687,7 @@ type MainWindowViewModel() as this =
 
         reviveFileSystemWatcherCommand <-
             ReactiveCommand.Create<_, _>(fun () ->
-                watcher.EnableRaisingEvents <- true
+                fileSystemCache.ReviveFileSystemWatcher()
                 log Informational KeepAlive "Manually triggered FileSystemWatcher keepalive")
 
         let removeFilesToChangeSubject = new System.Reactive.Subjects.Subject<_>()
@@ -1048,7 +1046,7 @@ type MainWindowViewModel() as this =
 
         isFileSystemWatcherAlive <-
             Observable.interval (TimeSpan.FromSeconds 1.)
-            |> Observable.map (fun _ -> watcher.EnableRaisingEvents)
+            |> Observable.map (fun _ -> fileSystemCache.IsFileSystemWatcherAlive)
             |> Observable.scanInit (false, AlreadyDead) (fun (previousValue, _) newValue ->
                 newValue,
                 match previousValue, newValue with
@@ -1062,9 +1060,11 @@ type MainWindowViewModel() as this =
                     | AlreadyAlive -> true, None
                     | NewlyAlive -> true, Some "FileSystemWatcher is alive"
                     | _ ->
-                        if not <| isNull watcher.Path && Directory.exists watcher.Path
+                        let path = fileSystemCache.FileSystemWatcherPath
+
+                        if not <| isNull path && Directory.exists path
                         then
-                            watcher.EnableRaisingEvents <- true
+                            fileSystemCache.ReviveFileSystemWatcher()
 
                             true, Some "FileSystemWatcher revived"
                         elif status = NewlyDead

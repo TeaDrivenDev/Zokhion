@@ -145,6 +145,10 @@ module FileSystem =
 
         member __.FileSystemUpdates = fileSystemUpdates
 
+        member __.IsFileSystemWatcherAlive = watcher.EnableRaisingEvents
+
+        member __.FileSystemWatcherPath = watcher.Path
+
         member __.Initialize(baseDirectory: string) =
             status.Value <- Initializing 0.
             watcher.EnableRaisingEvents <- false
@@ -190,3 +194,6 @@ module FileSystem =
                 watcher.Path <- baseDirectory
                 watcher.EnableRaisingEvents <- true
             }
+
+        member __.ReviveFileSystemWatcher() =
+            if status.Value = Ready then watcher.EnableRaisingEvents <- true

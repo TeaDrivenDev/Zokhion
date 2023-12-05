@@ -1,12 +1,12 @@
 ﻿namespace TeaDriven.Zokhion.UIHelper
 
 open System
-open System.IO
 open System.Text.RegularExpressions
 open System.Windows
 open System.Windows.Controls
 open System.Windows.Data
 
+open TeaDriven.Zokhion.FileSystem
 open TeaDriven.Zokhion.ViewModels
 
 module Utilities =
@@ -125,7 +125,7 @@ type NameHasFeaturesConverter() =
             match value with
             | :? string as name ->
                 name
-                |> Path.GetFileNameWithoutExtension
+                |> Path.getFileNameWithoutExtension
                 |> NameHasFeaturesConverter.FeatureRegex.IsMatch
             | _ -> false
             :> obj
@@ -173,14 +173,14 @@ type FileChangesToEnumConverter() =
     interface IMultiValueConverter with
         member this.Convert(values: obj [], targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
             match values with
-            | [| :? FileInfo as fileInfo; :? FileChanges as fileChanges |] ->
-                match fileChanges.RenamedFiles.TryGetValue fileInfo.FullName with
+            | [| :? string as fullName; :? FileChanges as fileChanges |] ->
+                match fileChanges.RenamedFiles.TryGetValue fullName with
                 | true, renamedFile ->
-                    if Path.GetDirectoryName renamedFile.OriginalFile.FullName = Path.GetDirectoryName renamedFile.NewFilePath
+                    if Path.getDirectoryName renamedFile.OriginalFile.FullName = Path.getDirectoryName renamedFile.NewFilePath
                     then FileChange.Renamed
                     else FileChange.Moved
                 | false, _ ->
-                    match fileChanges.DeletedFiles.TryGetValue fileInfo.FullName with
+                    match fileChanges.DeletedFiles.TryGetValue fullName with
                     | true, _ -> FileChange.Deleted
                     | _ -> FileChange.NoChange
             | _ -> FileChange.NoChange

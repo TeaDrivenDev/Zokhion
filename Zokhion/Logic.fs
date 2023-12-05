@@ -7,6 +7,8 @@ module Logic =
     open System.IO
     open System.Text.RegularExpressions
 
+    open TeaDriven.Zokhion.FileSystem
+
     let inline ( <||> ) f g x = f x || g x
     let trim (s: string) = s.Trim()
     let toUpper (s: string) = s.ToUpper()
@@ -288,7 +290,7 @@ module Logic =
         {
             Group: string
             NumberOfInstances: int
-            FileInfo: FileInfo
+            FileInfo: FileInfoCopy
         }
 
     type GroupCategory =
@@ -314,7 +316,7 @@ module Logic =
 
     let extractNames fileName =
         let _, names, _=
-            Path.GetFileNameWithoutExtension fileName
+            Path.getFileNameWithoutExtension fileName
             |> splitFileName true
 
         let m = Regex.Match(names, @"^\(\.(?<names>.+)\.\)$")
@@ -323,7 +325,7 @@ module Logic =
         then m.Groups.["names"].Value.Split [| '.' |] |> Array.map trim |> Array.toList
         else []
 
-    let groupByCooccurringNames (files: FileInfo list) =
+    let groupByCooccurringNames (files: FileInfoCopy list) =
         files
         |> List.collect (fun fileInfo ->
             let names =
@@ -333,14 +335,14 @@ module Logic =
 
             [ singleInstanceWithGroup names fileInfo])
 
-    let groupByIndividualNames (files: FileInfo list) =
+    let groupByIndividualNames (files: FileInfoCopy list) =
         files
         |> List.collect (fun fileInfo ->
             fileInfo.Name
             |> extractNames
             |> multiplexByGroups fileInfo)
 
-    let groupByFeatureInstances feature (files: FileInfo list) =
+    let groupByFeatureInstances feature (files: FileInfoCopy list) =
         let featureInstanceCodes =
             feature.Instances
             |> List.map (fun instance -> feature.Code + instance.Code)
@@ -349,7 +351,7 @@ module Logic =
         files
         |> List.collect (fun fileInfo ->
             let _, _, features =
-                Path.GetFileNameWithoutExtension fileInfo.Name
+                Path.getFileNameWithoutExtension fileInfo.Name
                 |> splitFileName false
 
             evaluateFeaturesPart features
@@ -359,7 +361,7 @@ module Logic =
             |> Set.toList
             |> multiplexByGroups fileInfo)
 
-    let groupFilesByCategory groupCategory (files: FileInfo list) =
+    let groupFilesByCategory groupCategory (files: FileInfoCopy list) =
         match groupCategory with
         | NoGrouping -> files |> List.map (singleInstanceWithGroup "")
         | ByIndividualNames -> groupByIndividualNames files

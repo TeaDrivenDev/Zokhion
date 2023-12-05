@@ -4,9 +4,9 @@ open System
 open System.Collections.Generic
 open System.Collections.ObjectModel
 open System.Diagnostics
-open System.IO
 open System.Linq
 open System.Reactive.Concurrency
+open System.Reactive.Disposables
 open System.Reactive.Linq
 open System.Reactive.Subjects
 open System.Text.RegularExpressions
@@ -25,6 +25,7 @@ open Reactive.Bindings.Notifiers
 open ReactiveUI
 
 open TeaDriven.Zokhion
+open TeaDriven.Zokhion.FileSystem
 
 type GroupCategoryEntry =
     {
@@ -32,23 +33,21 @@ type GroupCategoryEntry =
         GroupCategory: GroupCategory
     }
 
-type RenamedFile = { OriginalFile: FileInfo; NewFilePath: string }
+type RenamedFile = { OriginalFile: FileInfoCopy; NewFilePath: string }
 
 type FileChanges =
     {
         RenamedFiles: IDictionary<string, RenamedFile>
-        DeletedFiles: IDictionary<string, FileInfo>
+        DeletedFiles: IDictionary<string, FileInfoCopy>
     }
 
 type FileOperation =
-    | AddRename of oldFile:FileInfo * newName:string
+    | AddRename of oldFile:FileInfoCopy * newName:string
     | RemoveRename of oldNames:string list
-    | AddDelete of FileInfo
+    | AddDelete of FileInfoCopy
     | RemoveDelete of string list
 
 type UnderscoreHandling = Ignore = 0 | Replace = 1 | TrimSuffix = 2
-
-type FileChange = Added | Removed
 
 type LogLevel =
     | Diagnostic
@@ -79,7 +78,7 @@ type FileSystemWatcherStatus =
     | AlreadyDead
 
 [<AllowNullLiteral>]
-type DirectoryViewModel(directoryInfo: DirectoryInfo, fileCount: int) =
+type DirectoryViewModel(directoryInfo: DirectoryInfoCopy, fileCount: int) =
     member __.DirectoryInfo = directoryInfo
     member __.FullName = directoryInfo.FullName
     member __.Name = directoryInfo.Name
@@ -88,10 +87,15 @@ type DirectoryViewModel(directoryInfo: DirectoryInfo, fileCount: int) =
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
 
+    let fileChangesSubscription = new SerialDisposable()
+
     let hasTouchInput =
         Tablet.TabletDevices
         |> Seq.cast<TabletDevice>
         |> Seq.exists (fun tablet -> tablet.Type = TabletDeviceType.Touch)
+
+    let isBusy = new BooleanNotifier(false)
+    let mutable busyProgress = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     let baseDirectory = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let filterBySourceDirectoryPrefixes = new ReactiveProperty<_>(true)
@@ -109,9 +113,9 @@ type MainWindowViewModel() as this =
         :> ISubject<SearchViewModelCommand>
     let searches = ObservableCollection<SearchViewModel>()
     let activeSearchTab = new ReactiveProperty<SearchViewModel>()
-    let selectedFilesSubject = new System.Reactive.Subjects.Subject<IObservable<FileInfo>>()
+    let selectedFilesSubject = new System.Reactive.Subjects.Subject<IObservable<FileInfoCopy>>()
 
-    let mutable selectedFile = Unchecked.defaultof<ReadOnlyReactiveProperty<FileInfo>>
+    let mutable selectedFile = Unchecked.defaultof<ReadOnlyReactiveProperty<FileInfoCopy>>
 
     let mutable saveSettingsCommand = Unchecked.defaultof<ReactiveCommand>
 
@@ -122,7 +126,7 @@ type MainWindowViewModel() as this =
 
     let treatParenthesizedPartAsNames = new ReactiveProperty<_>(true)
     let fixupNamesInMainPart = new ReactiveProperty<_>(true)
-    let underscoreHandling = new ReactiveProperty<_>(UnderscoreHandling.Ignore)
+    let underscoreHandling = new ReactiveProperty<_>(UnderscoreHandling.TrimSuffix)
     let detectNamesInMainAndNamesParts = new ReactiveProperty<_>(false)
     let recapitalizeNames = new ReactiveProperty<_>(false)
 
@@ -135,7 +139,7 @@ type MainWindowViewModel() as this =
     let mutable fileChanges = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     let selectedDestinationDirectory =
-        new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfo>, ReactivePropertyMode.None)
+        new ReactiveProperty<_>(Unchecked.defaultof<DirectoryInfoCopy>, ReactivePropertyMode.None)
     let destinationDirectoryPrefixes = new ReactiveProperty<_>("")
     let destinationDirectories = ObservableCollection()
 
@@ -146,7 +150,7 @@ type MainWindowViewModel() as this =
 
     let newNameToAdd = new ReactiveProperty<_>("", ReactivePropertyMode.RaiseLatestValueOnSubscribe)
     let mutable clearNewNameToAddCommand = Unchecked.defaultof<ReactiveCommand>
-    let mutable addNameCommand = Unchecked.defaultof<ReactiveCommand>
+    let mutable addEnteredNameCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable setNameFilterCommand = Unchecked.defaultof<ReactiveCommand>
     let allNames = new SourceCache<NameViewModel, string>(fun vm -> vm.Name.Value)
 
@@ -156,7 +160,6 @@ type MainWindowViewModel() as this =
     let mutable resetNameSelectionCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable searchForTextCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable searchForNameCommand = Unchecked.defaultof<ReactiveCommand>
-    let mutable deleteNameCommand = Unchecked.defaultof<ReactiveCommand>
 
     let editingFeatureInstances = ObservableCollection()
     let editingFeatureName = new ReactiveProperty<_>()
@@ -179,9 +182,10 @@ type MainWindowViewModel() as this =
     let resultingFilePath = new ReactiveProperty<_>("", ReactivePropertyMode.None)
     let mutable applyCommand = Unchecked.defaultof<ReactiveCommand<_, _>>
 
-    let watcher = new FileSystemWatcher(EnableRaisingEvents = false, IncludeSubdirectories = true)
     let mutable reviveFileSystemWatcherCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable isFileSystemWatcherAlive = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
+
+    let fileSystemCache = new FileSystemCache()
 
     let mutable activityLog = ObservableCollection()
     let activityLogSubject = new System.Reactive.Subjects.Subject<_>()
@@ -197,16 +201,14 @@ type MainWindowViewModel() as this =
     let updateDirectoriesList baseDirectory prefixes filterByPrefixes =
         directories.Clear()
 
-        Directory.GetDirectories baseDirectory
-        |> Seq.map DirectoryInfo
+        Directory.getDirectories baseDirectory
+        |> Seq.map DirectoryInfoCopy
         |> Seq.filter (fun di ->
             match filterByPrefixes, prefixes with
             | false, _ | _, "" -> true
             | _ -> prefixes |> Seq.exists (string >> di.Name.StartsWith))
-        |> Seq.map (fun di ->
-            let files = di.GetFiles()
-
-            DirectoryViewModel(di, files.Length))
+        |> Seq.map (fun directoryInfo ->
+            DirectoryViewModel(directoryInfo, directoryInfo.NumberOfFiles))
         |> Seq.sortWith (fun x y -> Interop.StrCmpLogicalW(x.Name, y.Name))
         |> Seq.iter directories.Add
 
@@ -214,7 +216,7 @@ type MainWindowViewModel() as this =
         let startsWithAny parts (s: string) =
             parts |> Seq.toList |> List.exists (string >> s.StartsWith)
 
-        let currentFileDirectory = Path.GetDirectoryName currentFilePath
+        let currentFileDirectory = Path.getDirectoryName currentFilePath
 
         destinationDirectories.Clear()
 
@@ -227,40 +229,100 @@ type MainWindowViewModel() as this =
             currentFileDirectory
 
             yield!
-                Directory.GetDirectories this.BaseDirectory.Value
-                |> Array.filter (Path.GetFileName >> filter)
+                Directory.getDirectories this.BaseDirectory.Value
+                |> Array.filter (Path.getFileName >> filter)
                 |> Array.sortWith (fun x y -> Interop.StrCmpLogicalW(x, y))
                 |> Array.toList
         ]
         |> List.distinct
-        |> List.map DirectoryInfo
+        |> List.map DirectoryInfoCopy
         |> List.iter destinationDirectories.Add
 
         this.SelectedDestinationDirectory.Value <-
             destinationDirectories
-            |> Seq.find (fun (d: DirectoryInfo) -> d.FullName = currentFileDirectory)
+            |> Seq.find (fun (d: DirectoryInfoCopy) -> d.FullName = currentFileDirectory)
 
     let clearNewNameToAdd () = this.NewNameToAdd.Value <- ""
 
-    let addName name =
+    let parseNames fileName =
+        let m = Regex.Match(fileName, @"\(\.(?<names>.+)\.\)")
+
+        if m.Success
+        then m.Groups.["names"].Value.Split([| '.' |]) |> Array.toList
+        else []
+
+    let initializeNamesList (files: string seq) =
+        allNames.Clear()
+
+        let names =
+            files
+            |> Seq.collect (Path.getFileNameWithoutExtension >> parseNames)
+            |> Seq.countBy id
+
+        names
+        |> Seq.iter
+            (fun (name, count) ->
+                let nameViewModel =
+                    NameViewModel(
+                        name,
+                        isSelected=false,
+                        isNewlyDetected=false,
+                        isAdded=false)
+
+                nameViewModel.Count.Value <- count
+
+                allNames.AddOrUpdate nameViewModel)
+
+    let getNameViewModel name =
+        let name = trim name
+
+        allNames.Items
+        |> Seq.tryFind (fun viewModel -> toUpper viewModel.Name.Value = toUpper name)
+        |> Option.defaultWith
+            (fun () ->
+                let viewModel =
+                    NameViewModel(
+                        name,
+                        isSelected=false,
+                        isNewlyDetected=false,
+                        isAdded=true)
+
+                allNames.AddOrUpdate viewModel
+                viewModel)
+
+    let updateNamesListOnFileSystemChanges observable =
+        let toChangeCount = function Added -> 1 | Removed -> -1
+
+        observable
+        |> Observable.filter (List.isEmpty >> not)
+        |> Observable.subscribe
+            (fun changes ->
+                let namesWithChanges =
+                    changes
+                    |> List.collect
+                        (fun (fileName, change) ->
+                            parseNames fileName |> List.map (asFst (toChangeCount change)))
+                    |> List.groupBy fst
+                    |> List.map (fun (key, changes) -> key, changes |> List.sumBy snd)
+                    |> List.filter (snd >> (<>) 0)
+
+                namesWithChanges
+                |> List.iter
+                    (fun (name, changeCount) ->
+                        let viewModel = getNameViewModel name
+
+                        let newCount = viewModel.Count.Value + changeCount
+
+                        if newCount > 0
+                        then viewModel.Count.Value <- newCount
+                        else allNames.Remove viewModel))
+
+    let addEnteredName name =
         if not <| String.IsNullOrWhiteSpace name
         then
             let name = trim name
 
-            let viewModel =
-                allNames.Items
-                |> Seq.tryFind (fun vm -> vm.Name.Value = name)
-                |> Option.defaultWith (fun () ->
-                    let vm =
-                        NameViewModel(
-                            trim name,
-                            isSelected=false,
-                            isNewlyDetected=false,
-                            isAdded=true)
-
-                    allNames.AddOrUpdate vm
-                    vm)
-
+            let viewModel = getNameViewModel name
             viewModel.IsSelected <- true
 
             log Informational AddName name
@@ -269,15 +331,20 @@ type MainWindowViewModel() as this =
 
     let updateNamesList detectedNames =
         (detectedNames, allNames.Items |> Seq.toList)
-        ||> fullOuterJoin toUpper (fun vm -> vm.Name.Value |> toUpper)
-        |> Seq.iter (function
-            | LeftOnly vm -> vm.IsSelected <- false
-            | RightOnly name ->
-                NameViewModel(name, true, true, false)
-                |> allNames.AddOrUpdate
-            | JoinMatch (vm, name) ->
-                vm.Name.Value <- name
-                vm.IsSelected <- true)
+        ||> fullOuterJoin toUpper (fun viewModel -> viewModel.Name.Value |> toUpper)
+        |> Seq.iter
+            (function
+                | LeftOnly viewModel -> viewModel.IsSelected <- false
+                | RightOnly name ->
+                    NameViewModel(
+                        name,
+                        isSelected=true,
+                        isNewlyDetected=true,
+                        isAdded=false)
+                    |> allNames.AddOrUpdate
+                | JoinMatch (viewModel, name) ->
+                    viewModel.Name.Value <- name
+                    viewModel.IsSelected <- true)
 
     let updateSelectedFeatures isInitial selectedFeatures =
         (selectedFeatures, featureInstances)
@@ -294,7 +361,7 @@ type MainWindowViewModel() as this =
         |> Seq.map (fun vm -> vm.Name.Value)
         |> Seq.toList
 
-    let updateNewName originalFileName parameters =
+    let updateNewFileName originalFileName parameters =
         let result = rename parameters originalFileName
         this.NewFileName.Value <- result.NewFileName
 
@@ -311,12 +378,14 @@ type MainWindowViewModel() as this =
             |> Option.ofObj
             |> Option.iter (fun selectedFile ->
                 this.ResultingFilePath.Value <-
-                    Path.Combine(
-                        this.SelectedDestinationDirectory.Value.FullName,
-                        this.NewFileName.Value + Path.GetExtension(selectedFile.Name)))
+                    [|
+                        this.SelectedDestinationDirectory.Value.FullName
+                        this.NewFileName.Value + Path.getExtension selectedFile.Name
+                    |]
+                    |> Path.combine)
 
     let saveSettings baseDirectory =
-        if Directory.Exists baseDirectory
+        if Directory.exists baseDirectory
         then
             {
                 SourceDirectoryPrefixes = this.SourceDirectoryPrefixes.Value
@@ -347,17 +416,6 @@ type MainWindowViewModel() as this =
         settings.Replacements
         |> List.iter this.Replacements.Add
 
-        allNames.Clear()
-
-        settings.Names
-        |> List.iter (fun name ->
-            NameViewModel(
-                name,
-                isSelected=false,
-                isNewlyDetected=false,
-                isAdded=false)
-            |> allNames.AddOrUpdate)
-
         features.Clear()
         featureInstances.Clear()
 
@@ -368,8 +426,8 @@ type MainWindowViewModel() as this =
         |> Seq.collect (fun vm -> vm.Instances)
         |> this.FeatureInstances.AddRange
 
-    let createSearchTab directory searchString =
-        let search = SearchViewModel(searchCommands.AsObservable())
+    let createSearchTab (directory: string option) searchString =
+        let search = SearchViewModel(fileSystemCache, searchCommands.AsObservable())
         search.SearchFromBaseDirectory.Value <- true
 
         selectedFilesSubject.OnNext search.SelectedFileWhenActive
@@ -377,7 +435,7 @@ type MainWindowViewModel() as this =
 
         directory
         |> Option.iter (fun dir ->
-            Directories (Some (DirectoryInfo dir), this.BaseDirectory.Value)
+            Directories (Some (DirectoryInfoCopy dir), this.BaseDirectory.Value)
             |> searchCommands.OnNext)
 
         searchString
@@ -397,16 +455,17 @@ type MainWindowViewModel() as this =
         | UnderscoreHandling.TrimSuffix -> TrimSuffix
         | _ -> failwith "Invalid underscore handling value"
 
-    let parseNames fileName =
-        let m = Regex.Match(fileName, @"\(\.(?<names>.+)\.\)")
-
-        if m.Success
-        then m.Groups.["names"].Value.Split([| '.' |]) |> Array.toList
-        else []
-
     do
         RxApp.MainThreadScheduler <-
             DispatcherScheduler(Application.Current.Dispatcher)
+
+        busyProgress <-
+            fileSystemCache.Status
+            |> Observable.map
+                (function
+                    | Initializing progress -> progress
+                    | _ -> 0.)
+            |> toReadOnlyReactiveProperty
 
         refreshDirectoriesCommand <-
             ReactiveCommand.Create(fun () ->
@@ -425,16 +484,16 @@ type MainWindowViewModel() as this =
 
         openCommand <-
             ReactiveCommand.Create(
-                (fun (file: FileInfo) -> Process.Start file.FullName |> ignore),
+                (fun (file: FileInfoCopy) -> Process.Start file.FullName |> ignore),
                 this.SelectedFile
-                |> Observable.map (fun file -> not <| isNull file && file.Exists))
+                |> Observable.map (fun file -> not <| isNull file && File.exists file.FullName))
 
         openFromSearchCommand <-
-            ReactiveCommand.Create(fun (file: FileInfo) ->
-                if file.Exists then Process.Start file.FullName |> ignore)
+            ReactiveCommand.Create(fun (file: FileInfoCopy) ->
+                if File.exists file.FullName then Process.Start file.FullName |> ignore)
 
         openExplorerCommand <-
-            ReactiveCommand.Create(fun (file: FileInfo) ->
+            ReactiveCommand.Create(fun (file: FileInfoCopy) ->
                 if not <| isNull file
                 then
                     file.FullName
@@ -449,12 +508,12 @@ type MainWindowViewModel() as this =
                 |> Option.iter (asSnd "explorer.exe" >> Process.Start >> ignore))
 
         showFilePropertiesCommand <-
-            ReactiveCommand.Create(fun (file: FileInfo) ->
-                if file.Exists then Interop.showFileProperties file.FullName |> ignore)
+            ReactiveCommand.Create(fun (file: FileInfoCopy) ->
+                if File.exists file.FullName then Interop.showFileProperties file.FullName |> ignore)
 
         deleteFileCommand <-
-            ReactiveCommand.Create(fun (file: FileInfo) ->
-                if file.Exists
+            ReactiveCommand.Create(fun (file: FileInfoCopy) ->
+                if File.exists file.FullName
                 then
                     MessageBox.Show(
                         sprintf "Delete file %s?" file.FullName,
@@ -464,7 +523,7 @@ type MainWindowViewModel() as this =
                     |> function
                         | MessageBoxResult.OK ->
                             try
-                                File.Delete file.FullName
+                                File.delete file.FullName
                                 searchCommands.OnNext (Refresh [ file ])
                                 log Informational DeleteSuccess file.FullName
 
@@ -491,9 +550,9 @@ type MainWindowViewModel() as this =
 
         clearNewNameToAddCommand <- ReactiveCommand.Create clearNewNameToAdd
 
-        addNameCommand <-
+        addEnteredNameCommand <-
             ReactiveCommand.Create(
-                addName,
+                addEnteredName,
                 this.NewNameToAdd
                 |> Observable.map (fun name ->
                     not <| String.IsNullOrWhiteSpace name
@@ -516,16 +575,6 @@ type MainWindowViewModel() as this =
         searchForNameCommand <-
             ReactiveCommand.Create(fun name ->
                 sprintf ".%s." name |> Some |> createSearchTab None |> searches.Add)
-
-        deleteNameCommand <-
-            ReactiveCommand.Create(fun (vm: NameViewModel) ->
-                MessageBox.Show(sprintf "Delete name '%s'?" vm.Name.Value,
-                                "Delete Name",
-                                MessageBoxButton.OKCancel,
-                                MessageBoxImage.Question)
-                |> function
-                    | MessageBoxResult.OK -> allNames.Remove vm |> ignore
-                    | _ -> ())
 
         confirmEditingFeatureCommand <-
             ReactiveCommand.Create(fun () ->
@@ -608,9 +657,11 @@ type MainWindowViewModel() as this =
                     let oldFile, newName = this.SelectedFile.Value, this.ResultingFilePath.Value
 
                     try
-                        File.Move(oldFile.FullName, newName)
+                        File.move oldFile.FullName newName
 
-                        [ oldFile; FileInfo newName ] |> Refresh |> searchCommands.OnNext
+                        [ oldFile; FileInfoCopy newName ]
+                        |> Refresh
+                        |> searchCommands.OnNext
 
                         sprintf "%s\n%s" oldFile.FullName newName
                         |> log Informational RenameSuccess
@@ -622,12 +673,12 @@ type MainWindowViewModel() as this =
                         [ AddRename (oldFile, newName) ] |> Some),
                 [
                     this.SelectedFile
-                    |> Observable.map (fun file -> not <| isNull file && file.Exists)
+                    |> Observable.map (fun file -> not <| isNull file && File.exists file.FullName)
 
                     this.ResultingFilePath
                     |> Observable.map (fun path ->
                         not <| isNull path
-                        && (not <| File.Exists path
+                        && (not <| File.exists path
                             || this.SelectedFile.Value.FullName <> path
                                 && String.Compare(this.SelectedFile.Value.FullName, path, true) = 0))
                 ]
@@ -636,7 +687,7 @@ type MainWindowViewModel() as this =
 
         reviveFileSystemWatcherCommand <-
             ReactiveCommand.Create<_, _>(fun () ->
-                watcher.EnableRaisingEvents <- true
+                fileSystemCache.ReviveFileSystemWatcher()
                 log Informational KeepAlive "Manually triggered FileSystemWatcher keepalive")
 
         let removeFilesToChangeSubject = new System.Reactive.Subjects.Subject<_>()
@@ -684,15 +735,15 @@ type MainWindowViewModel() as this =
                 fileChanges.RenamedFiles.Values
                 |> Seq.choose (fun { OriginalFile = oldFile; NewFilePath = newName } ->
 
-                    if File.Exists oldFile.FullName
+                    if File.exists oldFile.FullName
                     then
                         try
-                            File.Move(oldFile.FullName, newName)
+                            File.move oldFile.FullName newName
 
                             sprintf "%s\n%s" oldFile.FullName newName
                             |> log Informational RenameSuccess
 
-                            Some (oldFile, Some (FileInfo newName))
+                            Some (oldFile, Some (FileInfoCopy newName))
                         with _ -> None
                     else Some (oldFile, None))
                 |> Seq.toList
@@ -702,7 +753,7 @@ type MainWindowViewModel() as this =
                 fileChanges.DeletedFiles.Values
                 |> Seq.choose (fun file ->
                     try
-                        File.Delete file.FullName
+                        File.delete file.FullName
 
                         log Informational DeleteSuccess file.FullName
 
@@ -745,13 +796,31 @@ type MainWindowViewModel() as this =
         let validBaseDirectory =
             this.BaseDirectory
             |> Observable.throttle (TimeSpan.FromMilliseconds 500.)
-            |> Observable.filter Directory.Exists
+            |> Observable.filter Directory.exists
 
         validBaseDirectory
         |> Observable.observeOn RxApp.MainThreadScheduler
-        |> Observable.subscribe (fun dir ->
-            loadSettings dir
-            searchCommands.OnNext (Directories (None, dir)))
+        |> Observable.subscribe
+            (fun directory ->
+                loadSettings directory
+
+                async {
+                    isBusy.TurnOn()
+
+                    do! fileSystemCache.Initialize directory
+
+                    fileSystemCache.Files
+                    |> Seq.map (fun (KeyValue(file, fileInfo)) -> file)
+                    |> initializeNamesList
+
+                    fileChangesSubscription.Disposable <-
+                        updateNamesListOnFileSystemChanges fileSystemCache.FileSystemUpdates
+
+                    searchCommands.OnNext (Directories (None, directory))
+
+                    isBusy.TurnOff()
+                }
+                |> Async.Start)
         |> ignore
 
         isBaseDirectoryValid <-
@@ -759,55 +828,6 @@ type MainWindowViewModel() as this =
             |> Observable.combineLatest validBaseDirectory
             |> Observable.map (fun (``base``, validBase) -> ``base`` = validBase)
             |> toReadOnlyReactiveProperty
-
-        validBaseDirectory
-        |> Observable.map (fun directory ->
-            let scanned =
-                Directory.EnumerateFiles(directory,"*.*", SearchOption.AllDirectories)
-                |> Seq.map (asFst Added >> List.singleton)
-                |> Observable.ofSeq
-
-            let watched =
-                Observable.Create(fun observer ->
-                    watcher.Path <- directory
-                    watcher.EnableRaisingEvents <- true
-
-                    [
-                        watcher.Created |> Observable.map (fun e -> [ e.FullPath, Added ])
-                        watcher.Deleted |> Observable.map (fun e -> [ e.FullPath, Removed ])
-                        watcher.Renamed
-                        |> Observable.map (fun e -> [ e.OldFullPath, Removed; e.FullPath, Added ])
-                    ]
-                    |> Observable.mergeSeq
-                    |> Observable.subscribeObserver observer)
-
-            scanned
-            |> Observable.concat watched
-            |> Observable.map (fun changes ->
-                changes
-                |> List.collect (fun (filePath, change) ->
-                    Path.GetFileNameWithoutExtension filePath
-                    |> parseNames
-                    |> List.map (asFst change)))
-            |> Observable.scanInit (Map.empty, []) (fun (acc, _) current ->
-                let updates =
-                    current
-                    |> List.map (fun (name, change) ->
-                        acc
-                        |> Map.tryFind name
-                        |> Option.map (fun count ->
-                            name, (if change = Added then count + 1 else count - 1))
-                        |> Option.defaultValue (name, 1))
-
-                (acc, updates) ||> List.fold (fun map (name, count) -> map |> Map.add name count), updates))
-        |> Observable.switch
-        |> Observable.subscribe (fun (_, updates) ->
-            updates
-            |> List.iter (fun (name, count) ->
-                allNames.Items
-                |> Seq.tryFind (fun vm -> vm.Name.Value = name)
-                |> Option.iter (fun vm -> vm.Count.Value <- count)))
-        |> ignore
 
         this.SourceDirectoryPrefixes
         |> Observable.throttle (TimeSpan.FromMilliseconds 500.)
@@ -839,7 +859,7 @@ type MainWindowViewModel() as this =
             |> List.iter allNames.Remove
 
             this.OriginalFileName.Value <-
-                string file.Name |> Path.GetFileNameWithoutExtension
+                string file.Name |> Path.getFileNameWithoutExtension
 
             this.NewNameToAdd.Value <- "")
         |> ignore
@@ -860,7 +880,7 @@ type MainWindowViewModel() as this =
         NewFeatureInstanceViewModel()
         |> this.EditingFeatureInstances.Add
 
-        let updateNewNameGate = new BooleanNotifier(true)
+        let updateNewFileNameGate = new BooleanNotifier(true)
 
         let allNamesChanges = allNames.Connect().WhenPropertyChanged(fun vm -> vm.IsSelected)
 
@@ -874,7 +894,7 @@ type MainWindowViewModel() as this =
             this.RecapitalizeNames |> Observable.map RecapitalizeNames
 
             allNamesChanges
-            |> xwhen updateNewNameGate
+            |> xwhen updateNewFileNameGate
             |> Observable.map (fun _ ->
                 allNames.Items
                 |> Seq.filter (fun n -> n.IsSelected)
@@ -893,11 +913,11 @@ type MainWindowViewModel() as this =
             this.FeatureInstances.ItemChanged
             |> Observable.filter (fun change ->
                 change.PropertyName = nameof Unchecked.defaultof<FeatureInstanceViewModel>.IsSelected)
-            |> xwhen updateNewNameGate
+            |> xwhen updateNewFileNameGate
             |> Observable.iter (fun change ->
                 if change.Sender.IsSelected
                 then
-                    updateNewNameGate.TurnOff()
+                    updateNewFileNameGate.TurnOff()
 
                     change.Sender.Include
                     |> Option.iter (fun toInclude ->
@@ -908,7 +928,7 @@ type MainWindowViewModel() as this =
                         featureToInclude
                         |> Option.iter (fun vm -> vm.IsSelected <- true))
 
-                    updateNewNameGate.TurnOn())
+                    updateNewFileNameGate.TurnOn())
             |> Observable.map (fun _ ->
                 this.SelectedFeatureInstances
                 |> Seq.toList
@@ -930,9 +950,9 @@ type MainWindowViewModel() as this =
             }
             (updateParameters this.Replacements getAllNames)
         |> Observable.subscribe (fun parameters ->
-            updateNewNameGate.TurnOff()
-            updateNewName this.OriginalFileName.Value parameters
-            updateNewNameGate.TurnOn())
+            updateNewFileNameGate.TurnOff()
+            updateNewFileName this.OriginalFileName.Value parameters
+            updateNewFileNameGate.TurnOn())
         |> ignore
 
         let nameFilter =
@@ -1026,7 +1046,7 @@ type MainWindowViewModel() as this =
 
         isFileSystemWatcherAlive <-
             Observable.interval (TimeSpan.FromSeconds 1.)
-            |> Observable.map (fun _ -> watcher.EnableRaisingEvents)
+            |> Observable.map (fun _ -> fileSystemCache.IsFileSystemWatcherAlive)
             |> Observable.scanInit (false, AlreadyDead) (fun (previousValue, _) newValue ->
                 newValue,
                 match previousValue, newValue with
@@ -1040,9 +1060,11 @@ type MainWindowViewModel() as this =
                     | AlreadyAlive -> true, None
                     | NewlyAlive -> true, Some "FileSystemWatcher is alive"
                     | _ ->
-                        if not <| isNull watcher.Path && Directory.Exists watcher.Path
+                        let path = fileSystemCache.FileSystemWatcherPath
+
+                        if not <| isNull path && Directory.exists path
                         then
-                            watcher.EnableRaisingEvents <- true
+                            fileSystemCache.ReviveFileSystemWatcher()
 
                             true, Some "FileSystemWatcher revived"
                         elif status = NewlyDead
@@ -1064,6 +1086,9 @@ type MainWindowViewModel() as this =
 
     member __.HasTouchInput = hasTouchInput
 
+    member __.IsBusy = isBusy
+    member __.BusyProgress = busyProgress
+
     member __.BaseDirectory: ReactiveProperty<string> = baseDirectory
     member __.FilterBySourceDirectoryPrefixes: ReactiveProperty<_> = filterBySourceDirectoryPrefixes
     member __.SourceDirectoryPrefixes: ReactiveProperty<_> = sourceDirectoryPrefixes
@@ -1083,7 +1108,7 @@ type MainWindowViewModel() as this =
         ItemActionCallback(fun (args: ItemActionCallbackArgs<TabablzControl>) ->
             if args.Owner.Items.Count < 2 then args.Cancel())
 
-    member __.SelectedFile: ReadOnlyReactiveProperty<FileInfo> = selectedFile
+    member __.SelectedFile: ReadOnlyReactiveProperty<FileInfoCopy> = selectedFile
 
     member __.SaveSettingsCommand = saveSettingsCommand
 
@@ -1118,8 +1143,8 @@ type MainWindowViewModel() as this =
     member __.NewNameToAdd: ReactiveProperty<string> = newNameToAdd
     member __.ClearNewNameToAdd() = clearNewNameToAdd ()
     member __.ClearNewNameToAddCommand = clearNewNameToAddCommand
-    member __.AddName(name: string) = addName name
-    member __.AddNameCommand = addNameCommand
+    member __.AddEnteredName(name: string) = addEnteredName name
+    member __.AddEnteredNameCommand = addEnteredNameCommand
     member __.SetNameFilterCommand = setNameFilterCommand
 
     member __.SelectedNames: ReadOnlyObservableCollection<NameViewModel> = selectedNames
@@ -1128,7 +1153,6 @@ type MainWindowViewModel() as this =
     member __.ResetNameSelectionCommand: ReactiveCommand = resetNameSelectionCommand
     member __.SearchForTextCommand = searchForTextCommand
     member __.SearchForNameCommand = searchForNameCommand
-    member __.DeleteNameCommand = deleteNameCommand
 
     member __.EditingFeatureInstances: ObservableCollection<NewFeatureInstanceViewModel> = editingFeatureInstances
     member __.RemoveFeatureInstanceRowCommand = removeFeatureInstanceRowCommand

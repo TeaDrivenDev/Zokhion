@@ -490,7 +490,7 @@
                                                         <ui:BindingProxy x:Key="FileChangeBindingProxy">
                                                             <ui:BindingProxy.Data>
                                                                 <MultiBinding Converter="{x:Static ui:FileChangesToEnumConverter.Instance}">
-                                                                    <Binding Path="FileInfo" />
+                                                                    <Binding Path="FullName" />
                                                                     <Binding ElementName="MainWindowView"
                                                                              Path="DataContext.FileChanges.Value" />
                                                                 </MultiBinding>
@@ -1038,12 +1038,6 @@
                                                                                     </Style>
                                                                                 </MenuItem.Style>
                                                                             </MenuItem>
-                                                                            <Separator />
-                                                                            <MenuItem Command="{Binding Source={StaticResource MainWindowBindingProxy},
-                                                                                                        Path=Data.DataContext.DeleteNameCommand}"
-                                                                                      CommandParameter="{Binding Source={StaticResource NameViewModelBindingProxy},
-                                                                                                                 Path=Data}"
-                                                                                      Header="Delete" />
                                                                         </ContextMenu>
                                                                     </Button.ContextMenu>
 
@@ -1086,11 +1080,6 @@
                                                                         </Style>
                                                                     </Button.Style>
                                                                 </Button>
-                                                                <Button Command="{Binding ClearNewFlagCommand}"
-                                                                        Content="+"
-                                                                        Style="{StaticResource NameActionButton}"
-                                                                        Visibility="{Binding IsNewlyDetected.Value,
-                                                                                             Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}" />
                                                             </StackPanel>
                                                         </Grid>
                                                     </CheckBox>
@@ -1141,7 +1130,7 @@
                                     <Button Grid.Column="1"
                                             Margin="5 0"
                                             Padding="0 -1 -1 0"
-                                            Command="{Binding AddNameCommand}"
+                                            Command="{Binding AddEnteredNameCommand}"
                                             CommandParameter="{Binding ElementName=NewNameToAdd,
                                                                        Path=Text}"
                                             Content="+" />
@@ -1635,5 +1624,30 @@
 
             <materialDesign:PackIcon Kind="ContentSave" />
         </Button>
+
+        <Border Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Visibility="{Binding IsBusy.Value,
+                                     Converter={x:Static ui:InvertableBooleanToVisibilityConverter.Instance}}">
+            <Border.Background>
+                <SolidColorBrush Opacity=".3"
+                                 Color="White" />
+            </Border.Background>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <ProgressBar Grid.Column="1"
+                             Height="35"
+                             Maximum="100"
+                             Minimum="0"
+                             Value="{Binding BusyProgress.Value,
+                                             Mode=OneWay}" />
+            </Grid>
+        </Border>
     </Grid>
 </Window>

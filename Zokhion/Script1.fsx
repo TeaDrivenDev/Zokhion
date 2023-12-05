@@ -53,3 +53,7 @@ let processFile featureInstances filePath =
 Directory.GetFiles(path, "*.*", SearchOption.AllDirectories)
 |> Seq.choose (processFile features)
 |> Seq.iter File.Move
+
+Path.GetFullPath @"\\aaa\b\c"
+
+"12345"[5 ..]

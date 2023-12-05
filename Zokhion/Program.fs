@@ -89,7 +89,7 @@ type MainWindow() as this =
 
         match e.Key with
         | Input.Key.Enter ->
-            __.ViewModel.AddName sender.Text
+            __.ViewModel.AddEnteredName sender.Text
             e.Handled <- true
         | Input.Key.Escape ->
             __.ViewModel.ClearNewNameToAdd()

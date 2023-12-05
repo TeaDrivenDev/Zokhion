@@ -16,6 +16,7 @@ open Reactive.Bindings.Notifiers
 open ReactiveUI
 
 open TeaDriven.Zokhion
+open TeaDriven.Zokhion.FileSystem
 
 [<AllowNullLiteral>]
 type FileViewModel(fileInstance: FileInstance) =
@@ -37,8 +38,8 @@ type FileViewModel(fileInstance: FileInstance) =
     member __.NumberOfInstances = fileInstance.NumberOfInstances
 
 type SearchViewModelCommand =
-    | Directories of (DirectoryInfo option * string)
-    | Refresh of FileInfo list
+    | Directories of (DirectoryInfoCopy option * string)
+    | Refresh of FileInfoCopy list
     | InitialSearchString of string
     | EnableTab
 
@@ -71,7 +72,7 @@ type FilterMode = Search | CheckAffected
 
 type SearchFilter =
     {
-        Filter: FilterMode -> FileInfo -> bool
+        Filter: FilterMode -> FileInfoCopy -> bool
         SearchDirectory: string option
     }
 
@@ -85,11 +86,15 @@ type DisplayParameterChange =
     | GroupCategory of GroupCategory
     | SearchFilter of SearchFilter
 
-type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
+type FileViewModelOperation = Keep | Replace | Remove
+
+type SearchViewModel(
+    fileSystemCache: FileSystemCache,
+    commands: IObservable<SearchViewModelCommand>) as this =
     inherit ReactiveObject()
 
     let mutable baseDirectory = ""
-    let selectedDirectory = new BehaviorSubject<DirectoryInfo option>(None)
+    let selectedDirectory = new BehaviorSubject<DirectoryInfoCopy option>(None)
 
     let isGroupByFeatureValue = new ReactiveProperty<bool>()
     let groupCategory = new ReactiveProperty<GroupCategory>(NoGrouping)
@@ -165,27 +170,27 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                             [
                                 smaller
                                 |> Option.map (fun smaller ->
-                                    fun (file: FileInfo) -> file.Length < int64 smaller)
+                                    fun (file: FileInfoCopy) -> file.Length < int64 smaller)
 
                                 larger
                                 |> Option.map (fun larger ->
-                                    fun (file: FileInfo) -> file.Length > int64 larger)
+                                    fun (file: FileInfoCopy) -> file.Length > int64 larger)
 
                                 match contains with
                                 | [] -> None
                                 | contains ->
-                                    (fun (file: FileInfo) ->
+                                    (fun (file: FileInfoCopy) ->
                                         file.Name
-                                        |> Path.GetFileNameWithoutExtension
+                                        |> Path.getFileNameWithoutExtension
                                         |> toUpper
                                         |> (fun s -> [ s; s.Replace("_", " ") ])
                                         |> Seq.exists (containsAll contains))
                                         |> Some
                             ]
 
-                    let checkHasFeatures (file: FileInfo) =
+                    let checkHasFeatures (file: FileInfoCopy) =
                         file.FullName
-                        |> Path.GetFileNameWithoutExtension
+                        |> Path.getFileNameWithoutExtension
                         |> hasFeaturesRegex.IsMatch
 
                     match searchFilterParameters.WithFeatures with
@@ -195,16 +200,16 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
                 ]
                 |> List.choose id
 
-            fun (file: FileInfo) -> filters |> Seq.forall (fun filter -> filter file)
+            fun (file: FileInfoCopy) -> filters |> Seq.forall (fun filter -> filter file)
 
         let filter =
             let checkFilter =
-                fun (file: FileInfo) ->
+                fun (file: FileInfoCopy) ->
                     (toUpper file.FullName)
                         .StartsWith(searchDirectory |> Option.defaultValue "" |> toUpper)
                     && searchFilters file
 
-            fun filterMode (file: FileInfo) ->
+            fun filterMode (file: FileInfoCopy) ->
                 match filterMode with
                 | Search -> searchFilters file
                 | CheckAffected -> checkFilter file
@@ -216,11 +221,23 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
 
     let getFiles filter =
         filter.SearchDirectory
-        |> Option.filter (String.IsNullOrWhiteSpace >> not <&&> Directory.Exists)
-        |> Option.map (fun dir ->
-            Directory.GetFiles(dir, "*", SearchOption.AllDirectories)
-            |> Seq.map FileInfo
-            |> Seq.filter (filter.Filter Search))
+        |> Option.filter (String.IsNullOrWhiteSpace >> not <&&> Directory.exists)
+        |> Option.map
+            (fun searchDirectory ->
+                fileSystemCache.Files
+                |> Seq.filter
+                    (fun (KeyValue(file, fileInfo)) ->
+                        Path.isSubDirectoryOf searchDirectory (Path.getDirectoryName file))
+                |> Seq.map (fun (KeyValue(file, fileInfo)) -> fileInfo)
+                |> Seq.filter (filter.Filter Search)
+                |> Seq.toList)
+
+    let tryAddFile (files: ObservableCollection<_>) fileInstance =
+        try
+            FileViewModel fileInstance
+            |> Some
+        with _ -> None
+        |> Option.iter files.Add
 
     do
         header <-
@@ -366,16 +383,25 @@ type SearchViewModel(commands: IObservable<SearchViewModelCommand>) as this =
             |> Seq.iter (function
                 | LeftOnly vm -> files.Remove vm |> ignore
                 | RightOnly (JoinWrapped fileInstance) ->
-                    files.Add (FileViewModel fileInstance)
+                    fileInstance |> tryAddFile files
                 | JoinMatch (oldViewModel, JoinWrapped newFileInstance) ->
-                    let inline sizeAndDate (file: FileInfo) =
-                        file.Length, file.LastWriteTimeUtc
+                    let inline sizeAndDate (file: FileInfoCopy) =
+                        file.Length, file.LastWriteTime
 
-                    if (sizeAndDate newFileInstance.FileInfo, newFileInstance.NumberOfInstances)
-                       <> (sizeAndDate oldViewModel.FileInfo, oldViewModel.NumberOfInstances)
-                    then
-                        files.Remove oldViewModel |> ignore
-                        files.Add (FileViewModel newFileInstance))
+                    try
+                        if (sizeAndDate newFileInstance.FileInfo, newFileInstance.NumberOfInstances)
+                            <> (sizeAndDate oldViewModel.FileInfo, oldViewModel.NumberOfInstances)
+                        then Replace
+                        else Keep
+                    with
+                    | :? FileNotFoundException as ex -> Remove
+                    |> function
+                        | Keep -> ()
+                        | Remove -> files.Remove oldViewModel |> ignore
+                        | Replace ->
+                            files.Remove oldViewModel |> ignore
+
+                            newFileInstance |> tryAddFile files)
 
             isUpdatingNotifier.TurnOff()
 

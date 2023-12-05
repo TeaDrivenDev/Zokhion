@@ -66,6 +66,7 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Prelude.fs" />
     <Compile Include="Interop.fs" />
+    <Compile Include="FileSystem.fs" />
     <Compile Include="Settings.fs" />
     <Compile Include="Logic.fs" />
     <Compile Include="ViewModelUtility.fs" />

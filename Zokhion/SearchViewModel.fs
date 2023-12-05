@@ -219,6 +219,8 @@ type SearchViewModel(
             SearchDirectory = searchDirectory
         }
 
+    let searchStringCondition (s: string) = s.Length > 2
+
     let getFiles filter =
         filter.SearchDirectory
         |> Option.filter (String.IsNullOrWhiteSpace >> not <&&> Directory.exists)
@@ -271,12 +273,15 @@ type SearchViewModel(
             |> Observable.mergeSeq
             |> toReadOnlyReactiveProperty
 
-        let splitSearchString =
+        let splitSearchString condition =
             toUpper
             >> split [| "&&" |]
             >> Array.map trim
+            >> Array.filter condition
             >> Array.toList
-            >> SearchValues
+            >> function
+                | [] -> None
+                | elements -> SearchValues elements |> Some
 
         filter <-
             [
@@ -292,14 +297,18 @@ type SearchViewModel(
                     | Refresh _ -> []
                     | InitialSearchString searchString ->
                         [
-                            splitSearchString searchString
+                            yield!
+                                splitSearchString searchStringCondition searchString
+                                |> Option.toList
+
                             SearchFromBaseDirectory true
                         ]
                     | EnableTab -> [ Enable ])
 
                 searchString
                 |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
-                |> Observable.map (splitSearchString >> List.singleton)
+                |> Observable.choose (splitSearchString searchStringCondition)
+                |> Observable.map List.singleton
                 |> Observable.distinctUntilChanged
 
                 searchFromBaseDirectory

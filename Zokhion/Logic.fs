@@ -297,6 +297,7 @@ module Logic =
         | NoGrouping
         | ByIndividualNames
         | ByCoOccurringNames
+        | ByDirectory
         | ByFeature of Feature
 
     let singleInstanceWithGroup group fileInfo =
@@ -333,7 +334,7 @@ module Logic =
                 |> extractNames
                 |> String.concat ", "
 
-            [ singleInstanceWithGroup names fileInfo])
+            [ singleInstanceWithGroup names fileInfo ])
 
     let groupByIndividualNames (files: FileInfoCopy list) =
         files
@@ -341,6 +342,17 @@ module Logic =
             fileInfo.Name
             |> extractNames
             |> multiplexByGroups fileInfo)
+
+    let groupByDirectory (files: FileInfoCopy list) =
+        files
+        |> List.collect
+            (fun fileInfo ->
+                let directory =
+                    fileInfo.FullName
+                    |> Path.getDirectoryName
+                    |> Path.getFileName
+
+                [ singleInstanceWithGroup directory fileInfo ])
 
     let groupByFeatureInstances feature (files: FileInfoCopy list) =
         let featureInstanceCodes =
@@ -362,8 +374,12 @@ module Logic =
             |> multiplexByGroups fileInfo)
 
     let groupFilesByCategory groupCategory (files: FileInfoCopy list) =
-        match groupCategory with
-        | NoGrouping -> files |> List.map (singleInstanceWithGroup "")
-        | ByIndividualNames -> groupByIndividualNames files
-        | ByCoOccurringNames -> groupByCooccurringNames files
-        | ByFeature feature -> groupByFeatureInstances feature files
+        let groupSelector =
+            match groupCategory with
+            | NoGrouping -> List.map (singleInstanceWithGroup "")
+            | ByIndividualNames -> groupByIndividualNames
+            | ByCoOccurringNames -> groupByCooccurringNames
+            | ByDirectory -> groupByDirectory
+            | ByFeature feature -> groupByFeatureInstances feature
+
+        groupSelector files

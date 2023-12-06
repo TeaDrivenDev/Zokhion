@@ -1032,6 +1032,7 @@ type MainWindowViewModel() as this =
                     { Name = "No grouping"; GroupCategory = NoGrouping }
                     { Name = "Individual names"; GroupCategory = ByIndividualNames }
                     { Name = "Co-occurring names"; GroupCategory = ByCoOccurringNames }
+                    { Name = "Directory"; GroupCategory = ByDirectory}
 
                     yield!
                         features

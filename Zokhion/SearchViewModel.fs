@@ -279,9 +279,7 @@ type SearchViewModel(
             >> Array.map trim
             >> Array.filter condition
             >> Array.toList
-            >> function
-                | [] -> None
-                | elements -> SearchValues elements |> Some
+            >> SearchValues
 
         filter <-
             [
@@ -297,9 +295,7 @@ type SearchViewModel(
                     | Refresh _ -> []
                     | InitialSearchString searchString ->
                         [
-                            yield!
-                                splitSearchString searchStringCondition searchString
-                                |> Option.toList
+                            splitSearchString searchStringCondition searchString
 
                             SearchFromBaseDirectory true
                         ]
@@ -307,8 +303,7 @@ type SearchViewModel(
 
                 searchString
                 |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
-                |> Observable.choose (splitSearchString searchStringCondition)
-                |> Observable.map List.singleton
+                |> Observable.map (splitSearchString searchStringCondition >> List.singleton)
                 |> Observable.distinctUntilChanged
 
                 searchFromBaseDirectory

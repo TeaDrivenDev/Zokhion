@@ -157,20 +157,20 @@ module Logic =
 
         let originalFileName =
             let originalFileName =
-                match parameters.UnderscoreHandling with
-                | Replace -> originalFileName.Replace("_", " ")
-                | TrimSuffix ->
-                    let underscoreIndex = originalFileName.LastIndexOf '_'
-                    if underscoreIndex >= 0
-                    then originalFileName.[..underscoreIndex - 1]
-                    else originalFileName
-                | Ignore -> originalFileName
+                match parameters.Replacements with
+                | [] -> originalFileName
+                | replacements ->
+                    (originalFileName, replacements)
+                    ||> List.fold (fun acc (replace, replaceWith) -> acc.Replace(replace, replaceWith))
 
-            match parameters.Replacements with
-            | [] -> originalFileName
-            | replacements ->
-                (originalFileName, replacements)
-                ||> List.fold (fun acc (replace, replaceWith) -> acc.Replace(replace, replaceWith))
+            match parameters.UnderscoreHandling with
+            | Replace -> originalFileName.Replace("_", " ")
+            | TrimSuffix ->
+                let underscoreIndex = originalFileName.LastIndexOf '_'
+                if underscoreIndex >= 0
+                then originalFileName.[..underscoreIndex - 1]
+                else originalFileName
+            | Ignore -> originalFileName
 
         let (mainPart, namesPart, featuresPart) =
             splitFileName parameters.TreatParenthesizedPartAsNames originalFileName

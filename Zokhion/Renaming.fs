@@ -118,12 +118,13 @@ module Renaming =
             ``match``.Groups.["names"].Value.Split separator
             |> Array.map trim
             |> Array.toList
-            |> List.map (fun name ->
-                {
-                    Name = name
-                    Normalized = toUpper name
-                    Source = NamesPart
-                })
+            |> List.map
+                (fun name ->
+                    {
+                        Name = name
+                        Normalized = toUpper name
+                        Source = NamesPart
+                    })
 
         let m = markedNamesPartRegex.Match names
 
@@ -147,14 +148,16 @@ module Renaming =
         let part = part.ToUpper()
 
         allNames
-        |> List.filter (fun name ->
-            Regex.IsMatch(part, sprintf @"\b%s\b" name, RegexOptions.IgnoreCase) )
-        |> List.map (fun name ->
-            {
-                Name = name
-                Normalized = toUpper name
-                Source = source
-            })
+        |> List.filter
+            (fun name ->
+                Regex.IsMatch(part, sprintf @"\b%s\b" name, RegexOptions.IgnoreCase) )
+        |> List.map
+            (fun name ->
+                {
+                    Name = name
+                    Normalized = toUpper name
+                    Source = source
+                })
 
     let rename parameters (originalFileName: string): RenameResult =
         let originalFileName = string originalFileName
@@ -165,7 +168,8 @@ module Renaming =
                 | [] -> originalFileName
                 | replacements ->
                     (originalFileName, replacements)
-                    ||> List.fold (fun acc (replace, replaceWith) -> acc.Replace(replace, replaceWith))
+                    ||> List.fold
+                        (fun acc (replace, replaceWith) -> acc.Replace(replace, replaceWith))
 
             match parameters.UnderscoreHandling with
             | Replace -> originalFileName.Replace("_", " ")
@@ -181,65 +185,76 @@ module Renaming =
 
         let detectedNames =
             evaluateNamesPart namesPart
-            |> Option.map (fun names ->
-                if parameters.DetectNamesInMainAndNamesParts
-                then names @ detectListedNames parameters.AllNames MainPart mainPart
-                else names)
-            |> Option.defaultWith (fun () -> detectListedNames parameters.AllNames MainPart mainPart)
+            |> Option.map
+                (fun names ->
+                    if parameters.DetectNamesInMainAndNamesParts
+                    then names @ detectListedNames parameters.AllNames MainPart mainPart
+                    else names)
+            |> Option.defaultWith
+                (fun () -> detectListedNames parameters.AllNames MainPart mainPart)
             |> List.map JoinWrapper
             |> asFst parameters.AllNames
-            ||> fullOuterJoin (fun n -> n.Value.Normalized) toUpper
-            |> Seq.choose (function
-                | LeftOnly _ -> None
-                | RightOnly (JoinWrapped detected) ->
-                    if parameters.RecapitalizeNames
-                    then { detected with Name = toTitleCase detected.Name }
-                    else detected
-                    |> Some
-                | JoinMatch (listed, JoinWrapped detected) -> Some { detected with Name = listed })
+            ||> fullOuterJoin (_.Value.Normalized) toUpper
+            |> Seq.choose
+                (function
+                    | LeftOnly _ -> None
+                    | RightOnly (JoinWrapped detected) ->
+                        if parameters.RecapitalizeNames
+                        then { detected with Name = toTitleCase detected.Name }
+                        else detected
+                        |> Some
+                    | JoinMatch (listed, JoinWrapped detected) ->
+                        Some { detected with Name = listed })
             |> Seq.distinct
             |> Seq.toList
             |> List.sort
 
         let detectedAndSelectedNames =
             parameters.SelectedNames
-            |> Option.map (fun selected ->
-                selected
-                |> List.map (fun name ->
-                    { Name = name; Normalized = toUpper name; Source = Selected }
-                    |> JoinWrapper)
-                |> asSnd parameters.AllNames
-                ||> leftJoin toUpper (fun n -> n.Value.Normalized)
-                |> Seq.map (function
-                    | JoinWrapped selected, Some inAll -> selected
-                    | JoinWrapped selected, None ->
-                        detectedNames
-                        |> List.tryFind (fun detected -> detected.Normalized = selected.Normalized)
-                        |> Option.map (fun detected -> { selected with Name = detected.Name })
-                        |> Option.defaultValue selected)
-                |> Seq.toList)
+            |> Option.map
+                (fun selected ->
+                    selected
+                    |> List.map
+                        (fun name ->
+                            { Name = name; Normalized = toUpper name; Source = Selected }
+                            |> JoinWrapper)
+                    |> asSnd parameters.AllNames
+                    ||> leftJoin toUpper _.Value.Normalized
+                    |> Seq.map
+                        (function
+                            | JoinWrapped selected, Some inAll -> selected
+                            | JoinWrapped selected, None ->
+                                detectedNames
+                                |> List.tryFind
+                                    (fun detected -> detected.Normalized = selected.Normalized)
+                                |> Option.map
+                                    (fun detected -> { selected with Name = detected.Name })
+                                |> Option.defaultValue selected)
+                    |> Seq.toList)
             |> Option.defaultValue detectedNames
-            |> List.groupBy (fun n -> n.Normalized)
-            |> List.map (fun (_, occurrences) ->
-                occurrences |> List.sortBy (fun n -> n.Source) |> List.head)
-            |> List.sortBy (fun n -> n.Normalized)
+            |> List.groupBy _.Normalized
+            |> List.map (fun (_, occurrences) -> occurrences |> List.sortBy _.Source |> List.head)
+            |> List.sortBy _.Normalized
 
         let namesToUse =
             detectedAndSelectedNames
-            |> List.filter (fun name ->
-                name.Source <> MainPart
-                || detectedAndSelectedNames
-                   |> List.forall (fun n ->
-                        name = n || n.Normalized.Contains name.Normalized |> not))
-            |> List.map (fun n -> n.Name)
+            |> List.filter
+                (fun name ->
+                    name.Source <> MainPart
+                    || detectedAndSelectedNames
+                       |> List.forall
+                           (fun n ->
+                                name = n || n.Normalized.Contains name.Normalized |> not))
+            |> List.map _.Name
 
         let mainPart =
             if parameters.FixupNamesInMainPart
             then
                 try
                     (mainPart, namesToUse)
-                    ||> List.fold (fun acc current ->
-                        Regex.Replace(acc, current, current, RegexOptions.IgnoreCase))
+                    ||> List.fold
+                        (fun acc current ->
+                            Regex.Replace(acc, current, current, RegexOptions.IgnoreCase))
                 with _ -> mainPart
             else mainPart
 
@@ -265,18 +280,19 @@ module Renaming =
 
         let features =
             featuresToUse
-            |> Option.map (fun features ->
-                match features with
-                | [] -> ""
-                | _ ->
-                    [
-                        "["
+            |> Option.map
+                (fun features ->
+                    match features with
+                    | [] -> ""
+                    | _ ->
+                        [
+                            "["
 
-                        yield! features
+                            yield! features
 
-                        "]"
-                    ]
-                    |> String.concat ".")
+                            "]"
+                        ]
+                        |> String.concat ".")
             |> Option.defaultValue ""
 
         let newFileName =

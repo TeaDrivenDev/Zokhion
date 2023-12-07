@@ -142,40 +142,44 @@ type SearchViewModel(
                         | _ ->
                             let smaller, contains, larger =
                                 searchFilterParameters.SearchValues
-                                |> List.map (fun part ->
-                                    let m = smallerThanRegex.Match part
-
-                                    if m.Success
-                                    then
-                                        m.Groups.["size"].Value
-                                        |> Int32.Parse
-                                        |> (*) (1024 * 1024)
-                                        |> SmallerThan
-                                    else
-                                        let m = largerThanRegex.Match part
+                                |> List.map
+                                    (fun part ->
+                                        let m = smallerThanRegex.Match part
 
                                         if m.Success
                                         then
                                             m.Groups.["size"].Value
                                             |> Int32.Parse
                                             |> (*) (1024 * 1024)
-                                            |> LargerThan
-                                        else Contains [ toUpper part ])
+                                            |> SmallerThan
+                                        else
+                                            let m = largerThanRegex.Match part
+
+                                            if m.Success
+                                            then
+                                                m.Groups.["size"].Value
+                                                |> Int32.Parse
+                                                |> (*) (1024 * 1024)
+                                                |> LargerThan
+                                            else Contains [ toUpper part ])
                                 |> asSnd (None, [], None)
-                                ||> List.fold (fun (smaller, contains, larger) current ->
-                                    match current with
-                                    | SmallerThan smaller -> Some smaller, contains, larger
-                                    | Contains parts -> smaller, parts @ contains, larger
-                                    | LargerThan larger -> smaller, contains, Some larger)
+                                ||> List.fold
+                                    (fun (smaller, contains, larger) current ->
+                                        match current with
+                                        | SmallerThan smaller -> Some smaller, contains, larger
+                                        | Contains parts -> smaller, parts @ contains, larger
+                                        | LargerThan larger -> smaller, contains, Some larger)
 
                             [
                                 smaller
-                                |> Option.map (fun smaller ->
-                                    fun (file: FileInfoCopy) -> file.Length < int64 smaller)
+                                |> Option.map
+                                    (fun smaller ->
+                                        fun (file: FileInfoCopy) -> file.Length < int64 smaller)
 
                                 larger
-                                |> Option.map (fun larger ->
-                                    fun (file: FileInfoCopy) -> file.Length > int64 larger)
+                                |> Option.map
+                                    (fun larger ->
+                                        fun (file: FileInfoCopy) -> file.Length > int64 larger)
 
                                 match contains with
                                 | [] -> None
@@ -245,13 +249,14 @@ type SearchViewModel(
     do
         header <-
             searchString
-            |> Observable.map (function
-                | "" ->
-                    selectedDirectory.Value
-                    |> Option.map (fun selected -> selected.Name)
-                    |> Option.defaultValue " (none) "
-                    |> sprintf "<%s>"
-                | search -> search)
+            |> Observable.map
+                (function
+                    | "" ->
+                        selectedDirectory.Value
+                        |> Option.map (fun selected -> selected.Name)
+                        |> Option.defaultValue " (none) "
+                        |> sprintf "<%s>"
+                    | search -> search)
             |> Observable.startWith [ "Search" ]
             |> toReadOnlyReactiveProperty
 
@@ -286,21 +291,22 @@ type SearchViewModel(
             [
                 commands
                 |> Observable.filter (fun _ -> isActive.Value)
-                |> Observable.map (function
-                    | Directories (dir, ``base``) ->
-                        [
-                            dir |> Option.map (fun di -> SelectedDirectory di.FullName)
-                            Some (BaseDirectory ``base``)
-                        ]
-                        |> List.choose id
-                    | Refresh _ -> []
-                    | InitialSearchString searchString ->
-                        [
-                            splitSearchString searchStringCondition searchString
+                |> Observable.map
+                    (function
+                        | Directories (dir, ``base``) ->
+                            [
+                                dir |> Option.map (_.FullName >> SelectedDirectory)
+                                Some (BaseDirectory ``base``)
+                            ]
+                            |> List.choose id
+                        | Refresh _ -> []
+                        | InitialSearchString searchString ->
+                            [
+                                splitSearchString searchStringCondition searchString
 
-                            SearchFromBaseDirectory true
-                        ]
-                    | EnableTab -> [ Enable ])
+                                SearchFromBaseDirectory true
+                            ]
+                        | EnableTab -> [ Enable ])
 
                 searchString
                 |> Observable.throttleOn RxApp.MainThreadScheduler (TimeSpan.FromMilliseconds 500.)
@@ -312,13 +318,14 @@ type SearchViewModel(
 
                 (filterHasNoFeatures, filterHasFeatures)
                 ||> Observable.combineLatest
-                |> Observable.map (fun flags ->
-                    match flags with
-                    | true, false -> HasNoFeatures
-                    | false, true -> HasFeatures
-                    | _ -> Both
-                    |> WithFeatures
-                    |> List.singleton)
+                |> Observable.map
+                    (fun flags ->
+                        match flags with
+                        | true, false -> HasNoFeatures
+                        | false, true -> HasFeatures
+                        | _ -> Both
+                        |> WithFeatures
+                        |> List.singleton)
 
                 refreshSubject |> Observable.map (fun () -> [])
             ]
@@ -334,20 +341,21 @@ type SearchViewModel(
                 }
                 (fun parameters changes ->
                     (parameters, changes)
-                    ||> List.fold (fun current change ->
-                        match change with
-                        | BaseDirectory ``base`` ->
-                            { current with BaseDirectory = ``base`` }
-                        | SelectedDirectory dir ->
-                            { current with SelectedDirectory = Some dir }
-                        | SearchValues searchValues ->
-                            { current with SearchValues = searchValues }
-                        | WithFeatures withFeatures ->
-                            { current with WithFeatures = withFeatures }
-                        | SearchFromBaseDirectory fromBase ->
-                            { current with SearchFromBaseDirectory = fromBase }
-                        | Enable -> { current with IsEnabled = true }))
-            |> Observable.filter (fun filter -> filter.IsEnabled)
+                    ||> List.fold
+                        (fun current change ->
+                            match change with
+                            | BaseDirectory ``base`` ->
+                                { current with BaseDirectory = ``base`` }
+                            | SelectedDirectory dir ->
+                                { current with SelectedDirectory = Some dir }
+                            | SearchValues searchValues ->
+                                { current with SearchValues = searchValues }
+                            | WithFeatures withFeatures ->
+                                { current with WithFeatures = withFeatures }
+                            | SearchFromBaseDirectory fromBase ->
+                                { current with SearchFromBaseDirectory = fromBase }
+                            | Enable -> { current with IsEnabled = true }))
+            |> Observable.filter _.IsEnabled
             |> Observable.map createFilter
             |> toReadOnlyReactivePropertyWithMode ReactivePropertyMode.None
 
@@ -372,65 +380,69 @@ type SearchViewModel(
                 | SearchFilter filter -> { parameters with SearchFilter = filter})
         |> Observable.iter (fun _ -> isUpdatingNotifier.TurnOn())
         |> Observable.observeOn ThreadPoolScheduler.Instance
-        |> Observable.choose (fun parameters ->
-            getFiles parameters.SearchFilter
-            |> Option.map (Seq.toList >> asSnd parameters.GroupCategory))
+        |> Observable.choose
+            (fun parameters ->
+                getFiles parameters.SearchFilter
+                |> Option.map (Seq.toList >> asSnd parameters.GroupCategory))
         |> Observable.observeOn RxApp.MainThreadScheduler
-        |> Observable.subscribe (fun (groupCategory, newFiles) ->
-            let newFiles = Grouping.groupFilesByCategory groupCategory newFiles
+        |> Observable.subscribe
+            (fun (groupCategory, newFiles) ->
+                let newFiles = Grouping.groupFilesByCategory groupCategory newFiles
 
-            (newFiles |> List.map JoinWrapper, Seq.toList files)
-            ||> fullOuterJoin
-                (fun newFile ->
-                    let { Group = group; FileInfo = file } = newFile.Value
-                    group, file.FullName)
-                (fun viewModel -> viewModel.Group, viewModel.FileInfo.FullName)
-            |> Seq.iter (function
-                | LeftOnly vm -> files.Remove vm |> ignore
-                | RightOnly (JoinWrapped fileInstance) ->
-                    fileInstance |> tryAddFile files
-                | JoinMatch (oldViewModel, JoinWrapped newFileInstance) ->
-                    let inline sizeAndDate (file: FileInfoCopy) =
-                        file.Length, file.LastWriteTime
+                (newFiles |> List.map JoinWrapper, Seq.toList files)
+                ||> fullOuterJoin
+                    (fun newFile ->
+                        let { Group = group; FileInfo = file } = newFile.Value
+                        group, file.FullName)
+                    (fun viewModel -> viewModel.Group, viewModel.FileInfo.FullName)
+                |> Seq.iter
+                    (function
+                        | LeftOnly vm -> files.Remove vm |> ignore
+                        | RightOnly (JoinWrapped fileInstance) ->
+                            fileInstance |> tryAddFile files
+                        | JoinMatch (oldViewModel, JoinWrapped newFileInstance) ->
+                            let inline sizeAndDate (file: FileInfoCopy) =
+                                file.Length, file.LastWriteTime
 
-                    try
-                        if (sizeAndDate newFileInstance.FileInfo, newFileInstance.NumberOfInstances)
-                            <> (sizeAndDate oldViewModel.FileInfo, oldViewModel.NumberOfInstances)
-                        then Replace
-                        else Keep
-                    with
-                    | :? FileNotFoundException as ex -> Remove
-                    |> function
-                        | Keep -> ()
-                        | Remove -> files.Remove oldViewModel |> ignore
-                        | Replace ->
-                            files.Remove oldViewModel |> ignore
+                            try
+                                if (sizeAndDate newFileInstance.FileInfo, newFileInstance.NumberOfInstances)
+                                    <> (sizeAndDate oldViewModel.FileInfo, oldViewModel.NumberOfInstances)
+                                then Replace
+                                else Keep
+                            with
+                            | :? FileNotFoundException as ex -> Remove
+                            |> function
+                                | Keep -> ()
+                                | Remove -> files.Remove oldViewModel |> ignore
+                                | Replace ->
+                                    files.Remove oldViewModel |> ignore
 
-                            newFileInstance |> tryAddFile files)
+                                    newFileInstance |> tryAddFile files)
 
-            isUpdatingNotifier.TurnOff()
+                isUpdatingNotifier.TurnOff()
 
-            this.RaisePropertyChanged(nameof this.Files))
+                this.RaisePropertyChanged(nameof this.Files))
         |> ignore
 
         [ refreshCommand.AsObservable(); commands ]
         |> Observable.mergeSeq
-        |> Observable.subscribe (function
-            | Directories (selected, ``base``) ->
-                if isActive.Value
-                then
-                    selectedDirectory.OnNext selected
-                    baseDirectory <- ``base``
-                    searchFromBaseDirectory.Value <- Option.isNone selected
+        |> Observable.subscribe
+            (function
+                | Directories (selected, ``base``) ->
+                    if isActive.Value
+                    then
+                        selectedDirectory.OnNext selected
+                        baseDirectory <- ``base``
+                        searchFromBaseDirectory.Value <- Option.isNone selected
 
-                    searchString.Value <- ""
-            | Refresh files ->
-                match files with
-                | [] -> isActive.Value
-                | _ -> files |> List.exists (filter.Value.Filter CheckAffected)
-                |> fun refresh -> if refresh then refreshSubject.OnNext ()
-            | InitialSearchString _
-            | EnableTab -> ())
+                        searchString.Value <- ""
+                | Refresh files ->
+                    match files with
+                    | [] -> isActive.Value
+                    | _ -> files |> List.exists (filter.Value.Filter CheckAffected)
+                    |> fun refresh -> if refresh then refreshSubject.OnNext ()
+                | InitialSearchString _
+                | EnableTab -> ())
         |> ignore
 
         isActive

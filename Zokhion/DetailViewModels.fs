@@ -31,10 +31,10 @@ type FeatureViewModel(feature: Feature) as this =
 
         hasSelectedInstances <-
             instances.ItemChanged
-            |> Observable.filter (fun change ->
-                change.PropertyName = nameof (Unchecked.defaultof<FeatureInstanceViewModel>.IsSelected))
-            |> Observable.map (fun _ ->
-                instances |> Seq.exists (fun instance -> instance.IsSelected))
+            |> Observable.filter
+                (fun change ->
+                    change.PropertyName = nameof instance<FeatureInstanceViewModel>.IsSelected)
+            |> Observable.map (fun _ -> instances |> Seq.exists _.IsSelected)
             |> toReadOnlyReactiveProperty
 
     member __.FeatureName = feature.Name
@@ -48,12 +48,12 @@ type FeatureViewModel(feature: Feature) as this =
     member __.HasSelectedInstances = hasSelectedInstances
 
     member __.Feature =
-        { feature with Instances = instances |> Seq.map (fun vm -> vm.Instance) |> Seq.toList }
+        { feature with Instances = instances |> Seq.map _.Instance |> Seq.toList }
 
     member val IsExpanded = new ReactiveProperty<_>(true)
 
     member __.ResetExpanded () =
-        __.IsExpanded.Value <- __.Instances |> Seq.exists (fun vm -> vm.IsSelected)
+        __.IsExpanded.Value <- __.Instances |> Seq.exists _.IsSelected
 
 and [<AllowNullLiteral>]
     FeatureInstanceViewModel(feature: Feature, instance: FeatureInstance) =
@@ -168,8 +168,10 @@ type NameViewModelComparer(mode: NameViewModelComparerMode) =
             | NameOnly -> byName ()
             | Selection ->
                 byFlag a.IsSelected b.IsSelected
-                |> Option.defaultWith (fun () ->
-                    byFlag a.IsNewlyDetected.Value b.IsNewlyDetected.Value
-                    |> Option.defaultWith (fun () ->
-                        byFlag a.IsPinned b.IsPinned
-                        |> Option.defaultWith byName))
+                |> Option.defaultWith
+                    (fun () ->
+                        byFlag a.IsNewlyDetected.Value b.IsNewlyDetected.Value
+                        |> Option.defaultWith
+                            (fun () ->
+                                byFlag a.IsPinned b.IsPinned
+                                |> Option.defaultWith byName))

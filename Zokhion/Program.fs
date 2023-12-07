@@ -37,17 +37,18 @@ type MainWindow() as this =
     member __.ViewModel: MainWindowViewModel = __.DataContext :?> MainWindowViewModel
 
     override __.MainWindow_OnActivated(_: obj, e: EventArgs) =
-        (this.ActivityLog.Items :> INotifyCollectionChanged).CollectionChanged.Add (fun _ ->
-            if __.ActivityLog.Items.Count > 0
-            then
-                if VisualTreeHelper.GetChildrenCount __.ActivityLog > 0
+        (this.ActivityLog.Items :> INotifyCollectionChanged).CollectionChanged.Add
+            (fun _ ->
+                if __.ActivityLog.Items.Count > 0
                 then
-                    match VisualTreeHelper.GetChild(__.ActivityLog, 0) with
-                    | :? Decorator as decorator ->
-                        match decorator.Child with
-                        | :? ScrollViewer as scrollViewer -> scrollViewer.ScrollToEnd()
-                        | _ -> ()
-                    | _ -> ())
+                    if VisualTreeHelper.GetChildrenCount __.ActivityLog > 0
+                    then
+                        match VisualTreeHelper.GetChild(__.ActivityLog, 0) with
+                        | :? Decorator as decorator ->
+                            match decorator.Child with
+                            | :? ScrollViewer as scrollViewer -> scrollViewer.ScrollToEnd()
+                            | _ -> ()
+                        | _ -> ())
 
     override __.SelectFolder_Click(_: obj, e: RoutedEventArgs) =
         use folderBrowserDialog = new Forms.FolderBrowserDialog()

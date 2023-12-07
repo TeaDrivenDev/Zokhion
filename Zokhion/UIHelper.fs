@@ -197,7 +197,7 @@ type FilesToUniqueCountConverter() =
             match value with
             | :? (FileViewModel seq) as files ->
                 files
-                |> Seq.distinctBy (fun vm -> vm.FullName)
+                |> Seq.distinctBy _.FullName
                 |> Seq.length
             | _ -> 0
             :> obj
@@ -213,8 +213,8 @@ type FilesToTotalSizeConverter() =
             match value with
             | :? (FileViewModel seq) as files ->
                 files
-                |> Seq.distinctBy (fun vm -> vm.FullName)
-                |> Seq.sumBy (fun fi -> fi.Length)
+                |> Seq.distinctBy _.FullName
+                |> Seq.sumBy _.Length
                 |> float |> Utilities.bytesToMegabytes
             | _ -> 0.
             :> obj

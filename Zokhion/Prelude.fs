@@ -27,6 +27,8 @@ module Prelude =
 
     let uncurry fn (a, b) = fn a b
 
+    let instance<'T> = Unchecked.defaultof<'T>
+
     let join innerKeySelector outerKeySelector (inner: seq<'TInner>) (outer: seq<'TOuter>) =
         outer.Join(
             inner,
@@ -56,11 +58,12 @@ module Prelude =
             |> Seq.map (optionizeFirst >> swap)
 
         Seq.append valueInOuter valueInInnerOnly
-        |> Seq.map (function
-            | Some leftItem, Some rightItem -> JoinMatch (leftItem, rightItem)
-            | Some leftItem, None -> LeftOnly leftItem
-            | None, Some rightItem -> RightOnly rightItem
-            | None, None -> failwith "This can never happen.")
+        |> Seq.map
+            (function
+                | Some leftItem, Some rightItem -> JoinMatch (leftItem, rightItem)
+                | Some leftItem, None -> LeftOnly leftItem
+                | None, Some rightItem -> RightOnly rightItem
+                | None, None -> failwith "This can never happen.")
 
     let (|OfNull|) value = if isNull value then None else Some value
 
@@ -89,8 +92,8 @@ module Prelude =
 
         do
             innerSubject
-            |> Observable.subscribe (fun value ->
-                if selector value then lastValue <- Some value)
+            |> Observable.subscribe
+                (fun value -> if selector value then lastValue <- Some value)
             |> compositeDisposable.Add
 
             compositeDisposable.Add innerSubject

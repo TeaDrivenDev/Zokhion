@@ -29,12 +29,13 @@ module Grouping =
         | [] -> [ singleInstanceWithGroup "" fileInfo ]
         | groups ->
             groups
-            |> List.map (fun group ->
-                {
-                    Group = group
-                    NumberOfInstances = groups.Length
-                    FileInfo = fileInfo
-                })
+            |> List.map
+                (fun group ->
+                    {
+                        Group = group
+                        NumberOfInstances = groups.Length
+                        FileInfo = fileInfo
+                    })
 
     let extractNames fileName =
         let _, names, _=
@@ -49,20 +50,22 @@ module Grouping =
 
     let groupByCooccurringNames (files: FileInfoCopy list) =
         files
-        |> List.collect (fun fileInfo ->
-            let names =
-                fileInfo.Name
-                |> extractNames
-                |> String.concat ", "
+        |> List.collect
+            (fun fileInfo ->
+                let names =
+                    fileInfo.Name
+                    |> extractNames
+                    |> String.concat ", "
 
-            [ singleInstanceWithGroup names fileInfo ])
+                [ singleInstanceWithGroup names fileInfo ])
 
     let groupByIndividualNames (files: FileInfoCopy list) =
         files
-        |> List.collect (fun fileInfo ->
-            fileInfo.Name
-            |> extractNames
-            |> multiplexByGroups fileInfo)
+        |> List.collect
+            (fun fileInfo ->
+                fileInfo.Name
+                |> extractNames
+                |> multiplexByGroups fileInfo)
 
     let groupByDirectory (files: FileInfoCopy list) =
         files
@@ -82,17 +85,18 @@ module Grouping =
             |> Set.ofList
 
         files
-        |> List.collect (fun fileInfo ->
-            let _, _, features =
-                Path.getFileNameWithoutExtension fileInfo.Name
-                |> Renaming.splitFileName false
+        |> List.collect
+            (fun fileInfo ->
+                let _, _, features =
+                    Path.getFileNameWithoutExtension fileInfo.Name
+                    |> Renaming.splitFileName false
 
-            Renaming.evaluateFeaturesPart features
-            |> Option.defaultValue []
-            |> Set.ofList
-            |> Set.intersect featureInstanceCodes
-            |> Set.toList
-            |> multiplexByGroups fileInfo)
+                Renaming.evaluateFeaturesPart features
+                |> Option.defaultValue []
+                |> Set.ofList
+                |> Set.intersect featureInstanceCodes
+                |> Set.toList
+                |> multiplexByGroups fileInfo)
 
     let groupFilesByCategory groupCategory (files: FileInfoCopy list) =
         let groupSelector =

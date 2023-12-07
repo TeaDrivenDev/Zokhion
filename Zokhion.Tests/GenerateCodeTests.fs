@@ -64,11 +64,12 @@ module GenerateCodeTests =
         let split = splitLength parts.Length parameters.CodeLength
 
         (([], 0), Seq.zip parts split)
-        ||> Seq.fold (fun (codes, difference) (part, length) ->
-            let length = length + difference
-            let code = encodeWord { parameters with CodeLength = length } part
+        ||> Seq.fold
+            (fun (codes, difference) (part, length) ->
+                let length = length + difference
+                let code = encodeWord { parameters with CodeLength = length } part
 
-            code :: codes, length - code.Length)
+                code :: codes, length - code.Length)
         |> fst
         |> Seq.rev
         |> String.concat ""

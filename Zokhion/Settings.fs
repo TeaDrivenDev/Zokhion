@@ -61,9 +61,10 @@ module Settings =
         then
             let prefixes =
                 File.readAllLines prefixesFilePath
-                |> Array.map (fun s ->
-                    let [| name; prefixes |] = s.Split [| '=' |]
-                    name, prefixes)
+                |> Array.map
+                    (fun s ->
+                        let [| name; prefixes |] = s.Split [| '=' |]
+                        name, prefixes)
                 |> Map.ofArray
 
             let sourcePrefixes =
@@ -80,8 +81,9 @@ module Settings =
 
         let lines =
             replacements
-            |> List.map (fun replacement ->
-                sprintf "%s|%s" replacement.ToReplace replacement.ReplaceWith)
+            |> List.map
+                (fun replacement ->
+                    sprintf "%s|%s" replacement.ToReplace replacement.ReplaceWith)
 
         if not <| List.isEmpty lines || File.exists replacementsFilePath
         then File.writeAllLines replacementsFilePath lines
@@ -92,13 +94,14 @@ module Settings =
         if File.exists replacementsFilePath
         then
             File.readAllLines replacementsFilePath
-            |> Array.map (fun s ->
-                let [| toReplace; replaceWith |] = s.Split '|'
+            |> Array.map
+                (fun s ->
+                    let [| toReplace; replaceWith |] = s.Split '|'
 
-                {
-                    ToReplace = toReplace
-                    ReplaceWith = replaceWith
-                })
+                    {
+                        ToReplace = toReplace
+                        ReplaceWith = replaceWith
+                    })
             |> Array.toList
         else []
 
@@ -176,11 +179,12 @@ module Settings =
                     Include = toInclude
                     Instances =
                         instances
-                        |> List.map (fun (name, code) ->
-                            {
-                                Name = name
-                                Code = code
-                            })
+                        |> List.map
+                            (fun (name, code) ->
+                                {
+                                    Name = name
+                                    Code = code
+                                })
                 }
                 :: deserialize tail
             | _ -> []

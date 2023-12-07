@@ -67,14 +67,13 @@ module FileSystem =
         | Ready
 
     [<AllowNullLiteral>]
-    type FileInfoCopy(fileInfo: FileInfo) =
-        let name = fileInfo.Name
-        let fullName = fileInfo.FullName
-        let directoryName = fileInfo.DirectoryName
-        let creationTime = fileInfo.CreationTime
-        let lastWriteTime = fileInfo.LastWriteTime
-        let length = fileInfo.Length
-
+    type FileInfoCopy(
+        name: string,
+        fullName: string,
+        directoryName: string,
+        creationTime: DateTime,
+        lastWriteTime: DateTime,
+        length: int64) =
         member __.Name = name
         member __.FullName = fullName
         member __.DirectoryName = directoryName
@@ -82,7 +81,16 @@ module FileSystem =
         member __.LastWriteTime = lastWriteTime
         member __.Length = length
 
-        new(filePath: string) = FileInfoCopy(FileInfo(filePath))
+        static member FromFilePath(filePath: string) =
+            let fileInfo = FileInfo filePath
+
+            FileInfoCopy(
+                fileInfo.Name,
+                fileInfo.FullName,
+                fileInfo.DirectoryName,
+                fileInfo.CreationTime,
+                fileInfo.LastWriteTime,
+                fileInfo.Length)
 
     [<AllowNullLiteral>]
     type DirectoryInfoCopy(directoryInfo: System.IO.DirectoryInfo) =
@@ -168,7 +176,7 @@ module FileSystem =
                                 Initializing (float index / float subDirectories.Length * 100.)
 
                             files
-                            |> Array.map (fun file -> file, (FileInfoCopy file)))
+                            |> Array.map (fun file -> file, FileInfoCopy.FromFilePath file))
                     |> Array.concat
 
                 files <- data |> dict |> ConcurrentDictionary
@@ -184,7 +192,7 @@ module FileSystem =
                             |> List.iter
                                 (fun (file, fileChange) ->
                                     match fileChange with
-                                    | Added -> files.[file] <- FileInfoCopy file
+                                    | Added -> files.[file] <- FileInfoCopy.FromFilePath file
                                     | Removed -> files.TryRemove file |> ignore))
                     |> Observable.multicast Subject.broadcast
 

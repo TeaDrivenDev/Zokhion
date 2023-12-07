@@ -661,7 +661,7 @@ type MainWindowViewModel() as this =
                     try
                         File.move oldFile.FullName newName
 
-                        [ oldFile; FileInfoCopy newName ]
+                        [ oldFile; FileInfoCopy.FromFilePath newName ]
                         |> Refresh
                         |> searchCommands.OnNext
 
@@ -745,7 +745,7 @@ type MainWindowViewModel() as this =
                             sprintf "%s\n%s" oldFile.FullName newName
                             |> log Informational RenameSuccess
 
-                            Some (oldFile, Some (FileInfoCopy newName))
+                            Some (oldFile, Some (FileInfoCopy.FromFilePath newName))
                         with _ -> None
                     else Some (oldFile, None))
                 |> Seq.toList

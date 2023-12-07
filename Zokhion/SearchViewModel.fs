@@ -17,6 +17,7 @@ open ReactiveUI
 
 open TeaDriven.Zokhion
 open TeaDriven.Zokhion.FileSystem
+open TeaDriven.Zokhion.GroupingTypes
 
 [<AllowNullLiteral>]
 type FileViewModel(fileInstance: FileInstance) =
@@ -376,7 +377,7 @@ type SearchViewModel(
             |> Option.map (Seq.toList >> asSnd parameters.GroupCategory))
         |> Observable.observeOn RxApp.MainThreadScheduler
         |> Observable.subscribe (fun (groupCategory, newFiles) ->
-            let newFiles = Logic.groupFilesByCategory groupCategory newFiles
+            let newFiles = Grouping.groupFilesByCategory groupCategory newFiles
 
             (newFiles |> List.map JoinWrapper, Seq.toList files)
             ||> fullOuterJoin

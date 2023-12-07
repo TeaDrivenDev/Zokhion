@@ -68,7 +68,8 @@
     <Compile Include="Interop.fs" />
     <Compile Include="FileSystem.fs" />
     <Compile Include="Settings.fs" />
-    <Compile Include="Logic.fs" />
+    <Compile Include="Renaming.fs" />
+    <Compile Include="Grouping.fs" />
     <Compile Include="ViewModelUtility.fs" />
     <Compile Include="SearchViewModel.fs" />
     <Compile Include="DetailViewModels.fs" />

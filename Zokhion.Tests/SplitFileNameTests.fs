@@ -21,7 +21,7 @@ module SplitFileNameTests =
         let expectedResult = (expectedMain, expectedNames, expectedFeatures)
 
         // Act
-        let result = splitFileName true fileName
+        let result = Renaming.splitFileName true fileName
 
         // Assert
         Assert.Equal (expectedResult, result)
@@ -42,7 +42,7 @@ module SplitFileNameTests =
         let expectedResult = (expectedMain, expectedNames, expectedFeatures)
 
         // Act
-        let result = splitFileName false fileName
+        let result = Renaming.splitFileName false fileName
 
         // Assert
         Assert.Equal (expectedResult, result)

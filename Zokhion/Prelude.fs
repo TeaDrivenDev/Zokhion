@@ -70,6 +70,14 @@ module Prelude =
         if String.IsNullOrWhiteSpace value then None else Some value
 
     let inline ( <&&> ) f g x = f x && g x
+    let inline ( <||> ) f g x = f x || g x
+
+    let trim (s: string) = s.Trim()
+
+    let toUpper (s: string) = s.ToUpper()
+
+    let toTitleCase s =
+        System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase s
 
     /// A BehaviorSubject that only keeps a value fulfilling a certain condition
     type SelectiveBehaviorSubject<'T>(selector: 'T -> bool) =

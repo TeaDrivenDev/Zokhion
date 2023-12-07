@@ -26,6 +26,8 @@ open ReactiveUI
 
 open TeaDriven.Zokhion
 open TeaDriven.Zokhion.FileSystem
+open TeaDriven.Zokhion.GroupingTypes
+open TeaDriven.Zokhion.RenamingTypes
 
 type GroupCategoryEntry =
     {
@@ -362,7 +364,7 @@ type MainWindowViewModel() as this =
         |> Seq.toList
 
     let updateNewFileName originalFileName parameters =
-        let result = rename parameters originalFileName
+        let result = Renaming.rename parameters originalFileName
         this.NewFileName.Value <- result.NewFileName
 
         result.DetectedNames
@@ -888,7 +890,7 @@ type MainWindowViewModel() as this =
             this.TreatParenthesizedPartAsNames |> Observable.map TreatParenthesizedPartAsNames
             this.FixupNamesInMainPart |> Observable.map FixupNamesInMainPart
             this.UnderscoreHandling
-            |> Observable.map (toUnderscoreHandling >> Logic.UnderscoreHandling)
+            |> Observable.map (toUnderscoreHandling >> RenamingTypes.UnderscoreHandling)
 
             this.DetectNamesInMainAndNamesParts |> Observable.map DetectNamesInMainAndNamesParts
             this.RecapitalizeNames |> Observable.map RecapitalizeNames
@@ -948,7 +950,7 @@ type MainWindowViewModel() as this =
                 Replacements = []
                 AllNames = getAllNames ()
             }
-            (updateParameters this.Replacements getAllNames)
+            (Renaming.updateParameters this.Replacements getAllNames)
         |> Observable.subscribe (fun parameters ->
             updateNewFileNameGate.TurnOff()
             updateNewFileName this.OriginalFileName.Value parameters

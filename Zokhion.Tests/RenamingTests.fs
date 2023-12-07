@@ -4,6 +4,7 @@ module RenamingTests =
     open Xunit
 
     open TeaDriven.Zokhion
+    open TeaDriven.Zokhion.RenamingTypes
 
     let allNames =
         [
@@ -43,7 +44,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -63,7 +64,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -87,7 +88,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -110,7 +111,7 @@ module RenamingTests =
             }
 
         // Act
-        let { DetectedNames = detectedNames } = rename parameters originalName
+        let { DetectedNames = detectedNames } = Renaming.rename parameters originalName
 
         // Assert
         Assert.Equal (detectedNames |> List.contains nameToDetect, expectedDetected)
@@ -130,7 +131,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -150,7 +151,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -170,7 +171,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -190,7 +191,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -215,7 +216,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -240,7 +241,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -264,7 +265,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -288,7 +289,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -308,7 +309,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -332,7 +333,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -356,7 +357,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -376,7 +377,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -400,7 +401,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -420,7 +421,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -440,7 +441,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -464,7 +465,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -488,7 +489,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -508,7 +509,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -532,7 +533,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -556,7 +557,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -576,7 +577,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -596,7 +597,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -620,7 +621,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
@@ -644,7 +645,7 @@ module RenamingTests =
             }
 
         // Act
-        let result = rename parameters originalName
+        let result = Renaming.rename parameters originalName
 
         // Assert
         Assert.StrictEqual (expectedResult, result)

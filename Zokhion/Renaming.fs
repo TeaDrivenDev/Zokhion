@@ -1,20 +1,17 @@
 ﻿namespace TeaDriven.Zokhion
 
-[<AutoOpen>]
-module Logic =
-    open System
-    open System.Globalization
-    open System.IO
-    open System.Text.RegularExpressions
-
-    open TeaDriven.Zokhion.FileSystem
-
-    let inline ( <||> ) f g x = f x || g x
-    let trim (s: string) = s.Trim()
-    let toUpper (s: string) = s.ToUpper()
-    let toTitleCase s = CultureInfo.CurrentCulture.TextInfo.ToTitleCase s
-
+module RenamingTypes =
     type UnderscoreHandling = Replace | TrimSuffix | Ignore
+
+    type OptionChange =
+        | TreatParenthesizedPartAsNames of bool
+        | FixupNamesInMainPart of bool
+        | RecapitalizeNames of bool
+        | UnderscoreHandling of UnderscoreHandling
+        | DetectNamesInMainAndNamesParts of bool
+        | SelectedNames of string list option
+        | SelectedFeatures of string list option
+        | ResetSelections
 
     type RenameParameters =
         {
@@ -29,15 +26,28 @@ module Logic =
             Replacements: (string * string) list
         }
 
-    type OptionChange =
-        | TreatParenthesizedPartAsNames of bool
-        | FixupNamesInMainPart of bool
-        | RecapitalizeNames of bool
-        | UnderscoreHandling of UnderscoreHandling
-        | DetectNamesInMainAndNamesParts of bool
-        | SelectedNames of string list option
-        | SelectedFeatures of string list option
-        | ResetSelections
+    type RenameResult =
+        {
+            NewFileName: string
+            DetectedFeatures: string list
+            DetectedNames: string list
+        }
+
+    type NameSource = Selected | NamesPart | MainPart
+
+    type MatchedName =
+        {
+            Name: string
+            Normalized: string
+            Source: NameSource
+        }
+
+[<RequireQualifiedAccess>]
+module Renaming =
+    open System
+    open System.Text.RegularExpressions
+
+    open RenamingTypes
 
     let updateParameters replacements getAllNames parameters change =
         let parameters =
@@ -79,22 +89,6 @@ module Logic =
                     SelectedFeatures = None
                     SelectedNames = None
             }
-
-    type RenameResult =
-        {
-            NewFileName: string
-            DetectedFeatures: string list
-            DetectedNames: string list
-        }
-
-    type NameSource = Selected | NamesPart | MainPart
-
-    type MatchedName =
-        {
-            Name: string
-            Normalized: string
-            Source: NameSource
-        }
 
     let splitFileName preserveSeparateNamesPart (fileName: string) =
         let regex =
@@ -285,101 +279,3 @@ module Logic =
             DetectedNames = namesToUse
             DetectedFeatures = featuresToUse |> Option.defaultValue []
         }
-
-    type FileInstance =
-        {
-            Group: string
-            NumberOfInstances: int
-            FileInfo: FileInfoCopy
-        }
-
-    type GroupCategory =
-        | NoGrouping
-        | ByIndividualNames
-        | ByCoOccurringNames
-        | ByDirectory
-        | ByFeature of Feature
-
-    let singleInstanceWithGroup group fileInfo =
-        { Group = group; NumberOfInstances = 1; FileInfo = fileInfo }
-
-    let multiplexByGroups fileInfo groups =
-        match groups with
-        | [] -> [ singleInstanceWithGroup "" fileInfo ]
-        | groups ->
-            groups
-            |> List.map (fun group ->
-                {
-                    Group = group
-                    NumberOfInstances = groups.Length
-                    FileInfo = fileInfo
-                })
-
-    let extractNames fileName =
-        let _, names, _=
-            Path.getFileNameWithoutExtension fileName
-            |> splitFileName true
-
-        let m = Regex.Match(names, @"^\(\.(?<names>.+)\.\)$")
-
-        if m.Success
-        then m.Groups.["names"].Value.Split [| '.' |] |> Array.map trim |> Array.toList
-        else []
-
-    let groupByCooccurringNames (files: FileInfoCopy list) =
-        files
-        |> List.collect (fun fileInfo ->
-            let names =
-                fileInfo.Name
-                |> extractNames
-                |> String.concat ", "
-
-            [ singleInstanceWithGroup names fileInfo ])
-
-    let groupByIndividualNames (files: FileInfoCopy list) =
-        files
-        |> List.collect (fun fileInfo ->
-            fileInfo.Name
-            |> extractNames
-            |> multiplexByGroups fileInfo)
-
-    let groupByDirectory (files: FileInfoCopy list) =
-        files
-        |> List.collect
-            (fun fileInfo ->
-                let directory =
-                    fileInfo.FullName
-                    |> Path.getDirectoryName
-                    |> Path.getFileName
-
-                [ singleInstanceWithGroup directory fileInfo ])
-
-    let groupByFeatureInstances feature (files: FileInfoCopy list) =
-        let featureInstanceCodes =
-            feature.Instances
-            |> List.map (fun instance -> feature.Code + instance.Code)
-            |> Set.ofList
-
-        files
-        |> List.collect (fun fileInfo ->
-            let _, _, features =
-                Path.getFileNameWithoutExtension fileInfo.Name
-                |> splitFileName false
-
-            evaluateFeaturesPart features
-            |> Option.defaultValue []
-            |> Set.ofList
-            |> Set.intersect featureInstanceCodes
-            |> Set.toList
-            |> multiplexByGroups fileInfo)
-
-    let groupFilesByCategory groupCategory (files: FileInfoCopy list) =
-        let groupSelector =
-            match groupCategory with
-            | NoGrouping -> List.map (singleInstanceWithGroup "")
-            | ByIndividualNames -> groupByIndividualNames
-            | ByCoOccurringNames -> groupByCooccurringNames
-            | ByDirectory -> groupByDirectory
-            | ByFeature feature -> groupByFeatureInstances feature
-
-        groupSelector files

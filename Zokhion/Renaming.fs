@@ -49,6 +49,17 @@ module Renaming =
 
     open RenamingTypes
 
+    let compileRegex pattern = Regex(pattern, RegexOptions.Compiled)
+
+    let fileNameRegexPreservingNamesPart =
+        compileRegex @"^(?<main>.+?)\s*(?<names>\([^\)]+\))?\s*(?<features>\[\..+\.\])?$"
+    let fileNameRegexDisregardingNamesPart =
+        compileRegex @"^(?<main>.+?)\s*(?<features>\[\..+\.\])?$"
+
+    let markedNamesPartRegex = compileRegex @"^\(\.(?<names>.+)\.\)$"
+    let unmarkedNamesPartRegex = compileRegex @"^\((?<names>.+)\)"
+    let featuresPartRegex = compileRegex @"^\[\.(?<features>.+)\.\]$"
+
     let updateParameters replacements getAllNames parameters change =
         let parameters =
             {
@@ -91,13 +102,12 @@ module Renaming =
             }
 
     let splitFileName preserveSeparateNamesPart (fileName: string) =
-        let regex =
+        let fileNameRegex =
             if preserveSeparateNamesPart
-            then @"^(?<main>.+?)\s*(?<names>\([^\)]+\))?\s*(?<features>\[\..+\.\])?$"
-            else @"^(?<main>.+?)\s*(?<features>\[\..+\.\])?$"
-            |> Regex
+            then fileNameRegexPreservingNamesPart
+            else fileNameRegexDisregardingNamesPart
 
-        let m = regex.Match fileName
+        let m = fileNameRegex.Match fileName
 
         if m.Success
         then m.Groups.["main"].Value, m.Groups.["names"].Value, m.Groups.["features"].Value
@@ -115,19 +125,19 @@ module Renaming =
                     Source = NamesPart
                 })
 
-        let m = Regex.Match(names, @"^\(\.(?<names>.+)\.\)$")
+        let m = markedNamesPartRegex.Match names
 
         if m.Success
         then Some (splitBy [| '.' |] m)
         else
-            let m = Regex.Match(names, @"^\((?<names>.+)\)")
+            let m = unmarkedNamesPartRegex.Match names
 
             if m.Success
             then Some (splitBy [| ',' |] m)
             else None
 
     let evaluateFeaturesPart (names: string) =
-        let m = Regex.Match(names, @"^\[\.(?<features>.+)\.\]$")
+        let m = featuresPartRegex.Match names
 
         if m.Success
         then Some (m.Groups.["features"].Value.Split('.') |> Array.map trim |> Array.toList)

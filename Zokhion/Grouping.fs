@@ -19,8 +19,6 @@ module GroupingTypes =
 
 [<RequireQualifiedAccess>]
 module Grouping =
-    open System.Text.RegularExpressions
-
     open GroupingTypes
 
     let singleInstanceWithGroup group fileInfo =
@@ -43,7 +41,7 @@ module Grouping =
             Path.getFileNameWithoutExtension fileName
             |> Renaming.splitFileName true
 
-        let m = Regex.Match(names, @"^\(\.(?<names>.+)\.\)$")
+        let m = Renaming.markedNamesPartRegex.Match names
 
         if m.Success
         then m.Groups.["names"].Value.Split [| '.' |] |> Array.map trim |> Array.toList

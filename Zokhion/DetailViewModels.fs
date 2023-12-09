@@ -21,6 +21,8 @@ type FeatureViewModel(feature: Feature) as this =
     let mutable hasSelectedInstances =
         Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
+    let mutable includeIsSelected = false
+
     do
         match this with
         | :? FeatureInstanceViewModel -> ()
@@ -34,7 +36,8 @@ type FeatureViewModel(feature: Feature) as this =
             |> Observable.filter
                 (fun change ->
                     change.PropertyName = nameof instance<FeatureInstanceViewModel>.IsSelected)
-            |> Observable.map (fun _ -> instances |> Seq.exists _.IsSelected)
+            |> Observable.map
+                (fun _ -> instances |> Seq.exists (fun instance -> instance.IsSelected))
             |> toReadOnlyReactiveProperty
 
     member __.FeatureName = feature.Name
@@ -46,6 +49,12 @@ type FeatureViewModel(feature: Feature) as this =
     member __.Instances = instances
 
     member __.HasSelectedInstances = hasSelectedInstances
+
+    member __.IncludeIsSelected
+        with get () = includeIsSelected
+        and set value =
+            __.RaiseAndSetIfChanged(&includeIsSelected, value, nameof __.IncludeIsSelected)
+            |> ignore
 
     member __.Feature =
         { feature with Instances = instances |> Seq.map _.Instance |> Seq.toList }

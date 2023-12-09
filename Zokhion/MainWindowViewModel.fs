@@ -931,6 +931,28 @@ type MainWindowViewModel() as this =
         let allNamesChanges =
             allNames.Connect().WhenPropertyChanged(fun vm -> vm.IsSelected)
 
+        let featureInstancesIsSelectedChanged =
+            this.FeatureInstances.ItemChanged
+            |> Observable.filter
+                (fun change ->
+                    change.PropertyName =
+                        nameof Unchecked.defaultof<FeatureInstanceViewModel>.IsSelected)
+            |> Observable.multicast Subject.broadcast
+
+        featureInstancesIsSelectedChanged.Connect() |> ignore
+
+        featureInstancesIsSelectedChanged
+        |> Observable.subscribe
+            (fun e ->
+                this.Features
+                |> Seq.choose
+                    (fun feature ->
+                        feature.Include
+                        |> Option.map (fun ``include`` -> ``include``, feature))
+                |> Seq.filter (fst >> (=) e.Sender.CompositeInstanceCode)
+                |> Seq.iter (fun (_, feature) -> feature.IncludeIsSelected <- e.Sender.IsSelected))
+        |> ignore
+
         [
             this.TreatParenthesizedPartAsNames |> Observable.map TreatParenthesizedPartAsNames
             this.FixupNamesInMainPart |> Observable.map FixupNamesInMainPart
@@ -958,11 +980,7 @@ type MainWindowViewModel() as this =
 
             this.OriginalFileName |> Observable.map (fun _ -> ResetSelections)
 
-            this.FeatureInstances.ItemChanged
-            |> Observable.filter
-                (fun change ->
-                    change.PropertyName =
-                        nameof Unchecked.defaultof<FeatureInstanceViewModel>.IsSelected)
+            featureInstancesIsSelectedChanged
             |> xwhen updateNewFileNameGate
             |> Observable.iter
                 (fun change ->

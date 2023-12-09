@@ -919,11 +919,13 @@
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </CheckBox.Style>
+
                                                         <Grid>
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition />
                                                                 <ColumnDefinition Width="Auto" />
                                                             </Grid.ColumnDefinitions>
+
                                                             <Grid.Style>
                                                                 <Style TargetType="Grid">
                                                                     <Style.Triggers>
@@ -936,6 +938,7 @@
                                                                                 </Setter.Value>
                                                                             </Setter>
                                                                         </DataTrigger>
+
                                                                         <DataTrigger Binding="{Binding IsSelected}"
                                                                                      Value="True">
                                                                             <Setter Property="Background">
@@ -970,6 +973,7 @@
                                                                         </Style>
                                                                     </TextBlock.Style>
                                                                 </TextBlock>
+
                                                                 <TextBlock Grid.Column="0"
                                                                            Margin="5 0 15 0"
                                                                            HorizontalAlignment="Stretch"
@@ -1002,6 +1006,7 @@
                                                                                      Data="{Binding ElementName=ActionsButton,
                                                                                                     Path=DataContext}" />
                                                                 </StackPanel.Resources>
+
                                                                 <materialDesign:PackIcon Margin="0 0 7 0"
                                                                                          VerticalAlignment="Center"
                                                                                          Kind="Pin"
@@ -1264,6 +1269,19 @@
                                                               Header="{Binding .,
                                                                                Converter={x:Static ui:FeatureToDisplayStringConverter.Instance}}"
                                                               IsExpanded="True">
+                                                        <Expander.Style>
+                                                            <Style BasedOn="{StaticResource MaterialDesignExpander}"
+                                                                   TargetType="{x:Type Expander}">
+                                                                <Style.Triggers>
+
+                                                                    <DataTrigger Binding="{Binding HasSelectedInstances.Value}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Background" Value="{StaticResource FeatureHighlightBrush}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Expander.Style>
+
                                                         <ItemsControl Padding="5 0"
                                                                       ItemsSource="{Binding Instances}">
                                                             <ItemsControl.ItemsPanel>
@@ -1284,6 +1302,21 @@
                                                                                                                    Path=DataContext.HasTouchInput}"
                                                                                                  Value="True">
                                                                                         <Setter Property="Margin" Value="10" />
+                                                                                    </DataTrigger>
+
+                                                                                    <DataTrigger Binding="{Binding IsSelected}"
+                                                                                                 Value="True">
+                                                                                        <Setter Property="Background">
+                                                                                            <Setter.Value>
+                                                                                                <SolidColorBrush Color="{StaticResource Accent700}" />
+                                                                                            </Setter.Value>
+                                                                                        </Setter>
+
+                                                                                        <Setter Property="Foreground">
+                                                                                            <Setter.Value>
+                                                                                                <SolidColorBrush Color="{StaticResource Accent700Foreground}" />
+                                                                                            </Setter.Value>
+                                                                                        </Setter>
                                                                                     </DataTrigger>
                                                                                 </Style.Triggers>
                                                                             </Style>

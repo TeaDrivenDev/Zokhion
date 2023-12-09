@@ -1260,47 +1260,44 @@
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Expander Margin="0 0 0 5"
+                                                              materialDesign:ExpanderAssist.DownHeaderPadding="10 5 5 5"
                                                               Header="{Binding .,
-                                                                               Converter={x:Static ui:FeatureToDisplayStringConverter.Instance}}">
+                                                                               Converter={x:Static ui:FeatureToDisplayStringConverter.Instance}}"
+                                                              IsExpanded="True">
                                                         <ItemsControl Padding="5 0"
                                                                       ItemsSource="{Binding Instances}">
                                                             <ItemsControl.ItemsPanel>
                                                                 <ItemsPanelTemplate>
-                                                                    <WrapPanel Grid.IsSharedSizeScope="True" />
+                                                                    <WrapPanel />
                                                                 </ItemsPanelTemplate>
                                                             </ItemsControl.ItemsPanel>
 
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate>
-                                                                    <Grid>
-                                                                        <Grid.ColumnDefinitions>
-                                                                            <ColumnDefinition SharedSizeGroup="FeatureInstanceGroup" />
-                                                                        </Grid.ColumnDefinitions>
-                                                                        <CheckBox IsChecked="{Binding IsSelected}">
-                                                                            <CheckBox.Style>
-                                                                                <Style TargetType="CheckBox">
-                                                                                    <Setter Property="Margin" Value="5" />
+                                                                    <CheckBox IsChecked="{Binding IsSelected}">
+                                                                        <CheckBox.Style>
+                                                                            <Style TargetType="CheckBox">
+                                                                                <Setter Property="Margin" Value="5" />
 
-                                                                                    <Style.Triggers>
-                                                                                        <DataTrigger Binding="{Binding ElementName=MainWindowView,
-                                                                                                                       Path=DataContext.HasTouchInput}"
-                                                                                                     Value="True">
-                                                                                            <Setter Property="Margin" Value="10" />
-                                                                                        </DataTrigger>
-                                                                                    </Style.Triggers>
-                                                                                </Style>
-                                                                            </CheckBox.Style>
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding ElementName=MainWindowView,
+                                                                                                                   Path=DataContext.HasTouchInput}"
+                                                                                                 Value="True">
+                                                                                        <Setter Property="Margin" Value="10" />
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </CheckBox.Style>
 
-                                                                            <TextBlock Foreground="{StaticResource MaterialDesignBody}">
-                                                                                <TextBlock.Text>
-                                                                                    <MultiBinding StringFormat="{}{0}: {1}">
-                                                                                        <Binding Path="InstanceName" />
-                                                                                        <Binding Path="InstanceCode" />
-                                                                                    </MultiBinding>
-                                                                                </TextBlock.Text>
-                                                                            </TextBlock>
-                                                                        </CheckBox>
-                                                                    </Grid>
+                                                                        <TextBlock Foreground="{StaticResource MaterialDesignBody}">
+                                                                            <TextBlock.Text>
+                                                                                <MultiBinding StringFormat="{}{0}: {1}">
+                                                                                    <Binding Path="InstanceName" />
+                                                                                    <Binding Path="InstanceCode" />
+                                                                                </MultiBinding>
+                                                                            </TextBlock.Text>
+                                                                        </TextBlock>
+                                                                    </CheckBox>
                                                                 </DataTemplate>
                                                             </ItemsControl.ItemTemplate>
                                                         </ItemsControl>

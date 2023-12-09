@@ -29,9 +29,13 @@
         <viewModels:MainWindowViewModel />
     </Window.DataContext>
     <Window.Resources>
+        <Color x:Key="FeatureHighlightColor">
+            Teal
+        </Color>
+
         <SolidColorBrush x:Key="FeatureHighlightBrush"
                          Opacity="0.3"
-                         Color="Teal" />
+                         Color="{StaticResource FeatureHighlightColor}" />
 
         <ui:BindingProxy x:Key="MainWindowBindingProxy"
                          Data="{Binding ElementName=MainWindowView}" />
@@ -1278,7 +1282,12 @@
                                                                         <Style.Triggers>
                                                                             <DataTrigger Binding="{Binding HasSelectedInstances.Value}"
                                                                                          Value="True">
-                                                                                <Setter Property="Background" Value="{StaticResource FeatureHighlightBrush}" />
+                                                                                <Setter Property="Background">
+                                                                                    <Setter.Value>
+                                                                                        <SolidColorBrush Opacity="0.6"
+                                                                                                         Color="{StaticResource FeatureHighlightColor}" />
+                                                                                    </Setter.Value>
+                                                                                </Setter>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>

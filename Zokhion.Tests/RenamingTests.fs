@@ -649,3 +649,27 @@ module RenamingTests =
 
         // Assert
         Assert.StrictEqual (expectedResult, result)
+
+    [<Fact>]
+    let ``Trimming an underscore suffix also replaces other underscores`` () =
+        // Arrange
+        let originalName = "Here_is_a name_with suffix"
+
+        let parameters =
+            {
+                baseParameters with
+                    UnderscoreHandling = TrimSuffix
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "Here is a name"
+                DetectedNames = []
+                DetectedFeatures = []
+            }
+
+        // Act
+        let result = Renaming.rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual (expectedResult, result)

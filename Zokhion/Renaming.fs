@@ -171,12 +171,14 @@ module Renaming =
                     ||> List.fold
                         (fun acc (replace, replaceWith) -> acc.Replace(replace, replaceWith))
 
+            let replaceUnderscores (s: string) = s.Replace("_", " ")
+
             match parameters.UnderscoreHandling with
-            | Replace -> originalFileName.Replace("_", " ")
+            | Replace -> replaceUnderscores originalFileName
             | TrimSuffix ->
                 let underscoreIndex = originalFileName.LastIndexOf '_'
                 if underscoreIndex >= 0
-                then originalFileName.[..underscoreIndex - 1]
+                then originalFileName.[..underscoreIndex - 1] |> replaceUnderscores
                 else originalFileName
             | Ignore -> originalFileName
 

@@ -1241,6 +1241,77 @@
 
                             <Grid>
                                 <Grid>
+                                    <Grid.Style>
+                                        <Style TargetType="{x:Type Grid}">
+                                            <Setter Property="Visibility" Value="Visible" />
+
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Source={StaticResource EnableExtendedFeaturesViewBindingProxy},
+                                                                               Path=Data}"
+                                                             Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
+
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl ItemsSource="{Binding Features}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Expander Margin="0 0 0 5"
+                                                              Header="{Binding .,
+                                                                               Converter={x:Static ui:FeatureToDisplayStringConverter.Instance}}">
+                                                        <ItemsControl Padding="5 0"
+                                                                      ItemsSource="{Binding Instances}">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <WrapPanel Grid.IsSharedSizeScope="True" />
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition SharedSizeGroup="FeatureInstanceGroup" />
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <CheckBox IsChecked="{Binding IsSelected}">
+                                                                            <CheckBox.Style>
+                                                                                <Style TargetType="CheckBox">
+                                                                                    <Setter Property="Margin" Value="5" />
+
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding ElementName=MainWindowView,
+                                                                                                                       Path=DataContext.HasTouchInput}"
+                                                                                                     Value="True">
+                                                                                            <Setter Property="Margin" Value="10" />
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </CheckBox.Style>
+
+                                                                            <TextBlock Foreground="{StaticResource MaterialDesignBody}">
+                                                                                <TextBlock.Text>
+                                                                                    <MultiBinding StringFormat="{}{0}: {1}">
+                                                                                        <Binding Path="InstanceName" />
+                                                                                        <Binding Path="InstanceCode" />
+                                                                                    </MultiBinding>
+                                                                                </TextBlock.Text>
+                                                                            </TextBlock>
+                                                                        </CheckBox>
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </Expander>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </Grid>
+
+                                <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition />
                                         <RowDefinition Height="5" />

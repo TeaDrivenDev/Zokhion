@@ -684,6 +684,15 @@ type MainWindowViewModel() as this =
                     let oldFile, newName = this.SelectedFile.Value, this.ResultingFilePath.Value
 
                     try
+                        for instance in featureInstances do
+                            if instance.IsSelected
+                            then instance.MruPresence <- 3
+                            else
+                                let presence = instance.MruPresence
+
+                                if presence > 0
+                                then instance.MruPresence <- presence - 1
+
                         File.move oldFile.FullName newName
 
                         [ oldFile; FileInfoCopy.FromFilePath newName ]

@@ -60,6 +60,7 @@ and [<AllowNullLiteral>]
     inherit FeatureViewModel(feature)
 
     let mutable isSelected = false
+    let mutable mruPresence = 0
 
     member __.InstanceName = instance.Name
 
@@ -71,6 +72,11 @@ and [<AllowNullLiteral>]
         with get () = isSelected
         and set value =
             __.RaiseAndSetIfChanged(&isSelected, value, nameof __.IsSelected) |> ignore
+
+    member __.MruPresence
+        with get () = mruPresence
+        and set value =
+            __.RaiseAndSetIfChanged(&mruPresence, value, nameof __.MruPresence) |> ignore
 
     member __.Instance = instance
 

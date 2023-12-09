@@ -1321,6 +1321,21 @@
                                                                                             </Setter.Value>
                                                                                         </Setter>
                                                                                     </DataTrigger>
+
+                                                                                    <MultiDataTrigger>
+                                                                                        <MultiDataTrigger.Conditions>
+                                                                                            <Condition Binding="{Binding IsSelected}" Value="False" />
+                                                                                            <Condition Binding="{Binding MruPresence, Converter={x:Static ui:IntEqualityConverter.Instance}, ConverterParameter=0}" Value="False" />
+                                                                                        </MultiDataTrigger.Conditions>
+
+                                                                                        <Setter Property="Background">
+                                                                                            <Setter.Value>
+                                                                                                <SolidColorBrush Opacity="{Binding MruPresence,
+                                                                                                                                   Converter={x:Static ui:MruPresenceToOpacityConverter.Instance}}"
+                                                                                                                 Color="{StaticResource FeatureHighlightColor}" />
+                                                                                            </Setter.Value>
+                                                                                        </Setter>
+                                                                                    </MultiDataTrigger>
                                                                                 </Style.Triggers>
                                                                             </Style>
                                                                         </Grid.Style>
@@ -1335,15 +1350,6 @@
                                                                                                                        Path=DataContext.HasTouchInput}"
                                                                                                      Value="True">
                                                                                             <Setter Property="Margin" Value="10" />
-                                                                                        </DataTrigger>
-
-                                                                                        <DataTrigger Binding="{Binding IsSelected}"
-                                                                                                     Value="True">
-                                                                                            <Setter Property="Background">
-                                                                                                <Setter.Value>
-                                                                                                    <SolidColorBrush Color="{StaticResource Accent700}" />
-                                                                                                </Setter.Value>
-                                                                                            </Setter>
                                                                                         </DataTrigger>
                                                                                     </Style.Triggers>
                                                                                 </Style>

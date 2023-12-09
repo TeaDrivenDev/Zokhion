@@ -221,3 +221,32 @@ type FilesToTotalSizeConverter() =
 
         member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
             raise (System.NotSupportedException())
+
+type MruPresenceToOpacityConverter() =
+    static member Instance = MruPresenceToOpacityConverter() :> IValueConverter
+
+    interface IValueConverter with
+        member this.Convert(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
+            match value :?> int with
+            | 3 -> 0.7
+            | 2 -> 0.4
+            | 1 -> 0.2
+            | _ -> 0.0
+            :> obj
+
+        member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
+            raise (System.NotSupportedException())
+
+type IntEqualityConverter() =
+    static member Instance = IntEqualityConverter() :> IValueConverter
+
+    interface IValueConverter with
+        member this.Convert(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
+            let compareTo = System.Convert.ToInt32 parameter
+
+            match value with
+            | :? int as value -> value = compareTo
+            | _ -> Binding.DoNothing
+
+        member this.ConvertBack(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
+            raise (System.NotSupportedException())

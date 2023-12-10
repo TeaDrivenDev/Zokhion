@@ -228,9 +228,9 @@ type MruPresenceToOpacityConverter() =
     interface IValueConverter with
         member this.Convert(value: obj, targetType: Type, parameter: obj, culture: Globalization.CultureInfo): obj =
             match value :?> int with
-            | 3 -> 0.7
-            | 2 -> 0.4
-            | 1 -> 0.2
+            | 5 -> 0.8
+            | 4 | 3 -> 0.5
+            | 2 | 1 -> 0.3
             | _ -> 0.0
             :> obj
 

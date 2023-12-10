@@ -686,7 +686,7 @@ type MainWindowViewModel() as this =
                     try
                         for instance in featureInstances do
                             if instance.IsSelected
-                            then instance.MruPresence <- 3
+                            then instance.MruPresence <- 5
                             else
                                 let presence = instance.MruPresence
 

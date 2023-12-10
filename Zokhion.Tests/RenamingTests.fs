@@ -407,6 +407,30 @@ module RenamingTests =
         Assert.StrictEqual (expectedResult, result)
 
     [<Fact>]
+    let ``A marked names part is always treated as names`` () =
+        // Arrange
+        let originalName = "Here is a name (.Mount Toba.Uluru.) [.XAb.]"
+
+        let parameters =
+            {
+                baseParameters with
+                    TreatParenthesizedPartAsNames = false
+            }
+
+        let expectedResult =
+            {
+                NewFileName = "Here is a name (.Mount Toba.Uluru.) [.XAb.]"
+                DetectedNames = [ "Mount Toba"; "Uluru" ]
+                DetectedFeatures = [ "XAb" ]
+            }
+
+        // Act
+        let actualResult = Renaming.rename parameters originalName
+
+        // Assert
+        Assert.StrictEqual(expectedResult, actualResult)
+
+    [<Fact>]
     let ``New appended names format replaces old format`` () =
         // Arrange
         let originalName = "Glasshouse Mountains at sunset (Glasshouse Mountains)"

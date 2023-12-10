@@ -53,8 +53,8 @@ module Renaming =
 
     let fileNameRegexPreservingNamesPart =
         compileRegex @"^(?<main>.+?)\s*(?<names>\([^\)]+\))?\s*(?<features>\[\..+\.\])?$"
-    let fileNameRegexDisregardingNamesPart =
-        compileRegex @"^(?<main>.+?)\s*(?<features>\[\..+\.\])?$"
+    let fileNameRegexOnlyPreservingMarkedNamesPart =
+        compileRegex @"^(?<main>.+?)\s*(?<names>\(\.[^\)]+\.\))?\s*(?<features>\[\..+\.\])?$"
 
     let markedNamesPartRegex = compileRegex @"^\(\.(?<names>.+)\.\)$"
     let unmarkedNamesPartRegex = compileRegex @"^\((?<names>.+)\)"
@@ -105,7 +105,7 @@ module Renaming =
         let fileNameRegex =
             if preserveSeparateNamesPart
             then fileNameRegexPreservingNamesPart
-            else fileNameRegexDisregardingNamesPart
+            else fileNameRegexOnlyPreservingMarkedNamesPart
 
         let m = fileNameRegex.Match fileName
 

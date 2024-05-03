@@ -291,7 +291,8 @@ type MainWindowViewModel() as this =
                         name,
                         isSelected=false,
                         isNewlyDetected=false,
-                        isAdded=true)
+                        isAdded=true,
+                        IsPinned=true)
 
                 allNames.AddOrUpdate viewModel
                 viewModel)

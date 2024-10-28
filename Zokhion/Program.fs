@@ -19,6 +19,13 @@ type Win32Window(handle: IntPtr) =
     interface System.Windows.Forms.IWin32Window with
         member __.Handle: IntPtr = handle
 
+type StatisticsWindowBase = XAML<"StatisticsWindow.xaml">
+
+type StatisticsWindow() as this =
+    inherit StatisticsWindowBase()
+
+    member __.ViewModel: StatisticsWindowViewModel = __.DataContext :?> StatisticsWindowViewModel
+
 type MainWindowBase = XAML<"MainWindow.xaml">
 
 type MainWindow() as this =

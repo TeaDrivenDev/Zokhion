@@ -1,0 +1,29 @@
+﻿<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:TeaDriven.Zokhion;assembly=Zokhion"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:mde="clr-namespace:MaterialDesignExtensions.Controls;assembly=MaterialDesignExtensions"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
+        xmlns:ui="clr-namespace:TeaDriven.Zokhion.UIHelper;assembly=Zokhion"
+        xmlns:viewModels="clr-namespace:TeaDriven.Zokhion.ViewModels;assembly=Zokhion"
+        x:Name="StatisticsView"
+        Title="Statistics"
+        Width="1600"
+        Height="900"
+        d:Activated="StatisticsWindow_OnActivated"
+        d:WindowState="Maximized"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{StaticResource MaterialDesignFont}"
+        TextElement.FontSize="13"
+        TextElement.FontWeight="Regular"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        mc:Ignorable="d">
+    <Window.DataContext>
+        <viewModels:StatisticsWindowViewModel />
+    </Window.DataContext>
+</Window>

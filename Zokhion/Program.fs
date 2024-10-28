@@ -187,6 +187,13 @@ type MainWindow() as this =
         | _ -> None
         |> Option.iter __.ViewModel.CreateSearchTabForDirectory
 
+    override __.ShowStatistics_Click(_: obj, e: RoutedEventArgs) =
+        let statisticsWindow = StatisticsWindow()
+        statisticsWindow.DataContext <- this.ViewModel.StatisticsWindowViewModel
+
+        statisticsWindow.Owner <- this
+        statisticsWindow.Show()
+
 type AppBase = XAML<"App.xaml">
 
 type App() =

@@ -815,11 +815,17 @@
                                             <ColumnDefinition />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
+
                                         <TextBlock Grid.Column="0"
                                                    VerticalAlignment="Center"
                                                    Text="Names" />
+
                                         <StackPanel Grid.Column="1"
                                                     Orientation="Horizontal">
+                                            <Button Margin="0 0 5 0"
+                                                    Click="ShowStatistics_Click"
+                                                    Content="XX" />
+
                                             <Button Margin="0 0 5 0"
                                                     Command="{Binding ElementName=MainWindowView,
                                                                       Path=DataContext.ReviveFileSystemWatcherCommand}">
@@ -840,6 +846,7 @@
                                                     </Style>
                                                 </Button.Style>
                                             </Button>
+
                                             <Button Margin="0 0 5 0"
                                                     Padding="0 -10"
                                                     Command="{Binding ElementName=MainWindowView,
@@ -847,11 +854,11 @@
                                                     ToolTip="Search for file name parts">
                                                 <materialDesign:PackIcon Kind="FileFindOutline" />
                                             </Button>
+
                                             <Button Padding="0 -10"
                                                     Command="{Binding ElementName=MainWindowView,
                                                                       Path=DataContext.ResetNameSelectionCommand}"
                                                     ToolTip="Reset name selection">
-
                                                 <materialDesign:PackIcon Kind="Undo" />
                                             </Button>
                                         </StackPanel>

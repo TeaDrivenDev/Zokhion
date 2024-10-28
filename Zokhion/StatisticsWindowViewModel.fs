@@ -2,5 +2,5 @@
 
 open ReactiveUI
 
-type StatisticsWindowViewModel() as this =
+type StatisticsWindowViewModel() =
     inherit ReactiveObject()

@@ -1271,4 +1271,6 @@ type MainWindowViewModel() as this =
     member __.ReviveFileSystemWatcherCommand = reviveFileSystemWatcherCommand
     member __.IsFileSystemWatcherAlive = isFileSystemWatcherAlive
 
+    member __.StatisticsWindowViewModel = StatisticsWindowViewModel()
+
     member __.ActivityLog = activityLog

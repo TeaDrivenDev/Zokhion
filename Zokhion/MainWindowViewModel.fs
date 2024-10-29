@@ -6,10 +6,8 @@ open System.Collections.ObjectModel
 open System.Diagnostics
 open System.Linq
 open System.Reactive.Concurrency
-open System.Reactive.Disposables
 open System.Reactive.Linq
 open System.Reactive.Subjects
-open System.Text.RegularExpressions
 open System.Windows
 open System.Windows.Input
 
@@ -67,8 +65,6 @@ type DirectoryViewModel(directoryInfo: DirectoryInfoCopy, fileCount: int) =
 
 type MainWindowViewModel() as this =
     inherit ReactiveObject()
-
-    let fileChangesSubscription = new SerialDisposable()
 
     let hasTouchInput =
         Tablet.TabletDevices
@@ -133,7 +129,6 @@ type MainWindowViewModel() as this =
     let mutable clearNewNameToAddCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable addEnteredNameCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable setNameFilterCommand = Unchecked.defaultof<ReactiveCommand>
-    let allNames = new SourceCache<NameViewModel, string>(fun vm -> vm.Name.Value)
 
     let mutable selectedNames = Unchecked.defaultof<ReadOnlyObservableCollection<_>>
     let mutable names = Unchecked.defaultof<ReadOnlyObservableCollection<_>>
@@ -166,12 +161,13 @@ type MainWindowViewModel() as this =
     let mutable reviveFileSystemWatcherCommand = Unchecked.defaultof<ReactiveCommand>
     let mutable isFileSystemWatcherAlive = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
-    let fileSystemCache = new FileSystemCache()
-
     let mutable activityLog = ObservableCollection()
     let activityLogSubject = new System.Reactive.Subjects.Subject<_>()
 
     let log = Logging.log activityLogSubject.OnNext
+
+    let fileSystemCache = new FileSystemCache()
+    let dataCache = new Data.DataCache(fileSystemCache, log)
 
     let updateDirectoriesList baseDirectory prefixes filterByPrefixes =
         directories.Clear()
@@ -221,110 +217,17 @@ type MainWindowViewModel() as this =
 
     let clearNewNameToAdd () = this.NewNameToAdd.Value <- ""
 
-    let namesPartRegex = Regex(@"\(\.(?<names>.+)\.\)", RegexOptions.Compiled)
-
-    let parseNames fileName =
-        let m = namesPartRegex.Match fileName
-
-        if m.Success
-        then m.Groups.["names"].Value.Split([| '.' |]) |> Array.toList
-        else []
-
-    let initializeNamesList (files: string seq) =
-        allNames.Clear()
-
-        let names =
-            files
-            |> Seq.collect (Path.getFileNameWithoutExtension >> parseNames)
-            |> Seq.countBy id
-
-        names
-        |> Seq.iter
-            (fun (name, count) ->
-                let nameViewModel =
-                    NameViewModel(
-                        name,
-                        isSelected=false,
-                        isNewlyDetected=false,
-                        isAdded=false)
-
-                nameViewModel.Count.Value <- count
-
-                allNames.AddOrUpdate nameViewModel)
-
-    let getNameViewModel name =
-        let name = trim name
-
-        allNames.Items
-        |> Seq.tryFind (fun viewModel -> toUpper viewModel.Name.Value = toUpper name)
-        |> Option.defaultWith
-            (fun () ->
-                let viewModel =
-                    NameViewModel(
-                        name,
-                        isSelected=false,
-                        isNewlyDetected=false,
-                        isAdded=true,
-                        IsPinned=true)
-
-                allNames.AddOrUpdate viewModel
-                viewModel)
-
-    let updateNamesListOnFileSystemChanges observable =
-        let toChangeCount = function Added -> 1 | Removed -> -1
-
-        observable
-        |> Observable.filter (List.isEmpty >> not)
-        |> Observable.subscribe
-            (fun changes ->
-                let namesWithChanges =
-                    changes
-                    |> List.collect
-                        (fun (fileName, change) ->
-                            parseNames fileName |> List.map (asFst (toChangeCount change)))
-                    |> List.groupBy fst
-                    |> List.map (fun (key, changes) -> key, changes |> List.sumBy snd)
-                    |> List.filter (snd >> (<>) 0)
-
-                namesWithChanges
-                |> List.iter
-                    (fun (name, changeCount) ->
-                        let viewModel = getNameViewModel name
-
-                        let newCount = viewModel.Count.Value + changeCount
-
-                        if newCount > 0
-                        then viewModel.Count.Value <- newCount
-                        else allNames.Remove viewModel))
-
     let addEnteredName name =
         if not <| String.IsNullOrWhiteSpace name
         then
             let name = trim name
 
-            let viewModel = getNameViewModel name
+            let viewModel = dataCache.GetNameViewModel name
             viewModel.IsSelected <- true
 
             log Informational AddName name
 
             this.NewNameToAdd.Value <- ""
-
-    let updateNamesList detectedNames =
-        (detectedNames, allNames.Items |> Seq.toList)
-        ||> fullOuterJoin toUpper (_.Name.Value >> toUpper)
-        |> Seq.iter
-            (function
-                | LeftOnly viewModel -> viewModel.IsSelected <- false
-                | RightOnly name ->
-                    NameViewModel(
-                        name,
-                        isSelected=true,
-                        isNewlyDetected=true,
-                        isAdded=false)
-                    |> allNames.AddOrUpdate
-                | JoinMatch (viewModel, name) ->
-                    viewModel.Name.Value <- name
-                    viewModel.IsSelected <- true)
 
     let updateSelectedFeatures isInitial selectedFeatures =
         (selectedFeatures, featureInstances)
@@ -336,18 +239,11 @@ type MainWindowViewModel() as this =
                 | RightOnly _ -> ()
                 | JoinMatch (vm, _) -> vm.IsSelected <- true)
 
-    let getAllNames () =
-        allNames.Items
-        |> Seq.filter (_.IsNewlyDetected.Value >> not)
-        |> Seq.map _.Name.Value
-        |> Seq.toList
-
     let updateNewFileName originalFileName parameters =
         let result = Renaming.rename parameters originalFileName
         this.NewFileName.Value <- result.NewFileName
 
-        result.DetectedNames
-        |> updateNamesList
+        dataCache.UpdateNamesList result.DetectedNames
 
         result.DetectedFeatures
         |> updateSelectedFeatures (parameters.SelectedFeatures |> Option.isNone)
@@ -374,7 +270,7 @@ type MainWindowViewModel() as this =
                 DestinationDirectoryPrefixes = this.DestinationDirectoryPrefixes.Value
                 Replacements = this.Replacements |> Seq.toList
                 Names =
-                    allNames.Items
+                    dataCache.AllNames.Items
                     |> Seq.filter (_.IsNewlyDetected.Value >> not)
                     |> Seq.map _.Name.Value
                     |> Seq.distinct
@@ -824,14 +720,7 @@ type MainWindowViewModel() as this =
                 async {
                     isBusy.TurnOn()
 
-                    do! fileSystemCache.Initialize directory
-
-                    fileSystemCache.Files
-                    |> Seq.map (fun (KeyValue(file, fileInfo)) -> file)
-                    |> initializeNamesList
-
-                    fileChangesSubscription.Disposable <-
-                        updateNamesListOnFileSystemChanges fileSystemCache.FileSystemUpdates
+                    do! dataCache.Initialize directory
 
                     searchCommands.OnNext (Directories (None, directory))
 
@@ -872,10 +761,7 @@ type MainWindowViewModel() as this =
         existingSelectedFile
         |> Observable.subscribe
             (fun file ->
-                allNames.Items
-                |> Seq.filter _.IsNewlyDetected.Value
-                |> Seq.toList
-                |> List.iter allNames.Remove
+                dataCache.ClearNewlyDetected()
 
                 this.OriginalFileName.Value <-
                     string file.Name |> Path.getFileNameWithoutExtension
@@ -903,7 +789,7 @@ type MainWindowViewModel() as this =
         let updateNewFileNameGate = new BooleanNotifier(true)
 
         let allNamesChanges =
-            allNames.Connect().WhenPropertyChanged(fun vm -> vm.IsSelected)
+            dataCache.AllNames.Connect().WhenPropertyChanged(fun vm -> vm.IsSelected)
 
         let featureInstancesIsSelectedChanged =
             this.FeatureInstances.ItemChanged
@@ -940,7 +826,7 @@ type MainWindowViewModel() as this =
             |> xwhen updateNewFileNameGate
             |> Observable.map
                 (fun _ ->
-                    allNames.Items
+                    dataCache.AllNames.Items
                     |> Seq.filter _.IsSelected
                     |> Seq.map _.Name.Value
                     |> Seq.toList
@@ -991,9 +877,9 @@ type MainWindowViewModel() as this =
                 SelectedNames = None
                 SelectedFeatures = None
                 Replacements = []
-                AllNames = getAllNames ()
+                AllNames = dataCache.GetAllNames()
             }
-            (Renaming.updateParameters this.Replacements getAllNames)
+            (Renaming.updateParameters this.Replacements dataCache.GetAllNames)
         |> Observable.subscribe
             (fun parameters ->
                 updateNewFileNameGate.TurnOff()
@@ -1020,7 +906,7 @@ type MainWindowViewModel() as this =
 
                         Func<_, _> (fun (n: NameViewModel) -> n.Name.Value.ToUpper().Contains up))
 
-        allNames.Connect()
+        dataCache.AllNames.Connect()
             .AutoRefresh()
             .Filter(fun vm -> vm.IsSelected || vm.IsPinned)
             .Sort(NameViewModelComparer Selection)
@@ -1029,7 +915,7 @@ type MainWindowViewModel() as this =
             .Subscribe()
         |> ignore
 
-        allNames.Connect()
+        dataCache.AllNames.Connect()
             .AutoRefresh()
             .Filter(nameFilter)
             .Sort(NameViewModelComparer NameOnly)

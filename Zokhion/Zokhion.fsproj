@@ -74,6 +74,7 @@
     <Compile Include="ViewModelUtility.fs" />
     <Compile Include="SearchViewModel.fs" />
     <Compile Include="DetailViewModels.fs" />
+    <Compile Include="DataCache.fs" />
     <Compile Include="StatisticsWindowViewModel.fs" />
     <Compile Include="MainWindowViewModel.fs" />
     <Compile Include="UIHelper.fs" />

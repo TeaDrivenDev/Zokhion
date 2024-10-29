@@ -70,6 +70,7 @@
     <Compile Include="Settings.fs" />
     <Compile Include="Renaming.fs" />
     <Compile Include="Grouping.fs" />
+    <Compile Include="Logging.fs" />
     <Compile Include="ViewModelUtility.fs" />
     <Compile Include="SearchViewModel.fs" />
     <Compile Include="DetailViewModels.fs" />

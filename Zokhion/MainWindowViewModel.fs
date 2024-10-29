@@ -27,6 +27,7 @@ open ReactiveUI
 open TeaDriven.Zokhion
 open TeaDriven.Zokhion.FileSystem
 open TeaDriven.Zokhion.GroupingTypes
+open TeaDriven.Zokhion.LoggingTypes
 open TeaDriven.Zokhion.RenamingTypes
 
 type GroupCategoryEntry =
@@ -50,28 +51,6 @@ type FileOperation =
     | RemoveDelete of string list
 
 type UnderscoreHandling = Ignore = 0 | Replace = 1 | TrimSuffix = 2
-
-type LogLevel =
-    | Diagnostic
-    | Informational
-    | Warning
-    | Critical
-
-type Activity =
-    | KeepAlive
-    | RenameSuccess
-    | RenameFailure
-    | DeleteSuccess
-    | DeleteFailure
-    | AddName
-
-type LogEntry =
-    {
-        Timestamp: DateTimeOffset
-        LogLevel: LogLevel
-        Activity: Activity
-        Message: string
-    }
 
 type FileSystemWatcherStatus =
     | NewlyAlive
@@ -191,14 +170,8 @@ type MainWindowViewModel() as this =
 
     let mutable activityLog = ObservableCollection()
     let activityLogSubject = new System.Reactive.Subjects.Subject<_>()
-    let log logLevel activity message =
-        {
-            Timestamp = DateTimeOffset.Now
-            LogLevel = logLevel
-            Activity = activity
-            Message = message
-        }
-        |> activityLogSubject.OnNext
+
+    let log = Logging.log activityLogSubject.OnNext
 
     let updateDirectoriesList baseDirectory prefixes filterByPrefixes =
         directories.Clear()

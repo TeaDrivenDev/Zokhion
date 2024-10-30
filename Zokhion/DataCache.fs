@@ -24,17 +24,22 @@ module Data =
             then m.Groups.["names"].Value.Split([| '.' |]) |> Array.toList
             else []
 
-        let initializeNamesList (files: string seq) =
+        let initializeNamesList (files: FileInfoCopy seq) =
             allNames.Clear()
 
             let names =
                 files
-                |> Seq.collect (Path.getFileNameWithoutExtension >> parseNames)
-                |> Seq.countBy id
+                |> Seq.collect
+                    (fun file ->
+                        file.FullName
+                        |> Path.getFileNameWithoutExtension
+                        |> parseNames
+                        |> Seq.map (asFst file))
+                |> Seq.groupBy fst
 
             names
             |> Seq.iter
-                (fun (name, count) ->
+                (fun (name, files) ->
                     let nameViewModel =
                         NameViewModel(
                             name,
@@ -42,7 +47,7 @@ module Data =
                             isNewlyDetected=false,
                             isAdded=false)
 
-                    nameViewModel.Count.Value <- count
+                    files |> Seq.map snd |> nameViewModel.AddFiles
 
                     allNames.AddOrUpdate nameViewModel)
 
@@ -65,8 +70,6 @@ module Data =
                     viewModel)
 
         let updateNamesListOnFileSystemChanges observable =
-            let toChangeCount = function Added -> 1 | Removed -> -1
-
             observable
             |> Observable.filter (List.isEmpty >> not)
             |> Observable.subscribe
@@ -74,22 +77,26 @@ module Data =
                     let namesWithChanges =
                         changes
                         |> List.collect
-                            (fun (fileName, change) ->
-                                parseNames fileName |> List.map (asFst (toChangeCount change)))
+                            (fun (change: FileChange) ->
+                                change.FullPath
+                                |> Path.getFileNameWithoutExtension
+                                |> parseNames
+                                |> List.map (asFst change))
                         |> List.groupBy fst
-                        |> List.map (fun (key, changes) -> key, changes |> List.sumBy snd)
-                        |> List.filter (snd >> (<>) 0)
 
                     namesWithChanges
                     |> List.iter
-                        (fun (name, changeCount) ->
+                        (fun (name, changes) ->
                             let viewModel = getNameViewModel name
 
-                            let newCount = viewModel.Count.Value + changeCount
+                            changes
+                            |> List.iter
+                                (fun (_, change) ->
+                                    match change with
+                                    | Added fileInfoCopy -> viewModel.AddFile fileInfoCopy
+                                    | Removed fileName -> viewModel.RemoveFile fileName)
 
-                            if newCount > 0
-                            then viewModel.Count.Value <- newCount
-                            else allNames.Remove viewModel))
+                            if viewModel.Count = 0 then allNames.Remove viewModel))
 
         let initialize (directory: string) =
             async {
@@ -98,7 +105,7 @@ module Data =
                 do! fileSystemCache.Initialize directory
 
                 fileSystemCache.Files
-                |> Seq.map (fun (KeyValue(file, fileInfo)) -> file)
+                |> Seq.map (fun (KeyValue(file, fileInfo)) -> fileInfo)
                 |> initializeNamesList
 
                 fileChangesSubscription.Disposable <-

@@ -990,7 +990,7 @@
                                                                            HorizontalAlignment="Stretch"
                                                                            VerticalAlignment="Center"
                                                                            FontSize="10"
-                                                                           Text="{Binding Count.Value}">
+                                                                           Text="{Binding Count}">
                                                                     <TextBlock.Style>
                                                                         <Style TargetType="TextBlock">
                                                                             <Style.Triggers>

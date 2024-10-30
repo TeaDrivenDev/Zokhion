@@ -59,8 +59,6 @@ module FileSystem =
 
             normalizedPath.StartsWith(normalizedBaseDirPath, StringComparison.OrdinalIgnoreCase)
 
-    type FileChange = Added | Removed
-
     type FileSystemCacheStatus =
         | Empty
         | Initializing of progress: float
@@ -92,6 +90,15 @@ module FileSystem =
                 fileInfo.LastWriteTime,
                 fileInfo.Length)
 
+    type FileChange =
+        | Added of FileInfoCopy
+        | Removed of string
+        with
+            member __.FullPath =
+                match __ with
+                | Added file -> file.FullName
+                | Removed fileName -> fileName
+
     [<AllowNullLiteral>]
     type DirectoryInfoCopy(directoryInfo: System.IO.DirectoryInfo) =
         let fullName = directoryInfo.FullName
@@ -114,13 +121,15 @@ module FileSystem =
             Observable.Create
                 (fun observer ->
                     [
-                        watcher.Created |> Observable.map (fun e -> [ e.FullPath, Added ])
-                        watcher.Deleted |> Observable.map (fun e -> [ e.FullPath, Removed ])
+                        watcher.Created
+                        |> Observable.map (_.FullPath >> FileInfoCopy.FromFilePath >> Added >> List.singleton)
+
+                        watcher.Deleted |> Observable.map (_.FullPath >> Removed >> List.singleton)
                         watcher.Renamed
                         |> Observable.map
                             (fun e ->
                                 if not (Directory.Exists e.OldFullPath) && not (Directory.Exists e.FullPath)
-                                then [ e.OldFullPath, Removed; e.FullPath, Added ]
+                                then [ Removed e.OldFullPath; e.FullPath |> FileInfoCopy.FromFilePath |> Added ]
                                 else [])
                     ]
                     |> Observable.mergeSeq
@@ -188,12 +197,12 @@ module FileSystem =
                     |> Observable.iter
                         (fun changes ->
                             changes
-                            |> List.filter (fst >> Directory.Exists >> not)
+                            |> List.filter (_.FullPath >> Directory.Exists >> not)
                             |> List.iter
-                                (fun (file, fileChange) ->
+                                (fun fileChange ->
                                     match fileChange with
-                                    | Added -> files.[file] <- FileInfoCopy.FromFilePath file
-                                    | Removed -> files.TryRemove file |> ignore))
+                                    | Added file -> files.[file.FullName] <- file
+                                    | Removed fileName -> files.TryRemove fileName |> ignore))
                     |> Observable.multicast Subject.broadcast
 
                 connectableObservable.Connect() |> ignore

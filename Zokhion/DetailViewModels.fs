@@ -10,6 +10,7 @@ open ReactiveUI
 open Reactive.Bindings
 
 open TeaDriven.Zokhion
+open TeaDriven.Zokhion.FileSystem
 
 [<AllowNullLiteral>]
 type FeatureViewModel(feature: Feature) as this =
@@ -142,6 +143,8 @@ type NewFeatureInstanceViewModel(instanceName: string, instanceCode: string) =
 type NameViewModel(name: string, isSelected: bool, isNewlyDetected: bool, isAdded: bool) =
     inherit AbstractNotifyPropertyChanged()
 
+    let filesCache = Dictionary<string, FileInfoCopy>()
+
     let mutable xIsSelected = isSelected
 
     let mutable isPinned = false
@@ -160,10 +163,22 @@ type NameViewModel(name: string, isSelected: bool, isNewlyDetected: bool, isAdde
 
     member val IsAdded = new ReactiveProperty<_>(isAdded)
 
-    member val Count = new ReactiveProperty<_>(0)
+    member __.Count = filesCache.Count
 
     member __.PinCommand =
         ReactiveCommand.Create(fun () -> __.IsPinned <- not __.IsPinned)
+
+    member __.Files: IReadOnlyDictionary<_, _> = filesCache
+
+    member __.AddFile(file: FileInfoCopy) = __.AddFiles([file])
+
+    member __.AddFiles(files: FileInfoCopy seq) =
+        files |> Seq.map (fun file -> file.FullName, file) |> Seq.iter filesCache.Add
+        __.OnPropertyChanged(nameof(__.Count))
+
+    member __.RemoveFile(path: string) =
+        filesCache.Remove(path) |> ignore
+        __.OnPropertyChanged(nameof(__.Count))
 
 type NameViewModelComparerMode = NameOnly | Selection
 

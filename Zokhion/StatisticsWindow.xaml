@@ -25,6 +25,17 @@
         TextOptions.TextRenderingMode="Auto"
         mc:Ignorable="d">
     <Grid>
-        <TextBlock Text="{Binding Count}" />
+        <DataGrid Margin="20"
+                  AutoGenerateColumns="False"
+                  ItemsSource="{Binding Names}">
+            <DataGrid.Columns>
+                <materialDesign:DataGridTextColumn Binding="{Binding Name.Value}"
+                                                   Header="Name"
+                                                   IsReadOnly="True" />
+                <materialDesign:DataGridTextColumn Binding="{Binding Count}"
+                                                   Header="Count"
+                                                   IsReadOnly="True" />
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </Window>

@@ -64,7 +64,6 @@
   -->
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Interop.fs" />
     <Compile Include="ViewModelUtility.fs" />
     <Compile Include="SearchViewModel.fs" />
     <Compile Include="DetailViewModels.fs" />

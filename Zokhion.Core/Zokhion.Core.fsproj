@@ -5,6 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Interop.fs" />
     <Compile Include="Prelude.fs" />
     <Compile Include="FileSystem.fs" />
     <Compile Include="Settings.fs" />

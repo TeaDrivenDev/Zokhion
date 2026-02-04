@@ -9,7 +9,6 @@ open ReactiveUI
 
 open Reactive.Bindings
 
-open TeaDriven.Zokhion
 open TeaDriven.Zokhion.Core
 
 [<AllowNullLiteral>]

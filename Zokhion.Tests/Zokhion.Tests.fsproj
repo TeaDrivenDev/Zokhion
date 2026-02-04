@@ -16,5 +16,4 @@
   <ItemGroup>
     <ProjectReference Include="..\Zokhion\Zokhion.fsproj" />
   </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

@@ -1,5 +1,6 @@
 ﻿namespace TeaDriven.Zokhion
 
+open TeaDriven.Zokhion.Core
 open TeaDriven.Zokhion.Core.FileSystem
 
 module GroupingTypes =
@@ -19,8 +20,6 @@ module GroupingTypes =
 
 [<RequireQualifiedAccess>]
 module Grouping =
-    open TeaDriven.Zokhion.Core
-
     open GroupingTypes
 
     let singleInstanceWithGroup group fileInfo =

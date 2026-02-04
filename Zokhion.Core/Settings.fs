@@ -1,12 +1,11 @@
-﻿namespace TeaDriven.Zokhion
+﻿namespace TeaDriven.Zokhion.Core
 
 [<AutoOpen>]
 module Settings =
     open System
     open System.Text.RegularExpressions
 
-    open TeaDriven.Zokhion.Core
-    open TeaDriven.Zokhion.Core.FileSystem
+    open FileSystem
 
     type Feature =
         {

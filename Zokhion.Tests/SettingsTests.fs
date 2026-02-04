@@ -3,7 +3,7 @@
 module SettingsTests =
     open Xunit
 
-    open TeaDriven.Zokhion.Settings
+    open TeaDriven.Zokhion.Core.Settings
 
     [<Fact>]
     let ``A feature hierarchy is serialized in the correct format`` () =

@@ -6,7 +6,7 @@ module Settings =
     open System.Text.RegularExpressions
 
     open TeaDriven.Zokhion.Core
-    open TeaDriven.Zokhion.FileSystem
+    open TeaDriven.Zokhion.Core.FileSystem
 
     type Feature =
         {

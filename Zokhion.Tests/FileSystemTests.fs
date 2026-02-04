@@ -2,7 +2,7 @@
 
 open Xunit
 
-open TeaDriven.Zokhion.FileSystem
+open TeaDriven.Zokhion.Core.FileSystem
 
 module FileSystemTests =
     [<Theory>]

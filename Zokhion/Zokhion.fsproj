@@ -65,7 +65,6 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Interop.fs" />
-    <Compile Include="FileSystem.fs" />
     <Compile Include="Settings.fs" />
     <Compile Include="Renaming.fs" />
     <Compile Include="Grouping.fs" />

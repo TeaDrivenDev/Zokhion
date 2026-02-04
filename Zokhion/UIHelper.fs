@@ -6,7 +6,7 @@ open System.Windows
 open System.Windows.Controls
 open System.Windows.Data
 
-open TeaDriven.Zokhion.FileSystem
+open TeaDriven.Zokhion.Core.FileSystem
 open TeaDriven.Zokhion.ViewModels
 
 module Utilities =

@@ -36,19 +36,18 @@ type FeatureViewModel(feature: Feature) as this =
             |> Observable.filter
                 (fun change ->
                     change.PropertyName = nameof instance<FeatureInstanceViewModel>.IsSelected)
-            |> Observable.map
-                (fun _ -> instances |> Seq.exists (fun instance -> instance.IsSelected))
+            |> Observable.map (fun _ -> instances |> Seq.exists _.IsSelected)
             |> toReadOnlyReactiveProperty
 
-    member __.FeatureName = feature.Name
+    member _.FeatureName = feature.Name
 
-    member __.FeatureCode = feature.Code
+    member _.FeatureCode = feature.Code
 
-    member __.Include = feature.Include
+    member _.Include = feature.Include
 
-    member __.Instances = instances
+    member _.Instances = instances
 
-    member __.HasSelectedInstances = hasSelectedInstances
+    member _.HasSelectedInstances = hasSelectedInstances
 
     member __.IncludeIsSelected
         with get () = includeIsSelected
@@ -56,7 +55,7 @@ type FeatureViewModel(feature: Feature) as this =
             __.RaiseAndSetIfChanged(&includeIsSelected, value, nameof __.IncludeIsSelected)
             |> ignore
 
-    member __.Feature =
+    member _.Feature =
         { feature with Instances = instances |> Seq.map _.Instance |> Seq.toList }
 
     member val IsExpanded = new ReactiveProperty<_>(true)
@@ -71,23 +70,21 @@ and [<AllowNullLiteral>]
     let mutable isSelected = false
     let mutable mruPresence = 0
 
-    member __.InstanceName = instance.Name
+    member _.InstanceName = instance.Name
 
-    member __.InstanceCode = instance.Code
+    member _.InstanceCode = instance.Code
 
-    member __.CompositeInstanceCode = feature.Code + instance.Code
+    member _.CompositeInstanceCode = feature.Code + instance.Code
 
     member __.IsSelected
         with get () = isSelected
-        and set value =
-            __.RaiseAndSetIfChanged(&isSelected, value, nameof __.IsSelected) |> ignore
+        and set value = __.RaiseAndSetIfChanged(&isSelected, value, nameof __.IsSelected) |> ignore
 
     member __.MruPresence
         with get () = mruPresence
-        and set value =
-            __.RaiseAndSetIfChanged(&mruPresence, value, nameof __.MruPresence) |> ignore
+        and set value = __.RaiseAndSetIfChanged(&mruPresence, value, nameof __.MruPresence) |> ignore
 
-    member __.Instance = instance
+    member _.Instance = instance
 
 //type FeatureInstanceIncomingUpdate = X
 
@@ -130,8 +127,8 @@ type NewFeatureInstanceViewModel(instanceName: string, instanceCode: string) =
         |> Observable.subscribe (fun name -> instanceCode.Value <- maxString 2 name)
         |> ignore
 
-    member __.InstanceName = instanceName
-    member __.InstanceCode = instanceCode
+    member _.InstanceName = instanceName
+    member _.InstanceCode = instanceCode
 
     new () = NewFeatureInstanceViewModel("", "")
 
@@ -169,7 +166,7 @@ type NameViewModelComparerMode = NameOnly | Selection
 
 type NameViewModelComparer(mode: NameViewModelComparerMode) =
     interface IComparer<NameViewModel> with
-        member __.Compare (a, b) =
+        member _.Compare (a, b) =
             let byFlag flagA flagB =
                 match flagA, flagB with
                 | true, false -> Some -1

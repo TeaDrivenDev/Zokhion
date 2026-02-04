@@ -28,15 +28,15 @@ type FileViewModel(fileInstance: FileInstance) =
     let length = fileInstance.FileInfo.Length
     let creationTime = fileInstance.FileInfo.CreationTime
 
-    member __.Group = fileInstance.Group
-    member __.FileInfo = fileInstance.FileInfo
-    member __.Name = name
-    member __.FullName = fullName
-    member __.DirectoryName = directoryName
-    member __.LastWriteTime = lastWriteTime
-    member __.Length = length
-    member __.CreationTime = creationTime
-    member __.NumberOfInstances = fileInstance.NumberOfInstances
+    member _.Group = fileInstance.Group
+    member _.FileInfo = fileInstance.FileInfo
+    member _.Name = name
+    member _.FullName = fullName
+    member _.DirectoryName = directoryName
+    member _.LastWriteTime = lastWriteTime
+    member _.Length = length
+    member _.CreationTime = creationTime
+    member _.NumberOfInstances = fileInstance.NumberOfInstances
 
 type SearchViewModelCommand =
     | Directories of (DirectoryInfoCopy option * string)
@@ -148,7 +148,7 @@ type SearchViewModel(
 
                                         if m.Success
                                         then
-                                            m.Groups.["size"].Value
+                                            m.Groups["size"].Value
                                             |> Int32.Parse
                                             |> (*) (1024 * 1024)
                                             |> SmallerThan
@@ -157,7 +157,7 @@ type SearchViewModel(
 
                                             if m.Success
                                             then
-                                                m.Groups.["size"].Value
+                                                m.Groups["size"].Value
                                                 |> Int32.Parse
                                                 |> (*) (1024 * 1024)
                                                 |> LargerThan
@@ -253,7 +253,7 @@ type SearchViewModel(
                 (function
                     | "" ->
                         selectedDirectory.Value
-                        |> Option.map (fun selected -> selected.Name)
+                        |> Option.map _.Name
                         |> Option.defaultValue " (none) "
                         |> sprintf "<%s>"
                     | search -> search)
@@ -456,18 +456,18 @@ type SearchViewModel(
             |> Observable.map (fun vm -> if isNull vm then null else vm.FileInfo)
             |> toReadOnlyReactivePropertyWithMode ReactivePropertyMode.RaiseLatestValueOnSubscribe
 
-    member __.IsGroupByFeatureValue = isGroupByFeatureValue
-    member __.FeatureToGroupBy = groupCategory
-    member __.SearchString = searchString
-    member __.SearchFromBaseDirectory = searchFromBaseDirectory
-    member __.CanToggleSearchFromBaseDirectory = canToggleSearchFromBaseDirectory
-    member __.IsActive = isActive
-    member __.Files = files
-    member __.Header = header
-    member __.SelectedFile = selectedFile
-    member __.SelectedFileWhenActive = selectedFileWhenActive
-    member __.RefreshCommand = refreshCommand
-    member __.ClearSearchStringCommand = clearSearchStringCommand
-    member __.IsUpdating = isUpdating
-    member __.FilterHasNoFeatures = filterHasNoFeatures
-    member __.FilterHasFeatures = filterHasFeatures
+    member _.IsGroupByFeatureValue = isGroupByFeatureValue
+    member _.FeatureToGroupBy = groupCategory
+    member _.SearchString = searchString
+    member _.SearchFromBaseDirectory = searchFromBaseDirectory
+    member _.CanToggleSearchFromBaseDirectory = canToggleSearchFromBaseDirectory
+    member _.IsActive = isActive
+    member _.Files = files
+    member _.Header = header
+    member _.SelectedFile = selectedFile
+    member _.SelectedFileWhenActive = selectedFileWhenActive
+    member _.RefreshCommand = refreshCommand
+    member _.ClearSearchStringCommand = clearSearchStringCommand
+    member _.IsUpdating = isUpdating
+    member _.FilterHasNoFeatures = filterHasNoFeatures
+    member _.FilterHasFeatures = filterHasFeatures

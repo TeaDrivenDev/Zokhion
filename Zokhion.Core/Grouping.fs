@@ -45,7 +45,7 @@ module Grouping =
         let m = Renaming.markedNamesPartRegex.Match names
 
         if m.Success
-        then m.Groups.["names"].Value.Split [| '.' |] |> Array.map trim |> Array.toList
+        then m.Groups["names"].Value.Split [| '.' |] |> Array.map trim |> Array.toList
         else []
 
     let groupByCooccurringNames (files: FileInfoCopy list) =

@@ -16,7 +16,7 @@ module Prelude =
 
     [<AllowNullLiteral>]
     type JoinWrapper<'a>(value: 'a) =
-        member __.Value = value
+        member _.Value = value
 
     let (|JoinWrapped|) (wrapper: JoinWrapper<_>) = wrapper.Value
 
@@ -92,8 +92,7 @@ module Prelude =
 
         do
             innerSubject
-            |> Observable.subscribe
-                (fun value -> if selector value then lastValue <- Some value)
+            |> Observable.subscribe (fun value -> if selector value then lastValue <- Some value)
             |> compositeDisposable.Add
 
             compositeDisposable.Add innerSubject
@@ -106,8 +105,7 @@ module Prelude =
             member this.OnNext(value: 'T): unit =
                 innerSubject.OnNext value
             member this.Subscribe(observer: IObserver<'T>): IDisposable =
-                lastValue
-                |> Option.iter (fun command -> observer.OnNext command)
+                lastValue |> Option.iter observer.OnNext
 
                 let sub = innerSubject |> Observable.subscribeObserver observer
                 compositeDisposable.Add sub

@@ -47,7 +47,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Two names are detected and written to metadata`` () =
@@ -67,7 +67,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``A name that is part of another detected name is not returned`` () =
@@ -91,7 +91,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Theory>]
     [<InlineData("Mountains at dusk", false)>]
@@ -114,7 +114,7 @@ module RenamingTests =
         let { DetectedNames = detectedNames } = Renaming.rename parameters originalName
 
         // Assert
-        Assert.Equal (detectedNames |> List.contains nameToDetect, expectedDetected)
+        Assert.Equal(detectedNames |> List.contains nameToDetect, expectedDetected)
 
     [<Fact>]
     let ``A selected name that is part of another returned name is returned`` () =
@@ -134,7 +134,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Names are detected regardless of case`` () =
@@ -154,7 +154,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Detected existing names are properly capitalized`` () =
@@ -174,7 +174,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Detected new names are not automatically capitalized`` () =
@@ -194,7 +194,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Selected new names can change capitalization`` () =
@@ -219,7 +219,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Names in main part can be fixed up with proper capitalization`` () =
@@ -244,7 +244,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Selected names override detected names`` () =
@@ -268,7 +268,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Detected names can be re-selected`` () =
@@ -292,7 +292,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Appended names override names in the main part`` () =
@@ -312,7 +312,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Names can be detected in main part when a names part exists`` () =
@@ -336,7 +336,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Names in both main and names part are reported only once`` () =
@@ -360,7 +360,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Names in names part are reported regardless of prior existence`` () =
@@ -380,7 +380,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Treating parenthesized part as names can be disabled`` () =
@@ -404,7 +404,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``A marked names part is always treated as names`` () =
@@ -448,7 +448,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``No selected or detected names cause no name part to be added`` () =
@@ -468,7 +468,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Replacements are replaced correctly`` () =
@@ -492,7 +492,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Selected features are correctly appended`` () =
@@ -516,7 +516,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Features are correctly detected`` () =
@@ -536,7 +536,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Features can be added`` () =
@@ -560,7 +560,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``An empty selected features list is omitted`` () =
@@ -584,7 +584,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Square brackets without feature pattern are left alone`` () =
@@ -604,7 +604,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Underscores are not replaced by default`` () =
@@ -624,7 +624,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Replacing underscores works`` () =
@@ -648,7 +648,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Trimming an underscore suffix works`` () =
@@ -672,7 +672,7 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Trimming an underscore suffix also replaces other underscores`` () =
@@ -696,4 +696,4 @@ module RenamingTests =
         let result = Renaming.rename parameters originalName
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)

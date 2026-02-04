@@ -17,14 +17,14 @@ open TeaDriven.Zokhion.ViewModels
 
 type Win32Window(handle: IntPtr) =
     interface System.Windows.Forms.IWin32Window with
-        member __.Handle: IntPtr = handle
+        member _.Handle: IntPtr = handle
 
 type MainWindowBase = XAML<"MainWindow.xaml">
 
 type MainWindow() as this =
     inherit MainWindowBase()
 
-    let _materialDesignColorsResourcesReference = new Hue("", Colors.Black, Colors.Black)
+    let _materialDesignColorsResourcesReference = Hue("", Colors.Black, Colors.Black)
 
     let mutable dragStart = Unchecked.defaultof<Point>
     let draggedItems = ResizeArray<_>()
@@ -66,12 +66,12 @@ type MainWindow() as this =
         then
             __.ViewModel.BaseDirectory.Value <- folderBrowserDialog.SelectedPath
 
-    member __.Features_SelectedItemChanged (_: obj, e: RoutedPropertyChangedEventArgs<obj>) =
+    member _.Features_SelectedItemChanged (_: obj, e: RoutedPropertyChangedEventArgs<obj>) =
         match e.NewValue with
         | :? FeatureViewModel as item -> this.ViewModel.SelectedFeature.Value <- item
         | _ -> ()
 
-    override __.SearchString_KeyUp(sender: obj, e: Input.KeyEventArgs) =
+    override _.SearchString_KeyUp(sender: obj, e: Input.KeyEventArgs) =
         if e.Key = Input.Key.Escape
         then
             (sender :?> TextBox).Text <- ""
@@ -135,14 +135,14 @@ type MainWindow() as this =
 
     // Drag and drop implementation from http://codebrewery.blogspot.de/2010/06/drag-and-drop-files-from-wpf-listviews.html
     // see also https://stackoverflow.com/a/25123410/236507
-    member __.FilesGrid_PreviewMouseLeftButtonDown(sender: obj, e: MouseButtonEventArgs) =
+    member _.FilesGrid_PreviewMouseLeftButtonDown(sender: obj, e: MouseButtonEventArgs) =
         let filesGrid = sender :?> DataGrid
 
         dragStart <- e.GetPosition null
         draggedItems.Clear()
         draggedItems.AddRange(filesGrid.SelectedItems |> Seq.cast<obj>)
 
-    member __.FilesGrid_MouseMove(sender: obj, e: MouseEventArgs) =
+    member _.FilesGrid_MouseMove(sender: obj, e: MouseEventArgs) =
         let position = e.GetPosition null
         let dragDifference = dragStart - position
         let filesGrid = sender :?> DataGrid
@@ -185,7 +185,7 @@ type AppBase = XAML<"App.xaml">
 type App() =
     inherit AppBase()
 
-    member __.Application_Startup (_: obj, _: StartupEventArgs) =
+    member _.Application_Startup (_: obj, _: StartupEventArgs) =
         MainWindow().Show()
 
 module Program =

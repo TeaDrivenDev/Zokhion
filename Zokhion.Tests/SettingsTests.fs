@@ -49,7 +49,7 @@ module SettingsTests =
         let result: string list = serializeFeatures values
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``A feature list without instances is correctly deserialized`` () =
@@ -70,7 +70,7 @@ module SettingsTests =
         let result = deserializeFeatures values
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``A feature hierarchy is correctly deserialized`` () =
@@ -116,4 +116,4 @@ module SettingsTests =
         let result = deserializeFeatures values
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)

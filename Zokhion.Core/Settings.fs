@@ -81,9 +81,7 @@ module Settings =
 
         let lines =
             replacements
-            |> List.map
-                (fun replacement ->
-                    sprintf "%s|%s" replacement.ToReplace replacement.ReplaceWith)
+            |> List.map (fun replacement -> $"%s{replacement.ToReplace}|%s{replacement.ReplaceWith}")
 
         if not <| List.isEmpty lines || File.exists replacementsFilePath
         then File.writeAllLines replacementsFilePath lines
@@ -120,7 +118,7 @@ module Settings =
 
     let serializeFeatures features =
         let serializeInstance featureCode instance =
-            sprintf "\t%s%s|%s"featureCode instance.Code instance.Name
+            $"\t%s{featureCode}%s{instance.Code}|%s{instance.Name}"
 
         let serializeFeature (feature: Feature) =
             [
@@ -151,14 +149,14 @@ module Settings =
             let m = instanceRegex.Match s
 
             if m.Success
-            then Some (m.Groups.["name"].Value, Regex.Replace(m.Groups.["code"].Value, "^" + featureCode, ""))
+            then Some (m.Groups["name"].Value, Regex.Replace(m.Groups["code"].Value, "^" + featureCode, ""))
             else None
 
         let (|Feature|_|) s =
             let m = featureRegex.Match s
 
             if m.Success
-            then Some (m.Groups.["name"].Value, m.Groups.["code"].Value, nonEmptyString m.Groups.["include"].Value)
+            then Some (m.Groups["name"].Value, m.Groups["code"].Value, nonEmptyString m.Groups["include"].Value)
             else None
 
         let rec getInstances featureCode lines =

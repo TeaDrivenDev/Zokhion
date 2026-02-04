@@ -24,7 +24,7 @@ module SplitFileNameTests =
         let result = Renaming.splitFileName true fileName
 
         // Assert
-        Assert.Equal (expectedResult, result)
+        Assert.Equal(expectedResult, result)
 
     [<Theory>]
     [<InlineData("Aerial view over Uluru at night", "Aerial view over Uluru at night", "", "")>]
@@ -45,4 +45,4 @@ module SplitFileNameTests =
         let result = Renaming.splitFileName false fileName
 
         // Assert
-        Assert.Equal (expectedResult, result)
+        Assert.Equal(expectedResult, result)

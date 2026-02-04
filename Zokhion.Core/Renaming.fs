@@ -80,22 +80,17 @@ module Renaming =
                     TreatParenthesizedPartAsNames = value
                     SelectedNames = None
             }
-        | FixupNamesInMainPart value ->
-            { parameters with FixupNamesInMainPart = value }
-        | RecapitalizeNames value ->
-            { parameters with RecapitalizeNames = value }
-        | UnderscoreHandling value ->
-            { parameters with UnderscoreHandling = value }
+        | FixupNamesInMainPart value -> { parameters with FixupNamesInMainPart = value }
+        | RecapitalizeNames value -> { parameters with RecapitalizeNames = value }
+        | UnderscoreHandling value -> { parameters with UnderscoreHandling = value }
         | DetectNamesInMainAndNamesParts value ->
             {
                 parameters with
                     DetectNamesInMainAndNamesParts = value
                     SelectedNames = None
             }
-        | SelectedNames value ->
-            { parameters with SelectedNames = value }
-        | SelectedFeatures value ->
-            { parameters with SelectedFeatures = value }
+        | SelectedNames value -> { parameters with SelectedNames = value }
+        | SelectedFeatures value -> { parameters with SelectedFeatures = value }
         | ResetSelections ->
             {
                 parameters with
@@ -112,12 +107,12 @@ module Renaming =
         let m = fileNameRegex.Match fileName
 
         if m.Success
-        then m.Groups.["main"].Value, m.Groups.["names"].Value, m.Groups.["features"].Value
+        then m.Groups["main"].Value, m.Groups["names"].Value, m.Groups["features"].Value
         else "", "", ""
 
     let evaluateNamesPart (names: string) =
         let splitBy separator (``match``: Match) =
-            ``match``.Groups.["names"].Value.Split separator
+            ``match``.Groups["names"].Value.Split separator
             |> Array.map trim
             |> Array.toList
             |> List.map
@@ -150,9 +145,7 @@ module Renaming =
         let part = part.ToUpper()
 
         allNames
-        |> List.filter
-            (fun name ->
-                Regex.IsMatch(part, sprintf @"\b%s\b" name, RegexOptions.IgnoreCase) )
+        |> List.filter (fun name -> Regex.IsMatch(part, $@"\b%s{name}\b", RegexOptions.IgnoreCase))
         |> List.map
             (fun name ->
                 {
@@ -171,7 +164,7 @@ module Renaming =
                 | replacements ->
                     (originalFileName, replacements)
                     ||> List.fold
-                        (fun acc (replace, replaceWith) -> acc.Replace(replace, replaceWith))
+                            (fun acc (replace, replaceWith) -> acc.Replace(replace, replaceWith))
 
             let replaceUnderscores (s: string) = s.Replace("_", " ")
 
@@ -180,11 +173,11 @@ module Renaming =
             | TrimSuffix ->
                 let underscoreIndex = originalFileName.LastIndexOf '_'
                 if underscoreIndex >= 0
-                then originalFileName.[..underscoreIndex - 1] |> replaceUnderscores
+                then originalFileName[..underscoreIndex - 1] |> replaceUnderscores
                 else originalFileName
             | Ignore -> originalFileName
 
-        let (mainPart, namesPart, featuresPart) =
+        let mainPart, namesPart, featuresPart =
             splitFileName parameters.TreatParenthesizedPartAsNames originalFileName
 
         let detectedNames =
@@ -198,7 +191,7 @@ module Renaming =
                 (fun () -> detectListedNames parameters.AllNames MainPart mainPart)
             |> List.map JoinWrapper
             |> asFst parameters.AllNames
-            ||> fullOuterJoin (_.Value.Normalized) toUpper
+            ||> fullOuterJoin _.Value.Normalized toUpper
             |> Seq.choose
                 (function
                     | LeftOnly _ -> None
@@ -247,8 +240,7 @@ module Renaming =
                     name.Source <> MainPart
                     || detectedAndSelectedNames
                        |> List.forall
-                           (fun n ->
-                                name = n || n.Normalized.Contains name.Normalized |> not))
+                              (fun n ->name = n || n.Normalized.Contains name.Normalized |> not))
             |> List.map _.Name
 
         let mainPart =
@@ -262,12 +254,9 @@ module Renaming =
                 with _ -> mainPart
             else mainPart
 
-        let detectedFeatures =
-            evaluateFeaturesPart featuresPart
+        let detectedFeatures = evaluateFeaturesPart featuresPart
 
-        let featuresToUse =
-            parameters.SelectedFeatures
-            |> Option.orElse detectedFeatures
+        let featuresToUse = parameters.SelectedFeatures |> Option.orElse detectedFeatures
 
         let names =
             match namesToUse with
@@ -275,9 +264,7 @@ module Renaming =
             | _ ->
                 [
                     "("
-
                     yield! namesToUse
-
                     ")"
                 ]
                 |> String.concat "."
@@ -291,9 +278,7 @@ module Renaming =
                     | _ ->
                         [
                             "["
-
                             yield! features
-
                             "]"
                         ]
                         |> String.concat ".")

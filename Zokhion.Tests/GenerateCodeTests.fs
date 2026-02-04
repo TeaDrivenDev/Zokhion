@@ -41,7 +41,7 @@ module GenerateCodeTests =
                     0, input.[0]
 
                     let vowels, notVowels =
-                        input.[1..]
+                        input[1..]
                         |> Seq.mapi (fun index c -> index + 1, c)
                         |> Seq.toList
                         |> List.partition (snd >> isVowel)
@@ -96,7 +96,7 @@ module GenerateCodeTests =
         let result = generateCode parameters [] name
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Fact>]
     let ``Code does not contain spaces from name`` () =
@@ -111,7 +111,7 @@ module GenerateCodeTests =
         let result = generateCode parameters [] name
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Theory>]
     [<InlineData("Europe", 3, FillupWithVowelsEnum.DoNotFillup, "Erp")>]
@@ -137,7 +137,7 @@ module GenerateCodeTests =
         let result = generateCode parameters [] name
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
     [<Theory>]
     [<InlineData("North America", 5, "NoAme")>]
@@ -153,11 +153,9 @@ module GenerateCodeTests =
         let result = generateCode parameters [] name
 
         // Assert
-        Assert.StrictEqual (expectedResult, result)
+        Assert.StrictEqual(expectedResult, result)
 
 module SplitLengthTests =
-    open Xunit
-
     type CodePartLengthsTheoryData() as this =
         inherit TheoryData<int, int, int []>()
 

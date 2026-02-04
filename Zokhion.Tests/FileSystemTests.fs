@@ -17,7 +17,7 @@ module FileSystemTests =
         let result = Path.isSubDirectoryOf baseDirectory subDirectory
 
         // Assert
-        Assert.False (result)
+        Assert.False(result)
 
     [<Theory>]
     [<InlineData(@"\\server\root\subdirectory1", @"\\server\root\subdirectory1")>]
@@ -30,4 +30,4 @@ module FileSystemTests =
         let result = Path.isSubDirectoryOf baseDirectory subDirectory
 
         // Assert
-        Assert.True (result)
+        Assert.True(result)

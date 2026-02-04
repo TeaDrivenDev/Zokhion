@@ -34,8 +34,7 @@ module FileSystem =
 
         let inline readAllLines path = File.ReadAllLines(path)
 
-        let inline writeAllLines path (lines: #seq<string>) =
-            File.WriteAllLines(path, lines)
+        let inline writeAllLines path (lines: #seq<string>) = File.WriteAllLines(path, lines)
 
     [<RequireQualifiedAccess>]
     module Path =
@@ -74,12 +73,12 @@ module FileSystem =
         creationTime: DateTime,
         lastWriteTime: DateTime,
         length: int64) =
-        member __.Name = name
-        member __.FullName = fullName
-        member __.DirectoryName = directoryName
-        member __.CreationTime = creationTime
-        member __.LastWriteTime = lastWriteTime
-        member __.Length = length
+        member _.Name = name
+        member _.FullName = fullName
+        member _.DirectoryName = directoryName
+        member _.CreationTime = creationTime
+        member _.LastWriteTime = lastWriteTime
+        member _.Length = length
 
         static member FromFilePath(filePath: string) =
             let fileInfo = FileInfo filePath
@@ -97,11 +96,11 @@ module FileSystem =
         let fullName = directoryInfo.FullName
         let name = directoryInfo.Name
 
-        member __.FullName = fullName
-        member __.Name = name
+        member _.FullName = fullName
+        member _.Name = name
 
         // TODO Remove/Change
-        member __.NumberOfFiles = directoryInfo.GetFiles().Length
+        member _.NumberOfFiles = directoryInfo.GetFiles().Length
 
         new (directoryPath: string) = DirectoryInfoCopy(DirectoryInfo(directoryPath))
 
@@ -140,28 +139,28 @@ module FileSystem =
             status <- new ReactiveProperty<_>(Empty)
 
         interface IDisposable with
-            member __.Dispose() =
+            member _.Dispose() =
                 compositeDisposable.Dispose()
 
-        member __.Status = status
+        member _.Status = status
 
-        member __.Files =
+        member _.Files =
             files
             |> Option.ofObj
             |> Option.map Seq.toList
             |> Option.defaultValue []
 
-        member __.FileSystemUpdates = fileSystemUpdates
+        member _.FileSystemUpdates = fileSystemUpdates
 
-        member __.IsFileSystemWatcherAlive = watcher.EnableRaisingEvents
+        member _.IsFileSystemWatcherAlive = watcher.EnableRaisingEvents
 
-        member __.FileSystemWatcherPath = watcher.Path
+        member _.FileSystemWatcherPath = watcher.Path
 
-        member __.Initialize(baseDirectory: string) =
+        member _.Initialize(baseDirectory: string) =
             status.Value <- Initializing 0.
             watcher.EnableRaisingEvents <- false
 
-            files |> Option.ofObj |> Option.iter (fun files -> files.Clear())
+            files |> Option.ofObj |> Option.iter _.Clear()
 
             async {
                 let subDirectories = Directory.GetDirectories baseDirectory
@@ -175,8 +174,7 @@ module FileSystem =
                             status.Value <-
                                 Initializing (float index / float subDirectories.Length * 100.)
 
-                            files
-                            |> Array.map (fun file -> file, FileInfoCopy.FromFilePath file))
+                            files |> Array.map (fun file -> file, FileInfoCopy.FromFilePath file))
                     |> Array.concat
 
                 files <- data |> dict |> ConcurrentDictionary
@@ -192,7 +190,7 @@ module FileSystem =
                             |> List.iter
                                 (fun (file, fileChange) ->
                                     match fileChange with
-                                    | Added -> files.[file] <- FileInfoCopy.FromFilePath file
+                                    | Added -> files[file] <- FileInfoCopy.FromFilePath file
                                     | Removed -> files.TryRemove file |> ignore))
                     |> Observable.multicast Subject.broadcast
 
@@ -203,5 +201,5 @@ module FileSystem =
                 watcher.EnableRaisingEvents <- true
             }
 
-        member __.ReviveFileSystemWatcher() =
+        member _.ReviveFileSystemWatcher() =
             if status.Value = Ready then watcher.EnableRaisingEvents <- true

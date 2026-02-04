@@ -55,6 +55,13 @@
     </Otherwise>
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.8'">
+      <PropertyGroup>
+        <__paket__System_ValueTuple_targets>net471\System.ValueTuple</__paket__System_ValueTuple_targets>
+      </PropertyGroup>
+    </When>
+  </Choose>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
@@ -107,7 +114,7 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.8'">
       <ItemGroup>
         <Reference Include="DynamicData">
-          <HintPath>..\packages\DynamicData\lib\net461\DynamicData.dll</HintPath>
+          <HintPath>..\packages\DynamicData\lib\net462\DynamicData.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -118,7 +125,7 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.8'">
       <ItemGroup>
         <Reference Include="FSharp.Control.Reactive">
-          <HintPath>..\packages\FSharp.Control.Reactive\lib\net46\FSharp.Control.Reactive.dll</HintPath>
+          <HintPath>..\packages\FSharp.Control.Reactive\lib\net472\FSharp.Control.Reactive.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -168,7 +175,7 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.8'">
       <ItemGroup>
         <Reference Include="GongSolutions.WPF.DragDrop">
-          <HintPath>..\packages\gong-wpf-dragdrop\lib\net47\GongSolutions.WPF.DragDrop.dll</HintPath>
+          <HintPath>..\packages\gong-wpf-dragdrop\lib\net462\GongSolutions.WPF.DragDrop.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -212,7 +219,7 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.8'">
       <ItemGroup>
         <Reference Include="ReactiveProperty">
-          <HintPath>..\packages\ReactiveProperty\lib\netstandard2.0\ReactiveProperty.dll</HintPath>
+          <HintPath>..\packages\ReactiveProperty\lib\net472\ReactiveProperty.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -223,7 +230,7 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.8'">
       <ItemGroup>
         <Reference Include="ReactiveProperty.Core">
-          <HintPath>..\packages\ReactiveProperty.Core\lib\netstandard2.0\ReactiveProperty.Core.dll</HintPath>
+          <HintPath>..\packages\ReactiveProperty.Core\lib\net472\ReactiveProperty.Core.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -309,18 +316,7 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.8'">
       <ItemGroup>
         <Reference Include="System.Threading.Tasks.Extensions">
-          <HintPath>..\packages\System.Threading.Tasks.Extensions\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.8'">
-      <ItemGroup>
-        <Reference Include="System.ValueTuple">
-          <HintPath>..\packages\System.ValueTuple\lib\net47\System.ValueTuple.dll</HintPath>
+          <HintPath>..\packages\System.Threading.Tasks.Extensions\lib\net462\System.Threading.Tasks.Extensions.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -328,4 +324,5 @@
     </When>
   </Choose>
   <Import Project="..\packages\MaterialDesignThemes\build\MaterialDesignThemes.targets" Condition="Exists('..\packages\MaterialDesignThemes\build\MaterialDesignThemes.targets')" Label="Paket" />
+  <Import Project="..\packages\System.ValueTuple\build\$(__paket__System_ValueTuple_targets).targets" Condition="Exists('..\packages\System.ValueTuple\build\$(__paket__System_ValueTuple_targets).targets')" Label="Paket" />
 </Project>

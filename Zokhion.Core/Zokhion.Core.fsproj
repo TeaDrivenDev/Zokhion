@@ -9,6 +9,7 @@
     <Compile Include="FileSystem.fs" />
     <Compile Include="Settings.fs" />
     <Compile Include="Renaming.fs" />
+    <Compile Include="Grouping.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Control.Reactive" Version="6.1.2" />

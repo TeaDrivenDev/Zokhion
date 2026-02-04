@@ -1,7 +1,6 @@
-﻿namespace TeaDriven.Zokhion
+﻿namespace TeaDriven.Zokhion.Core
 
-open TeaDriven.Zokhion.Core
-open TeaDriven.Zokhion.Core.FileSystem
+open FileSystem
 
 module GroupingTypes =
     type FileInstance =

@@ -27,8 +27,8 @@ open ReactiveUI
 open TeaDriven.Zokhion
 open TeaDriven.Zokhion.Core
 open TeaDriven.Zokhion.Core.FileSystem
+open TeaDriven.Zokhion.Core.GroupingTypes
 open TeaDriven.Zokhion.Core.RenamingTypes
-open TeaDriven.Zokhion.GroupingTypes
 
 type GroupCategoryEntry =
     {

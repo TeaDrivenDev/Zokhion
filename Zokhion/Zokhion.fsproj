@@ -160,6 +160,12 @@
     <Reference Include="UIAutomationTypes" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Zokhion.Core\Zokhion.Core.fsproj">
+      <Project>{cdac1390-3a64-42c1-81c1-4a1adb3ff54d}</Project>
+      <Name>Zokhion.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="..\packages\MaterialDesignThemes.3.1.3\build\MaterialDesignThemes.targets" Condition="Exists('..\packages\MaterialDesignThemes.3.1.3\build\MaterialDesignThemes.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

@@ -14,13 +14,8 @@ nuget ReactiveUI < 9
 nuget Splat < 7
 
 nuget System.ValueTuple
- 
-group Test
-    source https://api.nuget.org/v3/index.json
-    framework: net48
 
-    nuget FSharp.Core
-    nuget xunit
-    nuget xunit.runner.console
-    nuget xunit.runner.visualstudio
-    nuget Unquote
+nuget xunit
+nuget xunit.runner.console
+nuget xunit.runner.visualstudio
+nuget Unquote

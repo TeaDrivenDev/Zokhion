@@ -2,6 +2,8 @@
 
 open Xunit
 
+// The actual logic for code generation is currently in here and not being used in the actual application.
+
 module GenerateCodeTests =
     open System
 

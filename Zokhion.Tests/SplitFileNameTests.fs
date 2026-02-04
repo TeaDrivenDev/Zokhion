@@ -3,7 +3,7 @@
 module SplitFileNameTests =
     open Xunit
 
-    open TeaDriven.Zokhion
+    open TeaDriven.Zokhion.Core
 
     [<Theory>]
     [<InlineData("Aerial view over Uluru at night", "Aerial view over Uluru at night", "", "")>]

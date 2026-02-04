@@ -3,8 +3,8 @@ namespace TeaDriven.Zokhion.Tests
 module RenamingTests =
     open Xunit
 
-    open TeaDriven.Zokhion
-    open TeaDriven.Zokhion.RenamingTypes
+    open TeaDriven.Zokhion.Core
+    open TeaDriven.Zokhion.Core.RenamingTypes
 
     let allNames =
         [

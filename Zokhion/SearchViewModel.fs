@@ -16,6 +16,7 @@ open Reactive.Bindings.Notifiers
 open ReactiveUI
 
 open TeaDriven.Zokhion
+open TeaDriven.Zokhion.Core
 open TeaDriven.Zokhion.FileSystem
 open TeaDriven.Zokhion.GroupingTypes
 

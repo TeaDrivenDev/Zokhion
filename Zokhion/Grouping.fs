@@ -19,6 +19,8 @@ module GroupingTypes =
 
 [<RequireQualifiedAccess>]
 module Grouping =
+    open TeaDriven.Zokhion.Core
+
     open GroupingTypes
 
     let singleInstanceWithGroup group fileInfo =

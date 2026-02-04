@@ -47,6 +47,8 @@ module Renaming =
     open System
     open System.Text.RegularExpressions
 
+    open TeaDriven.Zokhion.Core
+
     open RenamingTypes
 
     let compileRegex pattern = Regex(pattern, RegexOptions.Compiled)

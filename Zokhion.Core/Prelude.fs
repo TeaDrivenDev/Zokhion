@@ -1,4 +1,4 @@
-﻿namespace TeaDriven.Zokhion
+﻿namespace TeaDriven.Zokhion.Core
 
 [<AutoOpen>]
 module Prelude =

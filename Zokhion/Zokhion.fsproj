@@ -64,7 +64,6 @@
   -->
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Prelude.fs" />
     <Compile Include="Interop.fs" />
     <Compile Include="FileSystem.fs" />
     <Compile Include="Settings.fs" />

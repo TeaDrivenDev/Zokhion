@@ -2,6 +2,7 @@
 
 module SettingsTests =
     open Xunit
+    open Swensen.Unquote
 
     open TeaDriven.Zokhion.Core.Settings
 
@@ -46,10 +47,10 @@ module SettingsTests =
             ]
 
         // Act
-        let result: string list = serializeFeatures values
+        let actualResult: string list = serializeFeatures values
 
         // Assert
-        Assert.StrictEqual(expectedResult, result)
+        test <@ expectedResult = actualResult @>
 
     [<Fact>]
     let ``A feature list without instances is correctly deserialized`` () =
@@ -67,10 +68,10 @@ module SettingsTests =
             ]
 
         // Act
-        let result = deserializeFeatures values
+        let actualResult = deserializeFeatures values
 
         // Assert
-        Assert.StrictEqual(expectedResult, result)
+        test <@ expectedResult = actualResult @>
 
     [<Fact>]
     let ``A feature hierarchy is correctly deserialized`` () =
@@ -113,7 +114,7 @@ module SettingsTests =
             ]
 
         // Act
-        let result = deserializeFeatures values
+        let actualResult = deserializeFeatures values
 
         // Assert
-        Assert.StrictEqual(expectedResult, result)
+        test <@ expectedResult = actualResult @>

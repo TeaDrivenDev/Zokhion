@@ -14,10 +14,10 @@ module FileSystemTests =
     [<InlineData(@"C:\root\subdirectory\aaa", @"C:\root\subdirectory\")>]
     let ``Non-subdirectory is detected correctly`` (baseDirectory, subDirectory) =
         // Act
-        let result = Path.isSubDirectoryOf baseDirectory subDirectory
+        let actualResult = Path.isSubDirectoryOf baseDirectory subDirectory
 
         // Assert
-        Assert.False(result)
+        Assert.False(actualResult)
 
     [<Theory>]
     [<InlineData(@"\\server\root\subdirectory1", @"\\server\root\subdirectory1")>]
@@ -27,7 +27,7 @@ module FileSystemTests =
     [<InlineData(@"C:\server\root\subdirectory\", @"C:\server\root\subdirectory\aaaa")>]
     let ``Subdirectory is detected correctly`` (baseDirectory, subDirectory) =
         // Act
-        let result = Path.isSubDirectoryOf baseDirectory subDirectory
+        let actualResult = Path.isSubDirectoryOf baseDirectory subDirectory
 
         // Assert
-        Assert.True(result)
+        Assert.True(actualResult)

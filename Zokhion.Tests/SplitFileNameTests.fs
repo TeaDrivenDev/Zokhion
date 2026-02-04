@@ -18,13 +18,14 @@ module SplitFileNameTests =
         // Arrange
         let fileName = fileName
 
-        let expectedResult = (expectedMain, expectedNames, expectedFeatures)
-
         // Act
-        let result = Renaming.splitFileName true fileName
+        let actualMain, actualNames, actualFeatures = Renaming.splitFileName true fileName
 
         // Assert
-        Assert.Equal(expectedResult, result)
+        Assert.Multiple(
+            (fun _ -> Assert.Equal(expectedMain, actualMain)),
+            (fun _ -> Assert.Equal(expectedNames, actualNames)),
+            (fun _ -> Assert.Equal(expectedFeatures, actualFeatures)))
 
     [<Theory>]
     [<InlineData("Aerial view over Uluru at night", "Aerial view over Uluru at night", "", "")>]
@@ -39,10 +40,11 @@ module SplitFileNameTests =
         // Arrange
         let fileName = fileName
 
-        let expectedResult = (expectedMain, expectedNames, expectedFeatures)
-
         // Act
-        let result = Renaming.splitFileName false fileName
+        let actualMain, actualNames, actualFeatures = Renaming.splitFileName false fileName
 
         // Assert
-        Assert.Equal(expectedResult, result)
+        Assert.Multiple(
+            (fun _ -> Assert.Equal(expectedMain, actualMain)),
+            (fun _ -> Assert.Equal(expectedNames, actualNames)),
+            (fun _ -> Assert.Equal(expectedFeatures, actualFeatures)))

@@ -93,10 +93,10 @@ module GenerateCodeTests =
         let parameters = { baseParameters with CodeLength = codeLength }
 
         // Act
-        let result = generateCode parameters [] name
+        let actualResult = generateCode parameters [] name
 
         // Assert
-        Assert.StrictEqual(expectedResult, result)
+        Assert.Equal(expectedResult, actualResult)
 
     [<Fact>]
     let ``Code does not contain spaces from name`` () =
@@ -108,10 +108,10 @@ module GenerateCodeTests =
         let expectedResult = "AN"
 
         // Act
-        let result = generateCode parameters [] name
+        let actualResult = generateCode parameters [] name
 
         // Assert
-        Assert.StrictEqual(expectedResult, result)
+        Assert.Equal(expectedResult, actualResult)
 
     [<Theory>]
     [<InlineData("Europe", 3, FillupWithVowelsEnum.DoNotFillup, "Erp")>]
@@ -134,10 +134,10 @@ module GenerateCodeTests =
             }
 
         // Act
-        let result = generateCode parameters [] name
+        let actualResult = generateCode parameters [] name
 
         // Assert
-        Assert.StrictEqual(expectedResult, result)
+        Assert.Equal(expectedResult, actualResult)
 
     [<Theory>]
     [<InlineData("North America", 5, "NoAme")>]
@@ -150,10 +150,10 @@ module GenerateCodeTests =
         let parameters = { baseParameters with CodeLength = codeLength }
 
         // Act
-        let result = generateCode parameters [] name
+        let actualResult = generateCode parameters [] name
 
         // Assert
-        Assert.StrictEqual(expectedResult, result)
+        Assert.Equal(expectedResult, actualResult)
 
 module SplitLengthTests =
     type CodePartLengthsTheoryData() as this =
@@ -172,7 +172,7 @@ module SplitLengthTests =
         // Arrange
 
         // Act
-        let result = GenerateCodeTests.splitLength parts codeLength
+        let actualResult = GenerateCodeTests.splitLength parts codeLength
 
         // Assert
-        Assert.Equal<int []>(expectedResult, result)
+        Assert.Equal<int []>(expectedResult, actualResult)
